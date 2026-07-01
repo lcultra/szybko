@@ -5,29 +5,18 @@
     "private": true,
     "main": "dist/main.js",
     "scripts": {
-        "dev:renderer": "vite",
+        "dev:renderer": "pnpm --filter @szybko/launcher dev",
         "dev:main": "tsc && NODE_ENV=development electron .",
         "dev": "concurrently \"pnpm dev:renderer\" \"sleep 3 && pnpm dev:main\"",
-        "build:renderer": "vite build",
-        "build:main": "tsc",
+        "build:renderer": "pnpm --filter @szybko/launcher build",
+        "build:main": "tsc && cp -r ../packages/launcher/dist dist/renderer",
         "build": "pnpm build:renderer && pnpm build:main"
     },
-    "dependencies": {
-        "@szybko/launcher": "workspace:*",
-        "react": "^19.0",
-        "react-dom": "^19.0"
-    },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.0",
         "@types/node": "^26.0",
-        "@types/react": "^19.0",
-        "@types/react-dom": "^19.0",
-        "@vitejs/plugin-react": "^6.0",
         "concurrently": "^10.0",
         "electron": "^43.0",
         "electron-builder": "^26.0",
-        "tailwindcss": "^4.0",
-        "typescript": "^6.0",
-        "vite": "^8.0"
+        "typescript": "^6.0"
     }
 }

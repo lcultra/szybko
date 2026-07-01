@@ -5,6 +5,5 @@
         "rootDir": "./src",
         "types": ["node"]
     },
-    "include": ["src/main.ts", "src/preload.ts"],
-    "exclude": ["src/renderer"]
+    "include": ["src/main.ts", "src/preload.ts"]
 }
