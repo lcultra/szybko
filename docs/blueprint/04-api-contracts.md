@@ -85,5 +85,5 @@ invoke('window:resize', { height: number })
 // M→插件: send('plugin:search', { queryId, query, keyword, fullQuery })
 // 插件→M: send('plugin:search-result', { queryId, results, isFinal })
 // P→M: invoke('system:invoke', { pluginId, method, args })
-//       → 主进程校验 permissions → 调适配器 → 返回 { ok, data/error }
+//       → 主进程调适配器 → 返回 { ok, data/error }
 ```

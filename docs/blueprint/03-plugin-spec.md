@@ -13,15 +13,13 @@
     "features": [
         { "code": "hello", "explain": "示例", "cmds": ["hello", "你好"] }
     ],
-    "singleton": true,
-    "permissions": ["filesystem:read"]
+    "singleton": true
 }
 ```
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `singleton` | 否 | 默认 `true`。单例：整个应用只一个 Runtime；`false` 允许多实例 |
-| `permissions` | 否 | szybko 扩展，权限声明 |
 
 ## 插件目录结构
 

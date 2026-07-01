@@ -41,7 +41,6 @@ packages/
 │       │   └── floating-host.ts  # FloatingHost: 独立分离窗口
 │       ├── plugin-loader.ts      # 读取/校验 plugin.json
 │       ├── adapter-bridge.ts     # TS → Rust 桥接
-│       ├── permission.ts         # 权限校验
 │       ├── shortcut-manager.ts   # 全局快捷键
 │       ├── theme.ts              # 主题检测
 │       └── preload.ts            # contextBridge: window.utools

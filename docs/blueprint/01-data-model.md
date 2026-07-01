@@ -51,8 +51,7 @@ type ActionDescriptor =
     "features": [
         { "code": "...", "explain": "...", "cmds": ["..."] }
     ],
-    "singleton": true,
-    "permissions": ["filesystem:read"]
+    "singleton": true
 }
 ```
 
@@ -98,13 +97,13 @@ class RuntimeManager {
 
 ## 适配器接口（核心方法）
 
-| 接口 | 方法 |
-|---|---|
-| IFileSystemAdapter | `search(query, opts?)` → `SearchResult[]` |
-| IClipboardAdapter | `readText/writeText/getHistory/startMonitoring/stopMonitoring` |
-| IProcessAdapter | `launchApp/getInstalledApps/getRunningApps` |
-| IShellAdapter | `openPath/openUrl/showInFinder/trashItem` |
-| IImageAdapter | `captureScreen/pickColor/getPrimaryDisplay/getAllDisplays` |
+| 接口               | 方法                                                           |
+| ------------------ | -------------------------------------------------------------- |
+| IFileSystemAdapter | `search(query, opts?)` → `SearchResult[]`                      |
+| IClipboardAdapter  | `readText/writeText/getHistory/startMonitoring/stopMonitoring` |
+| IProcessAdapter    | `launchApp/getInstalledApps/getRunningApps`                    |
+| IShellAdapter      | `openPath/openUrl/showInFinder/trashItem`                      |
+| IImageAdapter      | `captureScreen/pickColor/getPrimaryDisplay/getAllDisplays`     |
 
 ## 错误类型
 
