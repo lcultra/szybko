@@ -47,7 +47,7 @@ Rust 错误
     ↓
 preload.ts 透传
     ↓
-渲染进程 / 插件 WebView 处理
+渲染进程 / 插件 WebContentsView 处理
 ```
 
 ## 3. 各层级错误处理
@@ -57,15 +57,16 @@ preload.ts 透传
 | Rust 核心 | 使用 `Result<T, napi::Error>`，所有可能失败的操作都返回 Result |
 | 适配器桥接 | 捕获 Rust Error → 包装为 `AdapterError`，附加上下文 |
 | IPC handler | `try/catch` 包裹业务逻辑，统一返回 `{ ok: false, error, message }` |
-| 插件 WebView | 插件崩溃 → 主进程收到 `crashed` 事件 → 记录日志 → 销毁 WebView |
+| 插件 WebContentsView | 插件崩溃 → 主进程收到 `render-process-gone` 事件 → 记录日志 → 销毁 WebContentsView |
 | 渲染进程 UI | ErrorBoundary 包裹，显示"出现错误"提示，不阻塞其他操作 |
 
 ## 4. 插件超时处理
 
 ```
-插件 WebView 接收搜索请求 → 5s 内未返回 → 主进程判定超时
-    → 取消该插件的搜索请求
-    → 通知用户"插件无响应"
+插件 WebContentsView 接收搜索请求
+    → 150ms 内未返回首批结果：本次查询不再等待该插件，UI 展示其他 source
+    → 800ms 内未 final：主进程标记该插件本次搜索超时，丢弃后续同 queryId 结果
+    → 连续 3 次超时：插件从后台搜索名单移除，仅保留手动进入
     → 插件继续运行（仅取消本次搜索）
 ```
 

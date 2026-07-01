@@ -196,23 +196,21 @@ plugins/                       # 本地开发插件目录
 
 ```
 docs/
-└── superpowers/
-    ├── specs/
-    │   └── szybko/            # 当前蓝图文档集
-    │       ├── 00-project-overview.md
-    │       ├── 01-architecture.md
-    │       ├── 02-data-model.md
-    │       ├── 03-api-contracts.md
-    │       ├── 04-file-map.md
-    │       ├── 05-milestones.md
-    │       ├── 06-plugin-spec.md
-    │       ├── 07-config-templates.md
-    │       ├── 08-error-handling.md
-    │       ├── 09-testing-guide.md
-    │       ├── 10-performance-budget.md
-    │       ├── 11-plugin-runtime-strategy.md
-    │       └── 12-utools-compat-matrix.md
-    └── plans/                 # writing-plans 的输出放这里
+├── blueprint/                 # 蓝图文档集
+│   ├── 00-project-overview.md
+│   ├── 01-architecture.md
+│   ├── 02-data-model.md
+│   ├── 03-api-contracts.md
+│   ├── 04-file-map.md
+│   ├── 05-milestones.md
+│   ├── 06-plugin-spec.md
+│   ├── 07-config-templates.md
+│   ├── 08-error-handling.md
+│   ├── 09-testing-guide.md
+│   ├── 10-performance-budget.md
+│   ├── 11-plugin-runtime-strategy.md
+│   └── 12-utools-compat-matrix.md
+└── plans/                    # writing-plans 的输出放这里
 ```
 
 ## 包依赖关系图
@@ -235,3 +233,60 @@ packages/core-rust  (napi-rs 编译，被 host 的 adapter-bridge require)
 - `launcher` 可依赖 `shared` 和 `design-system`
 - `host` 可依赖 `shared`；并在运行时 `require('core-rust')`
 - `plugin-sdk` 独立，只发布给插件开发者用
+
+## 文件拆分规则
+
+以下文件达到阈值时必须拆分。AI 在里程碑执行过程中需持续检查行数。
+
+### host/src/plugin-runtime.ts
+
+**阈值**: 300 行
+**描述**: 当前含"插件生命周期/搜索分发/预热池/LRU 回收"四个职责
+**拆分目标**:
+- `plugin-lifecycle.ts` — `activate()`, `suspend()`, `resume()`, `destroy()`, 状态机
+- `plugin-dispatcher.ts` — 搜索分发、结果收集、queryId 管理
+- `plugin-pool.ts` — WebView 预热、LRU 缓存、空闲回收
+
+### host/src/main.ts
+
+**阈值**: 150 行
+**描述**: Electron 入口，容易堆积初始化和注册逻辑
+**拆分目标**:
+- `main.ts` 只保留 `app.whenReady()` 和 `createWindow()` 调用
+- 提取 `setup.ts` — 插件加载器初始化、快捷键注册、主题监听等
+
+### launcher/src/App.tsx
+
+**阈值**: 200 行
+**描述**: 空闲态/搜索态/Tab 态三态合一
+**拆分目标**:
+- `IdleView.tsx` — 空闲态（仅搜索框）
+- `SearchView.tsx` — 搜索态（搜索框 + 结果列表 + 键盘导航）
+- `TabView.tsx` — Tab 态（TabHeader + 插件 WebView 区域）
+- `App.tsx` 只做状态路由：`state === 'idle' ? <IdleView/> : state === 'search' ? <SearchView/> : <TabView/>`
+
+### launcher/src/store.ts
+
+**阈值**: 200 行
+**描述**: search/plugin/window 三个领域耦合
+**拆分目标**: 使用 zustand slice 模式
+- `stores/search-slice.ts` — queryId, query, results, isSearching
+- `stores/plugin-slice.ts` — activePluginId, pluginState, webViewBounds
+- `stores/window-slice.ts` — height, isVisible, isDark
+- `store.ts` — 合并三个 slice
+
+### packages/core-rust/src/lib.rs
+
+**阈值**: 200 行
+**描述**: 所有 `#[napi]` 导出堆在入口
+**拆分目标**:
+- `lib.rs` 只保留 `#[napi]` 导出和模块声明
+- 每个适配器的方法在对应模块中用 `#[napi]` 标注，通过 `#[napi]` 的 pub use 导出
+
+### host/src/adapter-bridge.ts
+
+**阈值**: 150 行（或新增第 4 个适配器时）
+**描述**: 适配器注册中心 + Rust 加载逻辑
+**拆分目标**:
+- `adapter-bridge.ts` 只做注册中心
+- 提取 `rust-loader.ts` — `require('.node')` + 生命周期管理

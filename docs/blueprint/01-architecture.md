@@ -24,7 +24,8 @@
 │  ├─ window-manager.ts     窗口创建/定位/大小/显隐              │
 │  ├─ shortcut-manager.ts   全局快捷键 (Alt+Space)              │
 │  ├─ plugin-loader.ts      扫描 plugins/ 目录 → 读取plugin.json │
-│  ├─ plugin-runtime.ts     WebView 创建/销毁/生命周期/搜索分发  │
+│  ├─ plugin-runtime.ts     插件生命周期/搜索分发/预热池         │
+│  ├─ plugin-view-manager.ts WebContentsView 挂载/分离/销毁      │
 │  ├─ adapter-bridge.ts     TS 调用 → Rust napi-rs 映射         │
 │  └─ permission.ts         权限校验（当前简化版字符串匹配）      │
 │          │                                                    │
@@ -64,16 +65,18 @@ const results = native.searchFiles('query', { limit: 10 })
 
 错误通过 napi 的 `Result<T, napi::Error>` 自动转为 JavaScript Error。
 
-### 2.3 插件 WebView ↔ 主进程 (独立 IPC)
+### 2.3 插件 WebContentsView ↔ 主进程 (独立 IPC)
 
-每个插件运行在独立的 `<webview>` 中：
-- 插件可声明自己的 `preload.js`（访问 Node.js API）
-- 宿主同时注入 `utools` 全局对象（系统能力桥接）
-- 插件调 `utools.system.xxx()` → IPC → 主进程鉴权 → 执行
+每个已激活插件运行在主进程管理的 `WebContentsView` 中，而不是渲染进程内嵌 `<webview>`：
+- 主窗口和分离窗口都是 `BrowserWindow`
+- 插件内容是 `WebContentsView`，由主进程挂载到对应 `BrowserWindow.contentView`
+- 渲染进程只负责搜索 UI、Tab 头和占位区域，通过 IPC 上报插件视图 bounds
+- 插件 preload 注入 `window.utools`，系统能力调用走 IPC → 主进程鉴权 → 适配器/Rust
+- `compat` 模式允许插件 preload 使用 Node.js 以兼容 uTools；`sandbox` 模式禁 Node，只开放受控 API
 
 ## 3. 适配器模式
 
-所有系统能力定义在 `@szybko/adapter-interface` 包中，以 TypeScript interface 形式存在。
+所有系统能力定义在 `@szybko/shared` 包中，以 TypeScript interface 形式存在。
 
 ### 3.1 适配器注册
 
@@ -99,17 +102,30 @@ Windows/Linux 适配器：相同接口，后续按需实现。
 | 初始定位 | 鼠标所在屏幕 1/3 高度处，水平居中 |
 | 窗口装饰 | `frame: false` + `transparent: true`，圆角 + 毛玻璃 |
 | 高度策略 | 渲染进程 `ResizeObserver` → IPC → 主进程 `setBounds()` |
+| 插件视图策略 | 渲染进程上报内容区域 bounds → 主进程调用 `WebContentsView.setBounds()` |
 
 ## 5. 插件生命周期
 
 ```
-[安装] → [注册] ⇄ [休眠] ← [激活] → [运行] → [挂起] ⇄ [Tab 态]
-                                              ↓
-                                         [分离] → 独立窗口
+[安装] → [注册] ⇄ [休眠] → [预热] → [激活] → [Tab 态] ⇄ [挂起]
+                                      ↓             ↓
+                                  [运行搜索]      [分离] → 独立窗口
 ```
 
-- **休眠态**: 插件已注册关键词，未加载 WebView，占用 0 资源
-- **激活**: 用户输入匹配关键词 → 创建 WebView + 加载 preload + 加载 index.html
-- **Tab 态**: 用户点击"打开插件 UI"，插件 WebView 全屏接管主窗口
-- **挂起**: 用户返回搜索或打开其他插件，WebView 保留不销毁（可配置超时销毁）
-- **分离**: 插件弹出独立窗口，主窗口回到搜索空闲态并隐藏
+- **休眠态**: 插件已注册关键词和静态索引，未创建 `WebContentsView`
+- **预热**: 高频插件或刚命中的插件在后台创建 `WebContentsView`，受 LRU 和内存预算限制
+- **激活**: 用户执行 `plugin.open` 或精确进入指令后，将插件视图挂载到主窗口内容区域
+- **运行搜索**: 只有已激活、已预热或声明可后台搜索的插件接收 `plugin:search`
+- **Tab 态**: 插件 `WebContentsView` 接管主窗口内容区域，React 仍负责 Tab 头
+- **挂起**: 用户返回搜索或打开其他插件，视图从窗口移除但保留在预热池，超过 TTL 后销毁
+- **分离**: 主进程把同一个 `WebContentsView` 从主窗口移动到独立 `BrowserWindow`，不得重新加载插件页面
+
+## 6. 快速路径原则
+
+1. **热键唤起不等待搜索**: `Alt+Space` 只做定位、显示、聚焦，索引刷新和插件扫描不得阻塞窗口显示。
+2. **本地静态结果先返回**: 应用、插件指令、最近项目、剪贴板文本走内存索引，先发首批 `search-batch`。
+3. **Rust 搜索流式补充**: 文件索引、模糊排序和图标 key 生成在 Rust 或后台任务中完成，分批返回。
+4. **插件不冷启动参与每次输入**: 搜索框连续输入时，不为每个匹配关键词创建插件视图。
+5. **图标异步加载**: `SearchResult` 优先返回 `iconKey`，UI 延迟请求或使用缓存，避免 base64 图标拖慢 IPC。
+
+性能预算、测量点和失败处理见 `10-performance-budget.md`。

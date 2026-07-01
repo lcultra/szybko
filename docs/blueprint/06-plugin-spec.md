@@ -1,7 +1,7 @@
 # 插件规范
 
 > 本文定义 Szybko 插件格式、SDK API 和开发指南。
-> plugin.json 完全兼容 uTools 格式，目标可直接加载 uTools 插件。
+> plugin.json 以 uTools 格式为兼容目标；实际支持范围按 `12-utools-compat-matrix.md` 分阶段落地。
 
 ## 1. plugin.json 规范
 
@@ -60,7 +60,7 @@
 ```
 my-plugin/
 ├── plugin.json          # 必填
-├── preload.js           # 可选，有 Node.js API 访问权限
+├── preload.js           # 可选；compat 模式可访问 Node.js，sandbox 模式不可访问
 ├── index.html           # 插件 UI
 ├── index.js             # 业务逻辑
 ├── icon.png             # 图标
@@ -70,6 +70,17 @@ my-plugin/
 ## 3. SDK API
 
 插件通过 `window.utools` 访问宿主能力。完整 API 签名见下。
+
+### 3.0 运行模式
+
+```typescript
+type PluginRuntimeMode = 'compat' | 'sandbox'
+```
+
+- `compat`: 默认模式，优先兼容 uTools 插件；允许插件 preload 使用 Node.js/Electron 能力，适合本地可信插件。
+- `sandbox`: 安全模式，禁用 Node.js，仅注入受控 `window.utools` API；适合插件市场和不可信插件。
+- 两种模式都由主进程使用 `WebContentsView` 承载插件 UI，渲染进程不直接嵌入插件页面。
+- 权限系统在 `sandbox` 模式强制执行；`compat` 模式只能做宿主 API 鉴权，不能阻止插件直接使用 Node.js 能力。
 
 ### 3.1 生命周期
 
@@ -212,9 +223,9 @@ utools.onPluginOut((isKill) => {
 ## 4. 插件与宿主的通信架构
 
 ```
-插件 index.html
+插件 index.html (运行在 WebContentsView 中)
     ↕ window.utools.xxx()
-插件 preload.js (可访问 Node.js)
+插件 preload.js (compat 模式可访问 Node.js)
     ↕ ipcRenderer (Electron IPC)
 主进程 plugin-runtime.ts
     → 权限校验
@@ -222,4 +233,4 @@ utools.onPluginOut((isKill) => {
     → 返回结果
 ```
 
-插件不直接接触 Rust 核心或 Node.js 原生能力。所有系统操作经主进程鉴权后执行。
+插件不直接接触 Rust 核心。`sandbox` 模式下所有系统操作经主进程鉴权后执行；`compat` 模式保留 uTools 插件兼容性，安全边界按可信本地插件处理。

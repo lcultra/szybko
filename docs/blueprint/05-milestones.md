@@ -15,7 +15,8 @@ M6  主进程 (host)               → Alt+Space 唤出 + 窗口管理
 M7  IPC 通信链路                 → 输入 → IPC → 主进程 → 返回
 M8  插件加载器                   → 识别 plugin.json + 注册指令
 M9  搜索交互闭环                 → 输入 → 搜索 → 展示结果
-M10 插件 WebView + Tab 模式      → 打开插件 UI + 返回搜索
+M10 插件 WebContentsView + Tab 模式 → 打开插件 UI + 返回搜索
+M11 性能预算与运行时回收         → 搜索/插件/分离窗口 p95 达标
 ```
 
 ---
@@ -251,7 +252,7 @@ class PluginLoader {
 
 ## M9: 搜索交互闭环
 
-**目标**: 输入文本 → 防抖 → IPC 搜索 → 模拟结果 → 展示列表 → 键盘导航。
+**目标**: 输入文本 → 防抖 → IPC 搜索 → 内存索引首批结果 → Rust/插件结果流式补充 → 展示列表 → 键盘导航。
 
 **文件**:
 - 更新 `packages/launcher/src/App.tsx` — 空闲态/搜索态切换
@@ -260,46 +261,70 @@ class PluginLoader {
 - 更新 `packages/launcher/src/store.ts` — zustand store
 
 **关键行为**:
-- 输入防抖 80ms
+- 输入防抖 40-80ms，空查询不触发重搜索
 - 每个新输入生成新 `queryId`，取消上一个
+- 内存索引先返回应用、插件指令、最近项目，目标 p95 < 30ms
+- Rust 文件搜索分批返回，过期 `queryId` 结果直接丢弃
+- 插件搜索只分发给已激活、已预热或显式允许后台搜索的插件
+- 搜索结果优先使用 `iconKey`，图标异步解析
 - 窗口动态高度：`ResizeObserver` → `window:resize` IPC
 - 结果列表支持键盘选择（方向键 + Enter）
 
-**验收**: 输入文字 → 展示模拟结果列表 → 键盘导航选中 → Enter 触发 execute
+**验收**: 输入文字 → 30ms 级别展示首批内存结果 → 后续批次流式补充 → 键盘导航选中 → Enter 触发 execute
 
 ---
 
-## M10: 插件 WebView + Tab 模式
+## M10: 插件 WebContentsView + Tab 模式
 
-**目标**: 点击结果中的 "打开插件 UI" 动作 → 主窗口切换为 Tab 模式 → 显示插件 WebView。
+**目标**: 点击结果中的 "打开插件 UI" 动作 → 主窗口切换为 Tab 模式 → 主进程挂载插件 `WebContentsView`。
 
 **文件**:
-- `packages/host/src/plugin-runtime.ts` — WebView 创建/销毁/生命周期
+- `packages/host/src/plugin-runtime.ts` — 插件生命周期、预热池、搜索分发
+- `packages/host/src/plugin-view-manager.ts` — `WebContentsView` 创建/挂载/分离/销毁
 - `packages/launcher/src/TabHeader.tsx` — [← 返回] [插件名] [分离]
-- `packages/launcher/src/WebViewContainer.tsx` — 嵌入 `<webview>`
+- `packages/launcher/src/PluginSurface.tsx` — 上报插件内容区域 bounds
 
 **关键行为**:
 ```
 搜索态: 输入 "hello" → 匹配 example-plugin
-        → 插件返回 SeachResult: { action: { type: "plugin.open", payload: { pluginId: "example-plugin", url: "index.html" } } }
+        → 宿主返回 SearchResult: { action: { type: "plugin.open", payload: { pluginId: "example-plugin", url: "index.html" } } }
         → 用户 Enter → 主进程 execute 处理
 
 Tab 态: 窗口切换为 Tab 模式
         头部: [← 返回] [example-plugin] [分离]
-        内容: 插件 WebView 加载 index.html
+        内容: 主进程将插件 WebContentsView 挂载到 PluginSurface 上报的 bounds
         
 返回: 点击 ← → 插件挂起 → 回到搜索空闲态 (96px)
-分离: 点击 分离 → 新 BrowserWindow → 主窗口隐藏 → WebView 移动到新窗口
+分离: 点击 分离 → 新 BrowserWindow → 主窗口隐藏 → 同一个 WebContentsView 移动到新窗口
 ```
 
-**验收**: 搜索 → 选择插件结果 → 看到插件 WebView 加载 → ← 返回搜索态 → 分离 → WebView 在新窗口
+**验收**: 搜索 → 选择插件结果 → 看到插件内容加载 → ← 返回搜索态 → 分离 → 插件内容在新窗口且未重新加载
+
+---
+
+## M11: 性能预算与运行时回收
+
+**目标**: 按 `10-performance-budget.md` 接入测量点，验证搜索、插件启动、分离窗口和内存回收达标。
+
+**文件**:
+- `packages/host/src/performance.ts` — 主进程测量点、p95 聚合、日志输出
+- `packages/host/src/plugin-runtime.ts` — 预热池大小、TTL、LRU 销毁
+- `packages/launcher/src/hooks/useSearch.ts` — 输入到首批结果耗时埋点
+- `packages/core-rust/benches/` — 模糊搜索和索引查询基准
+
+**验收**:
+- 热键到输入框可输入 p95 < 80ms
+- 输入到首批结果 p95 < 30ms
+- 插件热启动 p95 < 80ms，冷启动 p95 < 300ms
+- 分离窗口 p95 < 120ms，且插件页面不 reload
+- 休眠状态 20 个插件不创建 `WebContentsView`
 
 ---
 
 ## 执行顺序依赖图
 
 ```
-M1 ──→ M2 ──→ M3 ──→ M5 ──→ M7 ──→ M9 ──→ M10
+M1 ──→ M2 ──→ M3 ──→ M5 ──→ M7 ──→ M9 ──→ M10 ──→ M11
   │              │       │
   └──→ M4 ───────┘       │
                   └──→ M6 ──→ M8 ──→ M9
@@ -312,3 +337,4 @@ M1 ──→ M2 ──→ M3 ──→ M5 ──→ M7 ──→ M9 ──→ M1
 - M8 需要 M6
 - M9 需要 M5 + M7 + M8
 - M10 需要 M8 + M9
+- M11 需要 M9 + M10

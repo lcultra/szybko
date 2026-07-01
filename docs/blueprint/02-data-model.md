@@ -27,7 +27,8 @@ interface SearchResult {
   id: string
   title: string
   subtitle?: string
-  icon?: string           // data: URL / 插件内相对路径
+  icon?: string           // 兼容字段：data: URL / 插件内相对路径；搜索热路径避免大体积 base64
+  iconKey?: string        // 推荐字段：图标缓存 key，由 UI 异步解析为实际图片
   group?: string          // 结果分组名（分节展示）
   score: number           // 0-1，越高越靠前
   action: ActionDescriptor
@@ -64,6 +65,7 @@ interface PluginManifest {
   main: string                    // index.html 路径
   logo: string                    // 图标路径
   preload?: string                // preload.js 路径（可选）
+  runtimeMode?: 'compat' | 'sandbox' // szybko 扩展字段，默认 compat
   pluginSetting?: {
     single?: boolean               // 默认 true
     height?: number                // 插件 Tab 态初始高度，默认 544
@@ -161,9 +163,46 @@ interface PluginInstance {
   id: string                    // pluginId
   manifest: PluginManifest
   state: PluginState
-  webview?: Electron.BrowserView  // 仅 activated/detached 时有
+  view?: Electron.WebContentsView // 仅 activated/tab/detached/suspended 时有
+  windowId?: number              // 当前挂载的 BrowserWindow id
+  runtimeMode: 'compat' | 'sandbox'
   features: PluginFeature[]     // 含动态注册的
+  warm: boolean                  // 是否在预热池中
+  lastUsedAt?: number            // LRU 回收排序
   suspendedAt?: number          // 挂起时间戳（用于超时销毁）
+}
+
+// 插件视图边界，由渲染进程上报给主进程，主进程调用 WebContentsView.setBounds()
+interface PluginViewBounds {
+  pluginId: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+// 搜索索引项：宿主内存索引和 Rust 索引共享的最小结构
+interface IndexedItem {
+  id: string
+  kind: 'app' | 'file' | 'directory' | 'plugin-command' | 'clipboard' | 'recent'
+  title: string
+  subtitle?: string
+  keywords: string[]
+  path?: string
+  pluginId?: string
+  featureCode?: string
+  iconKey?: string
+  lastUsedAt?: number
+  modifiedAt?: number
+}
+
+interface SearchSession {
+  queryId: string
+  query: string
+  startedAt: number
+  cancelled: boolean
+  deadlineMs: number
+  sources: ('memory' | 'rust' | 'plugin')[]
 }
 ```
 

@@ -95,10 +95,10 @@ ipcRenderer.invoke('execute', {
 
 `type: "plugin.open"` 时，主进程执行以下操作：
 1. 如果当前已有活跃插件 Tab → 挂起它（发 `plugin:suspended` 到渲染进程）
-2. 激活目标插件 WebView
+2. 激活或复用目标插件 `WebContentsView`
 3. 发 `plugin:tab-opened` 到渲染进程（通知切换 UI 为 Tab 模式）
 
-`type: "plugin.runCommand"` 时，主进程直接发送消息到对应插件 WebView。
+`type: "plugin.runCommand"` 时，主进程直接发送消息到对应插件 `webContents`。
 
 ## 3. 插件生命周期 IPC
 
@@ -160,7 +160,7 @@ webContents.send('plugin:suspended', {
 ipcRenderer.invoke('plugin:detach', {
   pluginId: string
 })
-// 主进程: 创建新 BrowserWindow，将 WebView 移动到新窗口
+// 主进程: 创建新 BrowserWindow，将同一个 WebContentsView 从主窗口移动到新窗口
 // 返回: { ok: true, windowId: number }
 ```
 
@@ -221,6 +221,27 @@ ipcRenderer.on('show-main-window', () => {
 })
 ```
 
+### plugin:view-bounds — 同步插件视图区域
+
+| | |
+|---|---|
+| 方向 | 渲染进程 → 主进程 |
+| 模式 | invoke/handle |
+| channel | `plugin:view-bounds` |
+
+React 渲染进程不嵌入插件页面，只负责计算 Tab 内容区域的位置和尺寸。主进程收到后调用 `WebContentsView.setBounds()`。
+
+```typescript
+ipcRenderer.invoke('plugin:view-bounds', {
+  pluginId: string
+  x: number
+  y: number
+  width: number
+  height: number
+})
+// 返回: { ok: true }
+```
+
 ## 5. 主题 IPC
 
 ### theme:changed — 主题变更
@@ -258,7 +279,7 @@ webContents.send('theme:changed', {
 
 | | |
 |---|---|
-| 方向 | 插件 WebView → 主进程（通过 preload 的 ipcRenderer） |
+| 方向 | 插件 WebContentsView → 主进程（通过 preload 的 ipcRenderer） |
 | 模式 | invoke/handle |
 | channel | `system:invoke` |
 
@@ -282,18 +303,18 @@ ipcRenderer.invoke('system:invoke', {
 3. 通过 → 调对应适配器实现
 4. 拒绝 → 返回 `{ ok: false, error: "permission_denied" }`
 
-## 7. 插件 WebView ↔ 渲染进程
+## 7. 插件 WebContentsView ↔ 主进程
 
-### plugin:search — 主进程转发搜索到插件 WebView
+### plugin:search — 主进程转发搜索到插件 WebContents
 
 | | |
 |---|---|
-| 方向 | 主进程 → 插件 WebView |
+| 方向 | 主进程 → 插件 WebContents |
 | 模式 | send/on |
 
 ```typescript
-// Main → Plugin WebView (通过 webViewContents.send)
-webViewContents.send('plugin:search', {
+// Main → Plugin WebContents
+pluginWebContents.send('plugin:search', {
   queryId: string
   query: string
   keyword: string
@@ -301,15 +322,20 @@ webViewContents.send('plugin:search', {
 })
 ```
 
-### plugin:search-result — 插件 WebView 返回结果
+搜索分发限制：
+- 休眠插件不参与连续输入搜索
+- 只有已激活、已预热、或 manifest 标记可后台搜索的插件接收该事件
+- 主进程必须按 `queryId` 丢弃过期结果
+
+### plugin:search-result — 插件 WebContents 返回结果
 
 | | |
 |---|---|
-| 方向 | 插件 WebView → 主进程 |
+| 方向 | 插件 WebContents → 主进程 |
 | 模式 | send/on |
 
 ```typescript
-// Plugin WebView preload → Main
+// Plugin preload → Main
 ipcRenderer.send('plugin:search-result', {
   queryId: string
   results: SearchResult[]
@@ -330,6 +356,7 @@ ipcRenderer.send('plugin:search-result', {
 | `plugin:suspended` | M→R | send/on | 通知插件挂起 |
 | `plugin:detach` | R→M | invoke/handle | 分离插件到独立窗口 |
 | `plugin:back-to-search` | R→M | invoke/handle | 返回搜索模式 |
+| `plugin:view-bounds` | R→M | invoke/handle | 同步 WebContentsView 挂载区域 |
 | `window:resize` | R→M | invoke/handle | 动态调整窗口高度 |
 | `window:hide` | R→M | invoke/handle | 隐藏窗口 |
 | `show-main-window` | M→R | send/on | 快捷键唤出窗口 |
@@ -339,4 +366,4 @@ ipcRenderer.send('plugin:search-result', {
 | `plugin:search` | M→P | send/on | 主进程转发搜索到插件 |
 | `plugin:search-result` | P→M | send/on | 插件返回搜索结果 |
 
-> R = 渲染进程, M = 主进程, P = 插件 WebView
+> R = 渲染进程, M = 主进程, P = 插件 WebContentsView

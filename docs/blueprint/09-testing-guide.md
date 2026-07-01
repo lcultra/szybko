@@ -9,7 +9,8 @@
 | 单元测试 | Vitest (TS) / cargo test (Rust) | 工具函数、搜索算法、状态管理逻辑 |
 | IPC 合约测试 | Vitest + 模拟 ipcMain/ipcRenderer | IPC 消息格式与序列化一致性 |
 | Rust 集成测试 | cargo test | napi 函数导入/导出、数据结构序列化 |
-| 搜索基准测试 | cargo bench | 模糊搜索性能（后续里程碑） |
+| 搜索基准测试 | cargo bench | 模糊搜索性能、索引查询、排序融合 |
+| Electron E2E | Playwright + Electron runner | 热键唤起、首批结果、WebContentsView 挂载、分离窗口 |
 | 手动验收 | 人工操作 | 窗口行为、UI 视觉效果、插件交互 |
 
 ## 2. 每个里程碑的验收条件
@@ -100,13 +101,13 @@ window.utools.search({ queryId: 'test-1', query: 'ping', timestamp: Date.now() }
 # 操作:
 # 1. Alt+Space 打开搜索框
 # 2. 输入 "hello"
-# 3. 预期: 出现结果列表（模拟数据）
+# 3. 预期: 首批内存索引结果快速出现，后续批次流式补充
 # 4. 按 ↓ ↓ 选择结果
 # 5. 按 Enter → 触发 execute
 # 6. 窗口高度随结果数量动态变化
 ```
 
-### M10: 插件 WebView + Tab 模式
+### M10: 插件 WebContentsView + Tab 模式
 
 ```bash
 # 操作:
@@ -114,9 +115,22 @@ window.utools.search({ queryId: 'test-1', query: 'ping', timestamp: Date.now() }
 # 2. 选择 "hello" 结果 → 按 Enter
 # 3. 窗口切换为 Tab 模式
 # 4. 头部显示: [← 返回] [example-plugin] [分离]
-# 5. 内容区域显示插件的 index.html
+# 5. 内容区域显示主进程挂载的 WebContentsView，插件加载 index.html
 # 6. 点击 ← 返回 → 回到搜索空闲态 (96px)
-# 7. 再次搜索并进入插件 → 点击 分离 → 插件在独立窗口打开
+# 7. 再次搜索并进入插件 → 点击 分离 → 同一个 WebContentsView 移动到独立窗口，页面不 reload
+```
+
+### M11: 性能预算
+
+```bash
+# 自动基准或人工测量均需输出 p50/p95
+# 预期:
+# - Alt+Space 到输入框可输入 p95 < 80ms
+# - 输入到首批结果 p95 < 30ms
+# - 插件热启动 p95 < 80ms
+# - 插件冷启动 p95 < 300ms
+# - 分离窗口 p95 < 120ms
+# - 20 个休眠插件不创建 WebContentsView
 ```
 
 ## 3. Vitest 测试建议
