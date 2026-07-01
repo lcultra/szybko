@@ -1,13 +1,13 @@
 {
     "name": "szybko",
     "version": "1.0.0",
+    "private": true,
     "packageManager": "pnpm@10.34.3",
-    "description": "",
-    "author": "",
-    "license": "ISC",
-    "keywords": [],
-    "main": "index.js",
     "scripts": {
+        "dev": "pnpm --filter @szybko/desktop dev",
+        "build": "pnpm -r build",
+        "typecheck": "pnpm -r exec tsc --noEmit",
+        "lint": "eslint ."
     },
     "devDependencies": {
         "@antfu/eslint-config": "^9.1.0",
