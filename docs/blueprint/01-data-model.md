@@ -50,12 +50,11 @@ type ActionDescriptor =
     "pluginSetting": { "single": true, "height": 544 },
     "features": [
         { "code": "...", "explain": "...", "cmds": ["..."] }
-    ],
-    "singleton": true
+    ]
 }
 ```
 
-`singleton` — `true`（默认）整个应用只有一个 Runtime；`false` 允许创建多个实例。
+`pluginSetting.single` — `true`（默认）整个应用只有一个 Runtime；`false` 允许创建多个实例。
 `cmds` 支持 uTools 全部匹配类型：`regex`、`over`、`files`、`img`、`window`。
 
 ## Host / Runtime 模型

@@ -157,9 +157,9 @@ Dispose 的只是 Host，不是 Runtime。Runtime 可以切换 Host 继续运行
 
 ## 单例 vs 多实例
 
-插件在 `plugin.json` 中声明 `singleton`：
+插件在 `plugin.json` 的 `pluginSetting` 中声明 `single`：
 
-| singleton      | 行为                                                                 |
+| single         | 行为                                                                 |
 | -------------- | -------------------------------------------------------------------- |
 | `true`（默认） | 整个应用只允许一个 Runtime。再次激活复用已有的。分离时移动，不重建。 |
 | `false`        | 允许创建多个 Runtime。每次激活创建新实例。互不影响。                 |
