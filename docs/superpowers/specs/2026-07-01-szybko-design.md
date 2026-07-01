@@ -43,7 +43,7 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 │  │ file-search    │  │ translate      │  │ 计算器       ││
 │  │ manifest.json  │  │ manifest.json  │  │ manifest.json││
 │  │ index.html     │  │ index.html     │  │ index.html   ││
-│  │ preload.js     │  │ preload.js     │  │ preload.js   ││
+│  │ (宿主注入 bridge)│  │ (宿主注入 bridge)│  │(宿主注入bridge)││
 │  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘│
 ├──────────┴──────────────────┴───────────────────┴────────┤
 │              IPC 桥接 (Electron contextBridge)              │
@@ -61,8 +61,8 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 ├──────┴───────────────────────────────────────────────────┤
 │              Rust 核心 (napi-rs .node 模块)                │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐ │
-│  │ 文件索引   │ │ 模糊搜索  │ │ 剪贴板监控 │ │ 全局快捷键  ││
-│  │ macOS     │ │ macOS    │ │ macOS    │ │ macOS      │ │
+│  │ 文件索引   │ │ 模糊搜索  │ │ 剪贴板监控 │ │ 屏幕截图/   ││
+│  │ macOS     │ │ macOS    │ │ macOS    │ │ 颜色拾取    ││
 │  └──────────┘ └──────────┘ └──────────┘ └────────────┘ │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -77,7 +77,7 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 | 文件索引与全文搜索 | Rust (napi-rs) |
 | 模糊搜索引擎 | Rust (napi-rs) |
 | 剪贴板监控与历史 | Rust (napi-rs) |
-| 全局快捷键注册 | Rust (napi-rs) |
+| 全局快捷键注册 | Electron 主进程 (TS) |
 | 屏幕截图 / 颜色拾取 | Rust (napi-rs) |
 | 进程 / 应用管理 | Rust (napi-rs) |
 | 插件商店 API 通信 | Electron 主进程 (TS) |
@@ -183,7 +183,10 @@ pub async fn search_files(
   query: String,
   options: SearchOptions,
 ) -> napi::Result<Vec<SearchResult>> {
-  // macOS 原生实现: 使用 MDItem / fsevent / 自定义索引
+  // ADR-001: Phase 1 使用 macOS Spotlight (MDItem) 直接搜索
+  //         Phase 2 引入 Tantivy 实现自定义全文索引
+  //         理由: Phase 1 不依赖自定义索引，零搭建成本
+  //         见 待决策项 章节的 ADR-001
   // 返回结果由 napi 自动序列化为 JS 对象
 }
 
@@ -248,14 +251,18 @@ React 搜索框 UI (防抖 100ms)
     │  → 返回结果
     ▼
 插件返回搜索结果
-    │  [{title, subtitle, icon, action}]
+    │  [{title, subtitle, icon, action: { type: "shell.openPath", payload: { path: "/path/to/file" } }}]
     ▼
 React 搜索框渲染结果列表
     │
 用户点击选择
-    │
+    │  IPC → 主进程 → 权限校验 → 执行 action descriptor
     ▼
-插件执行 action（打开文件/复制文本/跳转）
+主进程解析 descriptor 类型，校验权限后执行
+    shell.openPath       → 打开文件
+    clipboard.writeText  → 复制文本
+    process.launchApp    → 启动应用
+    plugin.openUrl       → 打开 URL
 ```
 
 ---
@@ -268,11 +275,14 @@ React 搜索框渲染结果列表
 szybko/plugins/
 ├── file-search/
 │   ├── manifest.json        # 插件元数据
-│   ├── index.html           # 插件 UI 入口
-│   ├── preload.js           # 桥接脚本（沙箱环境运行）
+│   ├── index.html           # 插件 UI 入口（内联或加载业务 JS）
 │   ├── assets/
 │   │   └── icon.png
 │   └── package.json         # 开发依赖（可选）
+│
+# 注意: 插件不提供 preload.js
+# 宿主自动注入固定 preload bridge (contextBridge)
+# 暴露 window.__SZYBKO__ API，插件直接调用
 ├── translate/
 └── calculator/
 ```
@@ -288,7 +298,7 @@ szybko/plugins/
   "author": "Your Name",
   "icon": "assets/icon.png",
   "main": "index.html",
-  "preload": "preload.js",
+  // ⚠️ 不声明 preload — 宿主自动注入固定 bridge
   "features": [
     {
       "keyword": "file",
@@ -301,10 +311,15 @@ szybko/plugins/
       "matchType": "prefix"
     }
   ],
-  "permissions": [
-    "filesystem:read",
-    "filesystem:index"
-  ],
+  "permissions": {
+    "filesystem": {
+      "read": { "paths": ["~/Documents", "~/Downloads"] },
+      "index": { "paths": ["~"] }
+    },
+    "network": {
+      "fetch": { "allowlist": ["api.github.com"] }
+    }
+  },
   "settings": {
     "maxResults": 20,
     "searchPaths": ["~", "/Users"]
@@ -325,9 +340,9 @@ szybko/plugins/
     ▼
 [休眠] ←──── [激活]
     │          用户输入匹配关键词时
-    │          创建 WebView 沙箱
-    │          加载 index.html
-    │          注入 preload.js (contextBridge API)
+    │          创建 WebView 沙箱（sandbox + contextIsolation）
+    │          注入宿主固定 preload bridge (contextBridge)
+    │          加载插件 index.html
     │          调用 onActivate(context)
     ▼
 [运行]
@@ -349,9 +364,13 @@ szybko/plugins/
 
 - 每个插件运行在独立的 `<webview>` / `BrowserView` 中
 - 使用 `contextIsolation: true` + `sandbox: true`
-- 通过 `preload.js` 中的 `contextBridge` 暴露有限的 API
+- **插件不提供自己的 preload** — 宿主注入固定 preload bridge
+  - bridge 通过 `contextBridge` 暴露 `window.__SZYBKO__` API
+  - API 方法在调用时自动携带权限 token（来自 manifest permissions）
+  - 主进程校验权限 token 后方可执行
 - 插件只能调用 `manifest.json` 中 `permissions` 声明的能力
-- 不可访问 Node.js 原生 API、文件系统、网络（除非授权）
+- 不可访问 Node.js 原生 API、文件系统、网络（除非通过 bridge 显式授权）
+- 插件 index.html 是普通 Web 页面，在沙箱中渲染，无 Node.js 集成
 
 ### 6.5 插件 SDK
 
@@ -365,7 +384,7 @@ npm run dev    # 启动热更新开发环境
 插件开发代码示例：
 
 ```typescript
-// preload.js — 在沙箱环境中运行
+// index.html 中加载的业务脚本 — 通过 SDK bridge 调用宿主能力
 const { system } = window.__SZYBKO__
 
 // 插件被激活时调用
@@ -376,7 +395,12 @@ window.onActivate = async (context: ActivationContext) => {
     title: r.name,
     subtitle: r.path,
     icon: r.icon,
-    action: () => system.shell.openPath(r.path)
+    // ⚠️ 返回 action descriptor，而非函数 — 由主进程校验权限后执行
+    action: {
+      type: "shell.openPath",
+      label: "打开文件",
+      payload: { path: r.path }
+    }
   }))
 }
 
@@ -385,6 +409,87 @@ window.onBackgroundTask = async () => {
   await system.filesystem.indexDirectory('~/Documents')
 }
 ```
+
+### 6.6 权限模型
+
+权限是插件安全的核心，采用**三层权限模型**：
+
+#### 6.6.1 声明层 (Declare)
+
+插件在 `manifest.json` 的 `permissions` 字段声明所需权限，支持路径级和作用域级限制：
+
+```json
+{
+  "permissions": {
+    "filesystem": {
+      "read": { "paths": ["~/Documents", "~/Downloads"] },
+      "index": { "paths": ["~"] }
+    },
+    "clipboard": {
+      "read": true,
+      "write": true
+    },
+    "network": {
+      "fetch": { "allowlist": ["api.github.com", "registry.npmjs.org"] }
+    },
+    "shell": {
+      "openPath": true,
+      "execute": { "allowlist": ["/usr/bin/git"] }
+    }
+  }
+}
+```
+
+#### 6.6.2 授权层 (Grant)
+
+| 时机 | 方式 | 说明 |
+|---|---|---|
+| 安装时 | 自动授予 | 覆盖 manifest 声明的权限，用户可在插件详情页查看 |
+| 首次使用时 | 弹窗授权 | 插件首次调用某项能力时弹出确认（如剪贴板读取） |
+| 运行时 | 逐次授权 | 敏感操作（执行命令、网络请求）每次调用都校验 |
+
+#### 6.6.3 执行层 (Enforce)
+
+```
+插件调用 system.filesystem.read("/etc/passwd")
+    │
+    ▼
+bridge 携带权限 token (来自 manifest + 用户授权)
+    │  IPC → 主进程
+    ▼
+PermissionManager.validate({
+    action:      "filesystem.read",
+    payload:     { path: "/etc/passwd" },
+    plugin:      "file-search",
+    permissions: { paths: ["~/Documents"] }
+})
+    │
+    ├── action 是否在已授权列表中？  → 否 → 拒绝
+    ├── path 是否在允许的路径范围？   → "/etc/passwd" 不在 ~/Documents 下 → 拒绝
+    └── 是否首次调用该路径？          → 是 → 弹窗询问用户
+    │
+    ▼
+    通过 → 执行 / 拒绝 → 返回错误
+```
+
+#### 6.6.4 权限审计
+
+- 所有权限检查和拒绝事件写入审计日志（`~/.szybko/audit.log`）
+- 日志包含: 时间、插件、操作、payload、结果（允许/拒绝）
+- 用户可在设置页查看审计日志
+- 权限可在设置页逐项撤销
+
+#### 6.6.5 路径规范化
+
+所有文件路径在权限校验前经过规范化处理：
+
+```
+~/Documents          → /Users/username/Documents
+/Users/./Downloads   → /Users/username/Downloads
+/var/./symlink       → 解析真实路径
+```
+
+防止 `../../etc/passwd` 等路径穿越攻击。
 
 ---
 
@@ -410,8 +515,8 @@ szybko/
 │   │   │   │   └── linux/       # 后续实现
 │   │   │   ├── search/          # 模糊搜索引擎
 │   │   │   ├── clipboard/       # 剪贴板监控
-│   │   │   ├── indexing/        # 文件索引
-│   │   │   └── shortcut/        # 全局快捷键
+│   │   │   └── indexing/        # 文件索引
+│   │   │   # 全局快捷键在 Electron 主进程实现, 见 host/shortcut-manager.ts
 │   │   └── build.rs
 │   │
 │   ├── adapter-interface/   # TS 适配器接口定义
@@ -427,7 +532,7 @@ szybko/
 │   │       ├── shell.ts
 │   │       └── search.ts
 │   │
-│   ├── host/                # Electron 主进程
+│   ├── host/                # Electron 主进程 (核心逻辑: main.ts, 插件加载器, 适配器桥接)
 │   │   ├── package.json
 │   │   ├── src/
 │   │   │   ├── main.ts           # Electron 入口
@@ -485,7 +590,7 @@ szybko/
 │           └── utils.ts        # 工具函数
 │
 ├── apps/
-│   └── desktop/             # Electron 应用入口/打包
+│   └── desktop/             # Electron 打包入口 (薄壳, 从 host 引入 main)
 │       ├── package.json
 │       ├── electron-builder.yml  # 打包配置
 │       └── resources/
@@ -495,8 +600,8 @@ szybko/
 ├── plugins/                 # 本地开发插件目录
 │   └── example-plugin/
 │       ├── manifest.json
-│       ├── index.html
-│       └── preload.js
+│       └── index.html
+│       # preload 由宿主注入，插件不提供
 │
 └── docs/
     ├── superpowers/
@@ -510,28 +615,90 @@ szybko/
 
 ## 8. 数据流设计
 
-### 8.1 搜索请求流
+### 8.1 搜索请求流（流式 + query ID + 取消）
+
+搜索使用**流式分批**协议，避免等待所有插件完成才展示结果：
+
+#### 协议定义
+
+```typescript
+// 搜索请求
+interface SearchRequest {
+  queryId: string        // UUID，每次输入变化生成新 ID
+  query: string          // 用户输入
+  timestamp: number      // 请求时间戳
+}
+
+// 搜索结果批次
+interface SearchBatch {
+  queryId: string        // 对应请求 ID，(queryId, batchSeq) 唯一标识一批
+  batchSeq: number       // 批次序号
+  source: string         // 来源: "system" | "plugin:file-search"
+  results: SearchResult[]
+  isFinal: boolean       // 该 source 是否还有后续结果
+}
+
+// 搜索取消
+// 主进程收到新 query 时，发送 cancel 给所有活跃插件 WebView
+// WebView 内部检查 AbortController.signal，及时中止
+```
+
+#### 搜索流程
 
 ```
-[React 搜索框] 用户输入 "file abc"
-    │  防抖 100ms
+[React 搜索框] 用户输入 "fil"
+    │  queryId = uuid()
+    │  防抖 80ms (比之前 100ms 更短，靠流式抵消)
     ▼
-[IPC] 主进程
+[IPC] search({ queryId, query: "fil", timestamp })
+    │
+    ├─▶ [主进程] 发送 cancel(queryId_prev) 给活跃插件
+    │          弃置上一个 queryId 的未处理结果
+    │
+    ├─▶ [系统搜索] （免激活，立即返回）
+    │       模糊搜索已安装应用 → batch({ source: "system", results: [...], isFinal: true })
+    │       内置计算器匹配 → batch({ source: "system", results: [...], isFinal: true })
     │
     ├─▶ [插件调度器]
-    │       匹配关键词 "file" → file-search 插件
-    │       检查插件是否已激活 → 否 → 激活插件
-    │
-    └─▶ [系统搜索]
-            搜索已安装应用
-            内置计算器
-    等待所有搜索结果
+    │       匹配关键词 → 无匹配 → 不激活任何插件
+    │       此时输入变为 "file abc"
     │
     ▼
-[IPC] 返回合并结果到渲染进程
+用户继续输入 "file abc" → 新 queryId，重复以上
+
+[用户输入 "file abc"]
+    │  queryId = uuid()
+    │  防抖 80ms
+    ▼
+[IPC] search({ queryId, query: "file abc", timestamp })
+    │
+    ├─▶ 系统搜索 → 无匹配
+    │
+    ├─▶ 插件调度器匹配关键词 "file" → file-search
+    │
+    ├─▶ [插件加载器]
+    │       检查插件 file-search 是否已激活
+    │       → 否 → 激活（创建 WebView ~200ms）
+    │       → 是 → 直接发送搜索请求
+    │
+    ├─▶ 发送 search({ queryId }) 到插件 WebView
+    │
+    ├─▶ [插件 WebView] 边搜索边分批返回
+    │       batch({ queryId, batchSeq: 0, source: "plugin:file-search", results: [10 items], isFinal: false })
+    │       batch({ queryId, batchSeq: 1, source: "plugin:file-search", results: [10 items], isFinal: false })
+    │       batch({ queryId, batchSeq: 2, source: "plugin:file-search", results: [5 items],  isFinal: true })
+    │
+    └─▶ 主进程持续转发批次到 React UI
+            UI 追加显示新批次（不替换已有结果）
     │
     ▼
-[React 搜索框] 渲染结果列表
+用户看到前 10 个结果 < 100ms（插件激活时 ~300ms）
+后续批次逐步补充
+    │
+用户按 ↓ 选择结果
+    │
+    ▼
+用户点击 → IPC → 主进程校验 action descriptor 权限后执行
 ```
 
 ### 8.2 插件通信流
@@ -584,7 +751,55 @@ szybko/
 
 ---
 
-## 10. 性能目标
+## 10. 测试策略
+
+### 10.1 测试分层
+
+| 层级 | 工具 | 覆盖内容 |
+|---|---|---|
+| 单元测试 | Vitest (TS) / cargo test (Rust) | 适配器接口逻辑、权限校验、搜索算法、工具函数 |
+| IPC 合约测试 | Vitest + electron-ipc-mock | 主进程 ↔ 渲染进程 双向 IPC 消息格式与序列化 |
+| Rust 集成测试 | cargo test + napi test | napi-rs 模块导入/导出、Rust 层错误转 JS Error |
+| 插件沙箱测试 | Vitest + WebView mock | 插件加载/销毁、权限边界隔离、超时处理、崩溃恢复 |
+| 搜索基准测试 | bencher (Rust) / Vitest bench | 模糊搜索吞吐量、文件索引速度、结果排序质量 |
+| E2E 测试 | Playwright + Electron | 搜索框呼出、插件交互、设置页操作、跨版本升级 |
+| 打包冒烟测试 | CI pipeline | electron-builder 打包、安装、首次启动 |
+
+### 10.2 关键测试场景
+
+**插件沙箱安全测试：**
+- 插件尝试访问 `process.env` → 应被沙箱拦截
+- 插件尝试 `require('fs')` → 应被沙箱拦截
+- 插件调用未声明的权限 → 应返回 PermissionDenied
+- 插件请求路径 `../../etc/passwd` → 应被路径规范化拒绝
+- 插件死循环 → 应在 5s 超时后被销毁
+
+**搜索协议测试：**
+- 连续输入 `fi` → `fil` → `file`，验证旧 queryId 结果被丢弃
+- 插件返回慢 → 系统搜索结果应在 < 100ms 内显示
+- 插件 WebView 崩溃 → 主进程应记录错误，不阻塞其他插件
+
+**IPC 合约测试：**
+- `SearchRequest` / `SearchBatch` / `ActionDescriptor` 的序列化/反序列化一致性
+- 发送 `cancel` 后插件应停止发送该 queryId 的 batch
+
+### 10.3 CI 流水线
+
+```
+提交 / PR
+    │
+    ├─▶ lint + type-check (TS + Rust)
+    ├─▶ 单元测试 (Vitest + cargo test)
+    ├─▶ IPC 合约测试
+    ├─▶ 插件沙箱测试
+    ├─▶ Rust 集成测试
+    ├─▶ 搜索基准测试 (对比 baseline，回归告警)
+    │
+    └─▶ 可选: E2E 测试 + 打包冒烟 (标签触发)
+
+---
+
+## 11. 性能目标
 
 | 指标 | 目标 |
 |---|---|
@@ -598,13 +813,13 @@ szybko/
 
 ---
 
-## 11. 开发计划建议
+## 12. 开发计划建议
 
 ### Phase 1: 核心框架
 - Monorepo 初始化（pnpm workspace）
 - Rust 核心模块 (napi-rs) 搭建
 - Electron 主进程 + 搜索框 UI
-- 适配器接口定义 + macOS 文件搜索实现
+- 适配器接口定义 + macOS 文件搜索 (Spotlight MDItem 封装)
 - 基本搜索交互闭环
 
 ### Phase 2: 插件系统
@@ -631,21 +846,31 @@ szybko/
 
 ---
 
-## 12. 待决策项
+## 13. 架构决策记录 (ADR)
 
-- [ ] 插件商店使用 npm registry 还是自建 registry
-- [ ] Rust 文件索引引擎的具体方案（自定义 SQLite FTS / Tantivy / macOS SpotLight 包装）
-- [ ] 搜索框 UI 设计细节（主题、字号、布局）
-- [ ] 应用自动更新机制
-- [ ] 是否使用 Turborepo
-- [ ] CI/CD 流水线配置
-- [x] ✅ 技术栈: Electron + Rust(napi-rs) + React + Monorepo pnpm
-- [x] ✅ 插件模型: sandbox WebView + manifest.json + 关键词直搜
-- [x] ✅ 系统能力: 适配器模式，macOS 优先
+### ✅ 已决策
+
+| ID | 决策 | 理由 |
+|---|---|---|
+| ADR-001 | 文件索引: **Phase 1 用 macOS Spotlight (MDItem)**，Phase 2+ 引入 Tantivy 自定义索引 | Phase 1 零搭建成本，无需维护索引文件；自定义索引是搜索体验优化，非核心功能依赖 |
+| ADR-002 | 全局快捷键: **Electron 主进程实现**，不放 Rust | Electron 已有 globalShortcut API，跨平台一致；Rust 在此场景无性能优势，增加 napi 回调复杂度 |
+| ADR-003 | 技术栈: Electron + Rust(napi-rs) + React + Monorepo pnpm | 已确认 |
+| ADR-004 | 插件模型: sandbox WebView + manifest.json + 关键词直搜 | 已确认 |
+| ADR-005 | 系统能力: 适配器模式，macOS 优先 | 已确认 |
+
+### 🔲 待决策
+
+| 决策项 | 选项 | 建议 |
+|---|---|---|
+| 插件商店 Registry | npm registry / 自建 registry | 建议先用 npm registry（低成本），后期自建 |
+| 自动更新 | electron-updater / 自建 | 建议 electron-updater + GitHub Releases |
+| 构建工具 | Turborepo / Nx / 原生 pnpm | 建议 Turborepo（按需，Phase 1 可选） |
+| CI/CD | GitHub Actions / 其他 | 建议 GitHub Actions |
+| 搜索框 UI 设计 | 待设计阶段细化 | — |
 
 ---
 
-## 13. 附录
+## 14. 附录
 
 ### 相关项目参考
 - [uTools](https://u.tools) — 插件化桌面启动器
