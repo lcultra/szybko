@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/radii.css';
+@import './tokens/shadows.css';
+@import './tokens/animations.css';
+@import './tokens/z-index.css';
+
+@custom-variant dark (&:where([data-theme='dark']));
+
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

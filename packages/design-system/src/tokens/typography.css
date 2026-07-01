@@ -1,10 +1,17 @@
-:root {
+@theme {
     --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
     --text-xs: 12px;
     --text-sm: 14px;
     --text-base: 16px;
     --text-lg: 18px;
     --text-xl: 20px;
     --text-2xl: 24px;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.75;
 }

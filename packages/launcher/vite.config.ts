@@ -16,8 +16,8 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            '@szybko/shared': path.resolve(__dirname, '../shared/src/index.ts'),
-            '@szybko/design-system': path.resolve(__dirname, '../design-system/src/index.ts'),
+            '@szybko/shared': path.resolve(__dirname, '../shared/src'),
+            '@szybko/design-system': path.resolve(__dirname, '../design-system/src'),
         },
     },
 })
