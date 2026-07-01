@@ -41,7 +41,7 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 │                    插件层 (Sandbox WebView)                │
 │  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐│
 │  │ file-search    │  │ translate      │  │ 计算器       ││
-│  │ manifest.json  │  │ manifest.json  │  │ manifest.json││
+│  │ plugin.json   │  │ plugin.json   │  │ plugin.json ││
 │  │ index.html     │  │ index.html     │  │ index.html   ││
 │  │ (宿主注入 bridge)│  │ (宿主注入 bridge)│  │(宿主注入bridge)││
 │  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘│
@@ -274,7 +274,7 @@ React 搜索框渲染结果列表
 ```
 szybko/plugins/
 ├── file-search/
-│   ├── manifest.json        # 插件元数据
+│   ├── plugin.json          # 插件元数据 (uTools 兼容格式)
 │   ├── index.html           # 插件 UI 入口（内联或加载业务 JS）
 │   ├── assets/
 │   │   └── icon.png
@@ -287,42 +287,39 @@ szybko/plugins/
 └── calculator/
 ```
 
-### 6.2 manifest.json 定义
+### 6.2 plugin.json 定义（完全兼容 uTools 格式）
 
 ```json
 {
-  "name": "file-search",
-  "title": "文件搜索",
-  "version": "1.0.0",
-  "description": "快速搜索本地文件",
-  "author": "Your Name",
-  "icon": "assets/icon.png",
   "main": "index.html",
-  // ⚠️ 不声明 preload — 宿主自动注入固定 bridge
+  "logo": "assets/icon.png",
+  "preload": "",
+  "pluginSetting": {
+    "single": true,
+    "height": 544
+  },
   "features": [
     {
-      "keyword": "file",
-      "description": "搜索本地文件",
-      "matchType": "prefix"
+      "code": "file-search",
+      "explain": "搜索本地文件，支持模糊匹配",
+      "cmds": ["file"]
     },
     {
-      "keyword": "find",
-      "description": "按内容搜索文件",
-      "matchType": "prefix"
+      "code": "find-content",
+      "explain": "按内容搜索文件",
+      "cmds": ["find"]
     }
   ],
   "permissions": [
     "filesystem:read",
-    "filesystem:index",
-    "clipboard:read",
-    "clipboard:write"
-  ],
-  "settings": {
-    "maxResults": 20,
-    "searchPaths": ["~", "/Users"]
-  }
+    "filesystem:index"
+  ]
 }
 ```
+
+> **兼容说明**: 格式与 uTools `plugin.json` 完全一致。uTools 插件可直接放入 `plugins/` 目录加载。
+> `preload` 字段保留但当前版本由宿主注入 bridge，插件自身 preload 暂不执行。
+> `permissions` 为 szybko 扩展字段，uTools 忽略。
 
 ### 6.3 插件生命周期
 
@@ -331,7 +328,7 @@ szybko/plugins/
     │  从商店下载 / 手动放入 plugins/ 目录 / 从 npm 安装
     ▼
 [注册]
-    │  插件加载器读取 manifest.json
+    │  插件加载器读取 plugin.json
     │  注册关键词到调度器
     │  校验请求的权限
     ▼
@@ -365,7 +362,7 @@ szybko/plugins/
   - bridge 通过 `contextBridge` 暴露 `window.__SZYBKO__` API
   - API 方法在调用时自动携带权限 token（来自 manifest permissions）
   - 主进程校验权限 token 后方可执行
-- 插件只能调用 `manifest.json` 中 `permissions` 声明的能力
+- 插件只能调用 `plugin.json` 中 `permissions` 声明的能力
 - 不可访问 Node.js 原生 API、文件系统、网络（除非通过 bridge 显式授权）
 - 插件 index.html 是普通 Web 页面，在沙箱中渲染，无 Node.js 集成
 
@@ -677,7 +674,7 @@ utools.onPluginDetach(() => {
 })
 ```
 
-插件在 `manifest.json` 中以字符串数组声明所需权限：
+插件在 `plugin.json` 中以字符串数组声明所需权限：
 
 ```json
 {
@@ -803,7 +800,7 @@ szybko/
 │
 ├── plugins/                 # 本地开发插件目录
 │   └── example-plugin/
-│       ├── manifest.json
+│       ├── plugin.json
 │       └── index.html
 │       # preload 由宿主注入，插件不提供
 │
@@ -1059,7 +1056,7 @@ interface SearchBatch {
 | ADR-001 | 文件索引: **Phase 1 用 macOS Spotlight (MDItem)**，Phase 2+ 引入 Tantivy 自定义索引 | Phase 1 零搭建成本，无需维护索引文件；自定义索引是搜索体验优化，非核心功能依赖 |
 | ADR-002 | 全局快捷键: **Electron 主进程实现**，不放 Rust | Electron 已有 globalShortcut API，跨平台一致；Rust 在此场景无性能优势，增加 napi 回调复杂度 |
 | ADR-003 | 技术栈: Electron + Rust(napi-rs) + React + Monorepo pnpm | 已确认 |
-| ADR-004 | 插件模型: sandbox WebView + manifest.json + 关键词直搜 | 已确认 |
+| ADR-004 | 插件模型: sandbox WebView + plugin.json + uTools 兼容指令 | 已确认 |
 | ADR-005 | 系统能力: 适配器模式，macOS 优先 | 已确认 |
 
 ### 🔲 待决策
