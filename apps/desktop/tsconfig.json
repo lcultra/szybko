@@ -3,10 +3,8 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
-        "module": "ESNext",
-        "moduleResolution": "bundler",
         "types": ["node"]
     },
-    "include": ["src/main", "src/preload"],
+    "include": ["src/main.ts", "src/preload.ts"],
     "exclude": ["src/renderer"]
 }

@@ -3,13 +3,13 @@
     "type": "module",
     "version": "0.1.0",
     "private": true,
-    "main": "dist/main/index.js",
+    "main": "dist/main.js",
     "scripts": {
         "dev:renderer": "vite",
-        "dev:main": "tsc -p tsconfig.main.json && NODE_ENV=development electron .",
+        "dev:main": "tsc && NODE_ENV=development electron .",
         "dev": "concurrently \"pnpm dev:renderer\" \"sleep 3 && pnpm dev:main\"",
         "build:renderer": "vite build",
-        "build:main": "tsc -p tsconfig.main.json",
+        "build:main": "tsc",
         "build": "pnpm build:renderer && pnpm build:main"
     },
     "dependencies": {
