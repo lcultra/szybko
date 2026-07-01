@@ -32,7 +32,7 @@ my-plugin/
 
 | 分类 | 方法 |
 |---|---|
-| 生命周期 | `onPluginEnter/onPluginOut/onPluginDetach/onPluginSuspend/onPluginResume/onPluginReady` |
+| 生命周期 | `onPluginEnter/onPluginOut/onPluginDetach/onPluginReady` |
 | 搜索 | `onSearch(ctx) → SearchResult[]` |
 | 窗口 | `setExpendHeight/hideMainWindow/showMainWindow/outPlugin` |
 | 子输入框 | `setSubInput/removeSubInput/setSubInputValue/subInputFocus/blur/select` |

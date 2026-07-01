@@ -64,7 +64,7 @@ core-rust     →  napi-rs (独立编译)
 
 | 文件 | 阈值 | 拆分为 |
 |---|---|---|
-| `host/plugin-runtime.ts` | 300 行 | lifecycle + dispatcher + pool |
+| `host/plugin-runtime.ts` | 300 行 | activation + dispatch + pool |
 | `host/main.ts` | 150 行 | main + setup |
 | `launcher/App.tsx` | 200 行 | IdleView + SearchView + TabView |
 | `launcher/store.ts` | 200 行 | zustand slices (search/plugin/window) |

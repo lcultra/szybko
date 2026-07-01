@@ -61,7 +61,7 @@ interface PluginInstance {
   webview?: Electron.WebContentsView; features: PluginFeature[]
 }
 
-type PluginState = 'registered' | 'sleeping' | 'activating' | 'tab' | 'detached' | 'suspended' | 'uninstalled'
+type PluginState = 'registered' | 'waiting' | 'activating' | 'running' | 'sleeping' | 'uninstalled'
 ```
 
 ## 适配器接口（核心方法）
