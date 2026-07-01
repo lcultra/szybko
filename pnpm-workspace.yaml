@@ -1,4 +1,12 @@
+shellEmulator: true
+
+trustPolicy: no-downgrade
+
 packages:
   - 'apps/*'
   - 'packages/*'
   - 'plugins/*'
+
+onlyBuiltDependencies:
+  - electron
+  - esbuild
