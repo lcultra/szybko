@@ -5,10 +5,10 @@ import path from 'path'
 
 export default defineConfig({
     plugins: [react(), tailwindcss()],
-    root: '.',
+    root: 'src/renderer',
     base: './',
     build: {
-        outDir: 'dist',
+        outDir: '../../dist/renderer',
         emptyOutDir: true,
     },
     server: {
@@ -17,6 +17,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@szybko/launcher': path.resolve(__dirname, '../../packages/launcher/src'),
+            '@szybko/shared': path.resolve(__dirname, '../../packages/shared/src'),
         },
     },
 })

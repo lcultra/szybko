@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from 'electron'
+import path from 'path'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -10,7 +11,6 @@ function createWindow() {
         transparent: true,
         resizable: false,
         webPreferences: {
-            preload: undefined,
             contextIsolation: true,
             nodeIntegration: false,
         },
@@ -18,17 +18,14 @@ function createWindow() {
 
     if (process.env.NODE_ENV === 'development') {
         mainWindow.loadURL('http://localhost:5173')
+    } else {
+        mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
     }
 
-    mainWindow.on('blur', () => {
-        mainWindow?.hide()
-    })
+    mainWindow.on('blur', () => mainWindow?.hide())
 }
 
 app.whenReady().then(createWindow)
-
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
+    if (process.platform !== 'darwin') app.quit()
 })

@@ -3,10 +3,14 @@
     "type": "module",
     "version": "0.1.0",
     "private": true,
-    "main": "src/main.ts",
+    "main": "dist/main/index.js",
     "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build"
+        "dev:renderer": "vite",
+        "dev:main": "tsc -p tsconfig.main.json && NODE_ENV=development electron .",
+        "dev": "concurrently \"pnpm dev:renderer\" \"sleep 3 && pnpm dev:main\"",
+        "build:renderer": "vite build",
+        "build:main": "tsc -p tsconfig.main.json",
+        "build": "pnpm build:renderer && pnpm build:main"
     },
     "dependencies": {
         "@szybko/launcher": "workspace:*",
@@ -15,9 +19,11 @@
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0",
+        "@types/node": "^26.1.0",
         "@types/react": "^19.0",
         "@types/react-dom": "^19.0",
         "@vitejs/plugin-react": "^4.3",
+        "concurrently": "^9.1",
         "electron": "^33.0",
         "electron-builder": "^25.0",
         "tailwindcss": "^4.0",
