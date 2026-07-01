@@ -82,6 +82,17 @@ type RuntimeState = 'created' | 'activated' | 'attached' | 'detached' | 'suspend
 // attached = 当前挂载到了某个 Host，≠ 插件在运行
 ```
 
+## PluginManager
+
+```typescript
+class PluginManager {
+  scan(): PluginManifest[]
+  install(path: string): void
+  uninstall(pluginId: string): void
+  update(pluginId: string): void
+}
+```
+
 ## RuntimeManager
 
 ```typescript
@@ -94,15 +105,24 @@ class RuntimeManager {
 }
 ```
 
-## 适配器接口（核心方法）
+## 适配器接口
 
-| 接口               | 方法                                                           |
+适配器返回**领域类型**（不是 SearchResult）。
+
+```typescript
+interface FileInfo { path: string; name: string; kind: string; modifiedAt: number }
+interface AppInfo { bundleId: string; name: string; path: string; icon: string }
+```
+
+| 接口               | 核心方法                                                       |
 | ------------------ | -------------------------------------------------------------- |
-| IFileSystemAdapter | `search(query, opts?)` → `SearchResult[]`                      |
+| IFileSystemAdapter | `search(query, opts?)` → `FileInfo[]`                          |
 | IClipboardAdapter  | `readText/writeText/getHistory/startMonitoring/stopMonitoring` |
 | IProcessAdapter    | `launchApp/getInstalledApps/getRunningApps`                    |
 | IShellAdapter      | `openPath/openUrl/showInFinder/trashItem`                      |
 | IImageAdapter      | `captureScreen/pickColor/getPrimaryDisplay/getAllDisplays`     |
+
+> 接口方法签名在实现过程中逐步细化，当前只定方向，不定死。
 
 ## 错误类型
 

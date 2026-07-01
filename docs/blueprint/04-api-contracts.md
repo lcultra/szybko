@@ -4,23 +4,23 @@
 
 ## channel 汇总
 
-| channel | 方向 | 模式 | 用途 |
-|---|---|---|---|
-| `search` | R→M | invoke | 提交搜索 |
-| `search-batch` | M→R | send | 流式返回结果 |
-| `search-cancel` | R→M | invoke | 取消旧查询 |
-| `execute` | R→M | invoke | 执行 ActionDescriptor |
-| `runtime:state-changed` | M→R | send | Runtime 状态变更通知 |
-| `runtime:create` | R→M | invoke | 创建新 Runtime（非单例插件） |
-| `runtime:destroy` | R→M | invoke | 销毁 Runtime |
-| `host:view-attached` | M→R | send | WebContentsView 已挂载到当前 Host |
-| `host:view-detached` | M→R | send | WebContentsView 已从当前 Host 移除 |
-| `host:switch` | R→M | invoke | 切换 Host（分离/合并） |
-| `window:resize` | R→M | invoke | 动态调整高度 |
-| `window:hide` | R→M | invoke | 隐藏窗口 |
-| `show-main-window` | M→R | send | Alt+Space 唤出 |
-| `theme:changed` | M→R | send | 主题切换 |
-| `theme:get` | R→M | invoke | 获取当前主题 |
+| channel                 | 方向 | 模式   | 用途                               |
+| ----------------------- | ---- | ------ | ---------------------------------- |
+| `search`                | R→M  | invoke | 提交搜索                           |
+| `search-batch`          | M→R  | send   | 流式返回结果                       |
+| `search-cancel`         | R→M  | invoke | 取消旧查询                         |
+| `execute`               | R→M  | invoke | 执行 ActionDescriptor              |
+| `runtime:state-changed` | M→R  | send   | Runtime 状态变更通知               |
+| `runtime:create`        | R→M  | invoke | 创建新 Runtime（非单例插件）       |
+| `runtime:destroy`       | R→M  | invoke | 销毁 Runtime                       |
+| `host:view-attached`    | M→R  | send   | WebContentsView 已挂载到当前 Host  |
+| `host:view-detached`    | M→R  | send   | WebContentsView 已从当前 Host 移除 |
+| `host:switch`           | R→M  | invoke | 切换 Host（分离/合并）             |
+| `window:resize`         | R→M  | invoke | 动态调整高度                       |
+| `window:hide`           | R→M  | invoke | 隐藏窗口                           |
+| `show-main-window`      | M→R  | send   | Alt+Space 唤出                     |
+| `theme:changed`         | M→R  | send   | 主题切换                           |
+| `theme:get`             | R→M  | invoke | 获取当前主题                       |
 
 > R = 渲染进程, M = 主进程
 
@@ -55,9 +55,10 @@ invoke('execute', { action: ActionDescriptor, source: string })
 ### host:switch (R→M)
 
 ```typescript
-invoke('host:switch', { runtimeId: string, targetHost: 'launcher' | 'floating' })
+invoke('host:switch', { pluginId: string, targetHost: 'launcher' | 'floating' })
 → { ok: true, hostId: string }
-// WindowManager 切换 Host：迁移 WebContentsView，不重建 WebContents
+// WindowManager 用 pluginId 查找 Runtime，切换 Host、迁移 WebContentsView
+// 渲染进程不感知 runtimeId，由主进程维护映射
 ```
 
 ### runtime:state-changed (M→R)
