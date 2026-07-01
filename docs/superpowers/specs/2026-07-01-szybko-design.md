@@ -42,8 +42,8 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 │  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐│
 │  │ file-search    │  │ translate      │  │ 计算器       ││
 │  │ plugin.json   │  │ plugin.json   │  │ plugin.json ││
+│  │ preload.js     │  │ preload.js     │  │ preload.js   ││
 │  │ index.html     │  │ index.html     │  │ index.html   ││
-│  │ (宿主注入 bridge)│  │ (宿主注入 bridge)│  │(宿主注入bridge)││
 │  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘│
 ├──────────┴──────────────────┴───────────────────┴────────┤
 │              IPC 桥接 (Electron contextBridge)              │
@@ -275,14 +275,14 @@ React 搜索框渲染结果列表
 szybko/plugins/
 ├── file-search/
 │   ├── plugin.json          # 插件元数据 (uTools 兼容格式)
-│   ├── index.html           # 插件 UI 入口（内联或加载业务 JS）
+│   ├── preload.js           # 预加载脚本（可选，可调 Node.js API）
+│   ├── index.html           # 插件 UI 入口
 │   ├── assets/
 │   │   └── icon.png
 │   └── package.json         # 开发依赖（可选）
 │
-# 注意: 插件不提供 preload.js
-# 宿主自动注入固定 preload bridge (contextBridge)
-# 暴露 window.__SZYBKO__ API，插件直接调用
+# 模型: 与 uTools 一致，插件通过 preload.js 暴露 API 到 window
+# 宿主同时注入 utools 全局对象（提供系统能力桥接）
 ├── translate/
 └── calculator/
 ```
@@ -293,7 +293,7 @@ szybko/plugins/
 {
   "main": "index.html",
   "logo": "assets/icon.png",
-  "preload": "",
+  "preload": "preload.js",
   "pluginSetting": {
     "single": true,
     "height": 544
@@ -318,8 +318,7 @@ szybko/plugins/
 ```
 
 > **兼容说明**: 格式与 uTools `plugin.json` 完全一致。uTools 插件可直接放入 `plugins/` 目录加载。
-> `preload` 字段保留但当前版本由宿主注入 bridge，插件自身 preload 暂不执行。
-> `permissions` 为 szybko 扩展字段，uTools 忽略。
+> `permissions` 为 szybko 扩展字段，uTools 忽略。preload.js 可选，插件可用它暴露 Node.js 能力到前端。
 
 ### 6.3 插件生命周期
 
@@ -334,10 +333,11 @@ szybko/plugins/
     ▼
 [休眠] ←──── [激活]
     │          用户输入匹配关键词时
-    │          创建 WebView 沙箱（sandbox + contextIsolation）
-    │          注入宿主固定 preload bridge (contextBridge)
+    │          创建 WebView
+    │          加载 plugin.json 指定的 preload.js
+    │          宿主同时注入 utools 全局 API (contextBridge)
     │          加载插件 index.html
-    │          调用 onActivate(context)
+    │          调用 utools.onPluginEnter()
     ▼
 [运行]
     │  接收搜索请求
@@ -357,14 +357,10 @@ szybko/plugins/
 ### 6.4 插件安全沙箱
 
 - 每个插件运行在独立的 `<webview>` / `BrowserView` 中
-- 使用 `contextIsolation: true` + `sandbox: true`
-- **插件不提供自己的 preload** — 宿主注入固定 preload bridge
-  - bridge 通过 `contextBridge` 暴露 `window.__SZYBKO__` API
-  - API 方法在调用时自动携带权限 token（来自 manifest permissions）
-  - 主进程校验权限 token 后方可执行
-- 插件只能调用 `plugin.json` 中 `permissions` 声明的能力
-- 不可访问 Node.js 原生 API、文件系统、网络（除非通过 bridge 显式授权）
-- 插件 index.html 是普通 Web 页面，在沙箱中渲染，无 Node.js 集成
+- 插件通过 `preload.js` 访问 Node.js 原生能力，与 uTools 一致
+- 宿主同时通过 `contextBridge` 注入 `utools` 全局对象（系统能力桥接）
+- 插件调用系统能力（文件、剪贴板、截图等）走 IPC → 主进程校验 permissions → 执行
+- `permissions` 在安装时由用户确认
 
 ### 6.5 插件 SDK — API 参考
 
@@ -801,8 +797,8 @@ szybko/
 ├── plugins/                 # 本地开发插件目录
 │   └── example-plugin/
 │       ├── plugin.json
+│       ├── preload.js
 │       └── index.html
-│       # preload 由宿主注入，插件不提供
 │
 └── docs/
     ├── superpowers/
