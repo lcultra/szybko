@@ -1,12 +1,10 @@
-# Szybko — Windsurf Rules
+# Szybko
 
-Before modifying code, first read:
-`docs/superpowers/specs/szybko/00-project-overview.md`
+Electron + Rust(napi-rs) + React + Tailwind CSS v4 + pnpm monorepo.
 
-Then:
-- `04-file-map.md` for file structure
-- `02-data-model.md` for types
-- `03-api-contracts.md` for IPC protocol
-- `05-milestones.md` for execution progress
-
-Stack: Electron + Rust(napi-rs) + React + Tailwind CSS v4 + pnpm
+Read before coding:
+1. `docs/superpowers/specs/szybko/00-project-overview.md`
+2. `docs/superpowers/specs/szybko/04-file-map.md`
+3. `docs/superpowers/specs/szybko/02-data-model.md`
+4. `docs/superpowers/specs/szybko/03-api-contracts.md`
+5. `docs/superpowers/specs/szybko/05-milestones.md`
