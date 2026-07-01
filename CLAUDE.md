@@ -6,11 +6,11 @@
 
 在修改代码前，先阅读以下文档：
 
-1. `docs/superpowers/specs/szybko/00-project-overview.md` — 项目概览
-2. `docs/superpowers/specs/szybko/04-file-map.md` — 文件结构与职责
-3. `docs/superpowers/specs/szybko/02-data-model.md` — 类型定义
-4. `docs/superpowers/specs/szybko/03-api-contracts.md` — IPC 协议
-5. `docs/superpowers/specs/szybko/05-milestones.md` — 构建里程碑与当前进度
+1. `docs/blueprint/00-project-overview.md` — 项目概览
+2. `docs/blueprint/04-file-map.md` — 文件结构与职责
+3. `docs/blueprint/02-data-model.md` — 类型定义
+4. `docs/blueprint/03-api-contracts.md` — IPC 协议
+5. `docs/blueprint/05-milestones.md` — 构建里程碑与当前进度
 
 ## 命令
 
