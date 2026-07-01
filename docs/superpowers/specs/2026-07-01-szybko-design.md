@@ -372,45 +372,313 @@ szybko/plugins/
 - 不可访问 Node.js 原生 API、文件系统、网络（除非通过 bridge 显式授权）
 - 插件 index.html 是普通 Web 页面，在沙箱中渲染，无 Node.js 集成
 
-### 6.5 插件 SDK
+### 6.5 插件 SDK — API 参考
 
-```bash
-npm create @szybko/plugin my-plugin
-cd my-plugin
-npm install
-npm run dev    # 启动热更新开发环境
-```
+插件通过宿主注入的 `window.__SZYBKO__` 对象访问所有能力。API 设计参考 uTools，适配 Electron + Rust 架构。
 
-插件开发代码示例：
+#### 6.5.1 生命周期事件
 
 ```typescript
-// index.html 中加载的业务脚本 — 通过 SDK bridge 调用宿主能力
-const { system } = window.__SZYBKO__
+interface SzybkoAPI {
+  /** 用户通过搜索进入插件时触发 */
+  onPluginEnter(callback: (action: PluginEnterAction) => void): void
 
-// 插件被激活时调用
-window.onActivate = async (context: ActivationContext) => {
-  const results = await system.filesystem.search(context.query)
-  return results.map(r => ({
-    id: r.path,
-    title: r.name,
-    subtitle: r.path,
-    icon: r.icon,
-    // ⚠️ 返回 action descriptor，而非函数 — 由主进程校验权限后执行
-    action: {
-      type: "shell.openPath",
-      label: "打开文件",
-      payload: { path: r.path }
-    }
-  }))
+  /** 插件退出（隐藏或销毁）时触发 */
+  onPluginOut(callback: (isKill: boolean) => void): void
+
+  /** 用户点击"分离"按钮，插件弹出独立窗口时触发 */
+  onPluginDetach(callback: () => void): void
+
+  /** 插件从活动→挂起（用户切换到其他插件或返回搜索）时触发 */
+  onPluginSuspend(callback: () => void): void
+
+  /** 插件从挂起→活动时触发 */
+  onPluginResume(callback: () => void): void
+
+  /** 插件初始化完成（WebView 加载完成）时触发 */
+  onPluginReady(callback: () => void): void
+
+  /** 用户搜索匹配到本插件时触发—返回搜索结果 */
+  onSearch(callback: (context: SearchContext) => SearchResult[]): void
 }
 
-// 插件需要定期执行的操作
-window.onBackgroundTask = async () => {
-  await system.filesystem.indexDirectory('~/Documents')
+interface PluginEnterAction {
+  code: string       // manifest.features[].code
+  type: 'text' | 'img' | 'file' | 'regex' | 'over' | 'window'
+  payload: string | MatchFile[] | MatchWindow
+  from: 'main' | 'detach'
+}
+
+interface SearchContext {
+  queryId: string
+  keyword: string      // 匹配的 keyword
+  query: string        // keyword 之后的搜索文本
+  fullQuery: string    // 完整内容
 }
 ```
 
-### 6.6 权限模型
+#### 6.5.2 窗口控制
+
+```typescript
+interface SzybkoAPI {
+  /** 设置插件在主窗口中的显示高度 */
+  setExpendHeight(height: number): void
+
+  /** 隐藏主窗口 */
+  hideMainWindow(): void
+
+  /** 显示主窗口 */
+  showMainWindow(): void
+
+  /** 退出插件，返回搜索模式 */
+  outPlugin(): void
+
+  /** 设置子输入框（插件自定义搜索框） */
+  setSubInput(onChange: (text: string) => void, placeholder?: string, isFocus?: boolean): void
+
+  /** 移除子输入框 */
+  removeSubInput(): void
+
+  /** 设置子输入框的值 */
+  setSubInputValue(text: string): void
+
+  subInputFocus(): void
+  subInputBlur(): void
+  subInputSelect(): void
+
+  /** 获取窗口类型 */
+  getWindowType(): 'main' | 'detach' | 'browser'
+
+  /** 判断当前是否为深色主题 */
+  isDarkColors(): boolean
+
+  /** 创建新浏览器窗口 */
+  createBrowserWindow(url: string, options?: BrowserWindowOptions): Promise<void>
+
+  /** 弹出系统文件选择对话框 */
+  showOpenDialog(options?: OpenDialogOptions): Promise<string[] | undefined>
+
+  showSaveDialog(options?: SaveDialogOptions): Promise<string | undefined>
+
+  /** 重定向到另一个插件的指令 */
+  redirect(label: string | [string, string], payload?: any): void
+}
+```
+
+#### 6.5.3 系统操作
+
+```typescript
+interface SzybkoAPI {
+  /** 以系统默认方式打开文件 */
+  shellOpenPath(fullPath: string): void
+
+  /** 在文件管理器中显示文件 */
+  shellShowItemInFolder(fullPath: string): void
+
+  /** 用默认浏览器打开 URL */
+  shellOpenExternal(url: string): void
+
+  /** 将文件移到回收站 */
+  shellTrashItem(fullPath: string): void
+
+  /** 弹出系统通知（点击可进入指定插件功能） */
+  showNotification(body: string, clickFeatureCode?: string): void
+
+  /** 获取设备 ID */
+  getNativeId(): string
+
+  getAppName(): string
+  getAppVersion(): string
+
+  /** 获取系统路径（home, appData, desktop, downloads 等） */
+  getPath(name: 'home' | 'appData' | 'desktop' | 'documents' | 'downloads' | string): string
+
+  /** 获取文件系统图标（返回 base64 Data URL） */
+  getFileIcon(filePath: string): string
+
+  isMacOS(): boolean
+  isWindows(): boolean
+  isLinux(): boolean
+  isDev(): boolean
+}
+```
+
+#### 6.5.4 剪贴板与输入
+
+```typescript
+interface SzybkoAPI {
+  /** 复制文本到剪贴板 */
+  copyText(text: string): boolean
+
+  /** 复制文件到剪贴板 */
+  copyFile(filePath: string | string[]): boolean
+
+  /** 复制图像到剪贴板（支持路径/base64/Buffer） */
+  copyImage(image: string | Uint8Array): boolean
+
+  /** 获取剪贴板中的文件列表 */
+  getCopyedFiles(): CopiedFile[]
+
+  /** 隐藏主窗口，粘贴文本到前台应用 */
+  hideMainWindowPasteText(text: string): void
+
+  /** 隐藏主窗口，粘贴图像 */
+  hideMainWindowPasteImage(image: string | Uint8Array): void
+
+  /** 隐藏主窗口，粘贴文件 */
+  hideMainWindowPasteFile(filePath: string | string[]): void
+
+  /** 模拟输入法输入文本（不触发键盘事件） */
+  hideMainWindowTypeString(text: string): void
+}
+```
+
+#### 6.5.5 屏幕与图像
+
+```typescript
+interface SzybkoAPI {
+  /** 屏幕取色，弹出取色器 */
+  screenColorPick(callback: (color: { hex: string; rgb: string }) => void): void
+
+  /** 屏幕截图，进入截图模式框选区域 */
+  screenCapture(callback: (dataUrl: string) => void): void
+
+  /** 获取主/所有显示器信息 */
+  getPrimaryDisplay(): Display
+  getAllDisplays(): Display[]
+
+  /** 获取鼠标屏幕绝对位置 */
+  getCursorScreenPoint(): { x: number; y: number }
+
+  /** 获取录屏源（用于录屏或截取屏幕） */
+  desktopCaptureSources(options: DesktopCaptureOptions): Promise<DesktopCaptureSource[]>
+}
+```
+
+#### 6.5.6 数据存储
+
+```typescript
+interface SzybkoAPI {
+  db: {
+    put(doc: DbDoc): DbResult
+    get(id: string): DbDoc | null
+    remove(doc: DbDoc | string): DbResult
+    bulkDocs(docs: DbDoc[]): DbResult[]
+    allDocs(idStartsWith?: string | string[]): DbDoc[]
+    postAttachment(id: string, attachment: Uint8Array, type: string): DbResult
+    getAttachment(id: string): Uint8Array | null
+    promises: { /* 同上，异步版本 */ }
+  }
+
+  /** 基于 db 的键值对存储（类似 localStorage） */
+  dbStorage: { setItem(key: string, value: any): void; getItem(key: string): any; removeItem(key: string): void }
+
+  /** 加密存储 */
+  dbCryptoStorage: { setItem(key: string, value: any): void; getItem(key: string): any; removeItem(key: string): void }
+}
+
+interface DbDoc { _id: string; _rev?: string; [key: string]: unknown }
+interface DbResult { id: string; rev?: string; ok?: boolean; error?: boolean; name?: string; message?: string }
+```
+
+#### 6.5.7 动态指令
+
+```typescript
+interface SzybkoAPI {
+  /** 获取/设置/删除动态指令 */
+  getFeatures(codes?: string[]): Feature[]
+  setFeature(feature: Feature): void
+  removeFeature(code: string): boolean
+}
+
+interface Feature {
+  code: string
+  explain?: string
+  icon?: string
+  cmds: (string | MatchCommand)[]
+  mainHide?: boolean
+  mainPush?: boolean
+  platform?: ('win32' | 'darwin' | 'linux')[]
+}
+```
+
+#### 6.5.8 模拟按键
+
+```typescript
+interface SzybkoAPI {
+  simulateKeyboardTap(key: string, ...modifiers: ('shift' | 'ctrl' | 'alt' | 'meta')[]): void
+  simulateMouseMove(x: number, y: number): void
+  simulateMouseClick(x: number, y: number): void
+  simulateMouseDoubleClick(x: number, y: number): void
+  simulateMouseRightClick(x: number, y: number): void
+}
+```
+
+#### 6.5.9 搜索结果格式
+
+```typescript
+interface SearchResult {
+  id: string
+  title: string            // 主标题（支持高亮标记）
+  subtitle?: string        // 副标题
+  icon?: string            // 图标（data: URL / 插件内相对路径）
+  group?: string           // 分组名
+  score: number            // 排序权重 0-1
+  action: ActionDescriptor // 执行动作
+}
+
+type ActionDescriptor =
+  | { type: "shell.openPath",       payload: { path: string } }
+  | { type: "shell.openUrl",        payload: { url: string } }
+  | { type: "shell.trashItem",      payload: { path: string } }
+  | { type: "clipboard.writeText",  payload: { text: string } }
+  | { type: "process.launchApp",    payload: { bundleId: string } }
+  | { type: "plugin.open",          payload: { pluginId: string; url: string } }
+  | { type: "plugin.runCommand",    payload: { pluginId: string; command: string; args?: any[] } }
+  | { type: "plugin.search",        payload: { query: string } }
+  | { type: "text.paste",           payload: { text: string } }
+  | { type: "text.typeString",      payload: { text: string } }
+  | { type: "redirect",             payload: { label: string; payload?: any } }
+```
+
+#### 6.5.10 脚手架与开发示例
+
+```bash
+# 创建插件项目
+npx create-szybko-plugin my-plugin
+cd my-plugin
+npm install
+npm run dev   # 启动热更新开发
+```
+
+```javascript
+// index.js
+
+utools.onPluginEnter(({ code, type, payload, from }) => {
+  console.log(`进入插件: ${code}, 来源: ${from}`)
+})
+
+utools.onSearch(({ keyword, query }) => {
+  return utools.db.allDocs('note/')
+    .filter(doc => doc.title.includes(query))
+    .map(doc => ({
+      id: doc._id,
+      title: doc.title,
+      subtitle: doc._id,
+      score: 0.8,
+      action: { type: "shell.openPath", payload: { path: doc.path } }
+    }))
+})
+
+utools.onPluginOut((isKill) => {
+  console.log(`插件退出: ${isKill ? '销毁' : '隐藏后台'}`)
+})
+
+utools.onPluginDetach(() => {
+  console.log('插件分离为独立窗口')
+  utools.setExpendHeight(600)
+})
+```
 
 权限是插件安全的核心，采用**三层权限模型**：
 
