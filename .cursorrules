@@ -1,0 +1,12 @@
+# Szybko — Project Rules for Cursor
+
+Before modifying any code, read the project blueprint:
+`docs/superpowers/specs/szybko/00-project-overview.md`
+
+Then read in order:
+1. `docs/superpowers/specs/szybko/04-file-map.md` — file structure
+2. `docs/superpowers/specs/szybko/02-data-model.md` — types
+3. `docs/superpowers/specs/szybko/03-api-contracts.md` — IPC protocol
+4. `docs/superpowers/specs/szybko/05-milestones.md` — current progress
+
+Tech: Electron + Rust(napi-rs) + React + Tailwind CSS v4 + pnpm monorepo
