@@ -311,15 +311,12 @@ szybko/plugins/
       "matchType": "prefix"
     }
   ],
-  "permissions": {
-    "filesystem": {
-      "read": { "paths": ["~/Documents", "~/Downloads"] },
-      "index": { "paths": ["~"] }
-    },
-    "network": {
-      "fetch": { "allowlist": ["api.github.com"] }
-    }
-  },
+  "permissions": [
+    "filesystem:read",
+    "filesystem:index",
+    "clipboard:read",
+    "clipboard:write"
+  ],
   "settings": {
     "maxResults": 20,
     "searchPaths": ["~", "/Users"]
@@ -680,84 +677,23 @@ utools.onPluginDetach(() => {
 })
 ```
 
-权限是插件安全的核心，采用**三层权限模型**：
-
-#### 6.6.1 声明层 (Declare)
-
-插件在 `manifest.json` 的 `permissions` 字段声明所需权限，支持路径级和作用域级限制：
+插件在 `manifest.json` 中以字符串数组声明所需权限：
 
 ```json
 {
-  "permissions": {
-    "filesystem": {
-      "read": { "paths": ["~/Documents", "~/Downloads"] },
-      "index": { "paths": ["~"] }
-    },
-    "clipboard": {
-      "read": true,
-      "write": true
-    },
-    "network": {
-      "fetch": { "allowlist": ["api.github.com", "registry.npmjs.org"] }
-    },
-    "shell": {
-      "openPath": true,
-      "execute": { "allowlist": ["/usr/bin/git"] }
-    }
-  }
+  "permissions": [
+    "filesystem:read",
+    "filesystem:index",
+    "clipboard:read",
+    "clipboard:write",
+    "shell:openPath"
+  ]
 }
 ```
 
-#### 6.6.2 授权层 (Grant)
-
-| 时机 | 方式 | 说明 |
-|---|---|---|
-| 安装时 | 自动授予 | 覆盖 manifest 声明的权限，用户可在插件详情页查看 |
-| 首次使用时 | 弹窗授权 | 插件首次调用某项能力时弹出确认（如剪贴板读取） |
-| 运行时 | 逐次授权 | 敏感操作（执行命令、网络请求）每次调用都校验 |
-
-#### 6.6.3 执行层 (Enforce)
-
-```
-插件调用 system.filesystem.read("/etc/passwd")
-    │
-    ▼
-bridge 携带权限 token (来自 manifest + 用户授权)
-    │  IPC → 主进程
-    ▼
-PermissionManager.validate({
-    action:      "filesystem.read",
-    payload:     { path: "/etc/passwd" },
-    plugin:      "file-search",
-    permissions: { paths: ["~/Documents"] }
-})
-    │
-    ├── action 是否在已授权列表中？  → 否 → 拒绝
-    ├── path 是否在允许的路径范围？   → "/etc/passwd" 不在 ~/Documents 下 → 拒绝
-    └── 是否首次调用该路径？          → 是 → 弹窗询问用户
-    │
-    ▼
-    通过 → 执行 / 拒绝 → 返回错误
-```
-
-#### 6.6.4 权限审计
-
-- 所有权限检查和拒绝事件写入审计日志（`~/.szybko/audit.log`）
-- 日志包含: 时间、插件、操作、payload、结果（允许/拒绝）
-- 用户可在设置页查看审计日志
-- 权限可在设置页逐项撤销
-
-#### 6.6.5 路径规范化
-
-所有文件路径在权限校验前经过规范化处理：
-
-```
-~/Documents          → /Users/username/Documents
-/Users/./Downloads   → /Users/username/Downloads
-/var/./symlink       → 解析真实路径
-```
-
-防止 `../../etc/passwd` 等路径穿越攻击。
+- 安装时由用户确认授权
+- 运行时简单校验（检查是否在声明的权限列表内）
+- 后续可逐步细化
 
 ---
 
