@@ -12,6 +12,9 @@
         "build:main": "tsc && cp -r ../packages/launcher/dist dist/renderer",
         "build": "pnpm build:renderer && pnpm build:main"
     },
+    "dependencies": {
+        "@szybko/shared": "workspace:*"
+    },
     "devDependencies": {
         "@types/node": "^26.0",
         "concurrently": "^10.0",
