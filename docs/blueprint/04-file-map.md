@@ -9,9 +9,9 @@
 szybko/
 ├── package.json               # 根 workspace 定义, scripts: dev/build/lint/test
 ├── pnpm-workspace.yaml        # workspace 包路径声明
+├── eslint.config.mjs          # ESLint flat config (@antfu/eslint-config)
+├── .editorconfig              # 编辑器统一配置
 ├── tsconfig.base.json         # 共享 TS 配置 (paths, strict mode)
-├── .eslintrc.cjs              # ESLint 配置
-├── .prettierrc                # Prettier 配置
 ├── .gitignore
 └── README.md                  # 开发者指引（非插件市场用）
 ```
@@ -92,7 +92,8 @@ packages/host/                 # Electron 主进程（核心中枢）
     ├── shortcut-manager.ts    # 全局快捷键: registerAltSpace(), unregister()
     ├── plugin-loader.ts       # 扫描 plugins/ 目录, 读取 plugin.json,
     │                          # 注册 features 到调度器
-    ├── plugin-runtime.ts      # WebView 创建/销毁/搜索分发/生命周期管理
+    ├── plugin-runtime.ts      # 插件生命周期/搜索分发/预热池/LRU 回收
+    ├── plugin-view-manager.ts # WebContentsView 创建/挂载/分离/销毁
     ├── adapter-bridge.ts      # TS 到 Rust 的桥接: 加载 .node 模块,
     │                          # 实例化适配器对象
     ├── permission.ts          # 权限校验: check(pluginId, method)
@@ -143,7 +144,7 @@ packages/launcher/             # 搜索外壳 UI（渲染进程）
     ├── ResultList.tsx         # 结果列表: 分组网格 + 滚动
     ├── ResultItem.tsx         # 单个结果瓦片: 图标 + 标题 + 高亮
     ├── TabHeader.tsx          # 插件 Tab 头: [← 返回] [插件名] [分离]
-    ├── WebViewContainer.tsx   # 插件 WebView 容器
+    ├── PluginSurface.tsx      # 插件内容区域占位；上报 bounds 给主进程挂载 WebContentsView
     ├── hooks/
     │   ├── useSearch.ts      # 输入 → 防抖 → invoke search + 处理search-batch
     │   ├── useKeyboard.ts    # 方向键/Enter/Esc 导航
@@ -207,7 +208,10 @@ docs/
     │       ├── 06-plugin-spec.md
     │       ├── 07-config-templates.md
     │       ├── 08-error-handling.md
-    │       └── 09-testing-guide.md
+    │       ├── 09-testing-guide.md
+    │       ├── 10-performance-budget.md
+    │       ├── 11-plugin-runtime-strategy.md
+    │       └── 12-utools-compat-matrix.md
     └── plans/                 # writing-plans 的输出放这里
 ```
 

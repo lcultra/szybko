@@ -9,27 +9,23 @@
 ```json
 {
   "name": "szybko",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @szybko/desktop dev",
     "build": "pnpm -r build",
     "build:rust": "pnpm --filter @szybko/core-rust build",
-    "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write .",
+    "lint": "eslint .",
     "typecheck": "pnpm -r exec tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^5.7",
-    "prettier": "^3.4",
-    "@typescript-eslint/eslint-plugin": "^8.0",
-    "@typescript-eslint/parser": "^8.0",
-    "eslint": "^9.0"
+    "@antfu/eslint-config": "^9.1.0",
+    "@eslint-react/eslint-plugin": "^5.9.2",
+    "eslint": "^10.5.0",
+    "eslint-plugin-format": "^2.0.1",
+    "eslint-plugin-react-refresh": "^0.5.3"
   },
-  "engines": {
-    "node": ">=20",
-    "pnpm": ">=9"
-  },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@10.34.3"
 }
 ```
 
@@ -71,18 +67,6 @@ packages:
     }
   },
   "exclude": ["node_modules", "dist"]
-}
-```
-
-### .prettierrc
-
-```json
-{
-  "semi": false,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "all",
-  "printWidth": 100
 }
 ```
 

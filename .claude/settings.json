@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(git commit -m 'docs: address spec review feedback *)",
+      "WebFetch(domain:www.u-tools.cn)",
+      "WebSearch",
+      "Bash(git commit -m 'docs: add comprehensive plugin API reference modeled after uTools *)",
+      "Bash(git commit -m 'docs: simplify permissions model to basic string array *)",
+      "Bash(git commit -m 'docs: align plugin.json format with uTools standard *)",
+      "Bash(git commit -m 'docs: restore plugin preload.js support for uTools compatibility *)",
+      "Bash(git commit -m 'docs: add design-tokens and ui packages, specify Tailwind v4 *)",
+      "Bash(git commit -m 'docs: consolidate design tokens and ui into @szybko/design-system *)",
+      "Bash(git commit -m 'docs: add lucide-react icons and @radix-ui/react headless UI to design-system *)",
+      "Bash(git commit -m 'docs: add common utility packages \\(dayjs, zod, uuid, zustand\\) *)",
+      "Bash(git commit -m 'docs: remove zod from utility packages *)",
+      "Bash(git commit -m 'docs: restructure spec into AI-readable blueprint document set *)",
+      "Bash(git commit -m 'docs: add CLAUDE.md as AI session entry point *)",
+      "Bash(git commit -m 'docs: add AI coding tool entry points *)",
+      "Bash(git commit -m 'docs: simplify AI entry files to minimal pointers *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m 'cleanup: remove extra AI entry files, keep only CLAUDE.md *)",
+      "Bash(git mv *)",
+      "Bash(git commit -m 'docs: move blueprint to docs/blueprint/ *)",
+      "Bash(git commit -m 'docs: move archived spec out of blueprint dir *)"
+    ]
+  }
+}
