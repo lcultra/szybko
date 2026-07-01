@@ -1,0 +1,26 @@
+{
+    "name": "@szybko/design-system",
+    "type": "module",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "lucide-react": "^0.468",
+        "@radix-ui/react-slot": "^1.1"
+    },
+    "peerDependencies": {
+        "react": "^19.0",
+        "tailwindcss": "^4.0"
+    },
+    "devDependencies": {
+        "typescript": "^6.0",
+        "@types/react": "^19.0"
+    }
+}

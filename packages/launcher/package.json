@@ -9,6 +9,8 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@szybko/shared": "workspace:*",
+        "@szybko/design-system": "workspace:*",
         "react": "^19.0",
         "react-dom": "^19.0"
     },
