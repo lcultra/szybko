@@ -29,6 +29,7 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 | 设计系统 | `@szybko/design-system` | 公共 Token + 图标库 + 无头 UI 组件 + 业务组件，所有前端模块共享 |
 | 图标库 | lucide-react | 统一图标风格，避免手动维护 SVG |
 | 无头 UI | @radix-ui/react-* | Popover、Dialog、Tabs 等无障碍原语，供 design-system 包装 |
+| 工具库 | dayjs, zod, uuid, zustand | 日期处理、运行时校验、ID 生成、轻量状态管理 |
 | 项目组织 | Monorepo (pnpm workspace) | 统一管理所有包，共享配置 |
 | 构建工具 | Turborepo (可选) | 加速 monorepo 构建 |
 | 打包 | electron-builder | 应用分发与自动更新 |
