@@ -1,0 +1,15 @@
+export const IPC = {
+    SEARCH: 'search',
+    SEARCH_BATCH: 'search-batch',
+    SEARCH_CANCEL: 'search-cancel',
+    EXECUTE: 'execute',
+    RUNTIME_STATE_CHANGED: 'runtime:state-changed',
+    HOST_SWITCH: 'host:switch',
+    HOST_VIEW_ATTACHED: 'host:view-attached',
+    HOST_VIEW_DETACHED: 'host:view-detached',
+    WINDOW_RESIZE: 'window:resize',
+    WINDOW_HIDE: 'window:hide',
+    SHOW_MAIN_WINDOW: 'show-main-window',
+    THEME_CHANGED: 'theme:changed',
+    THEME_GET: 'theme:get',
+} as const
