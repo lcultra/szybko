@@ -25,7 +25,8 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 |---|---|---|
 | 宿主框架 | Electron | 跨平台桌面应用容器 |
 | 系统核心 | Rust (napi-rs) | 编译为 `.node` 原生模块，处理性能敏感的系统调用 |
-| 前端 UI | React | 搜索框、设置页面、插件商店 UI |
+| 前端 UI | React + Tailwind CSS v4 | 搜索框、内置插件、插件 UI |
+| 设计系统 | `@szybko/design-tokens` + `@szybko/ui` | 公共 Token 和基础组件，所有前端模块共享 |
 | 项目组织 | Monorepo (pnpm workspace) | 统一管理所有包，共享配置 |
 | 构建工具 | Turborepo (可选) | 加速 monorepo 构建 |
 | 打包 | electron-builder | 应用分发与自动更新 |
