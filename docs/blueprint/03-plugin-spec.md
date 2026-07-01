@@ -2,23 +2,53 @@
 
 ## plugin.json
 
-字段与 uTools 完全一致，增加 `singleton` 扩展字段。
+字段与 uTools 完全一致。
 
 ```json
 {
     "main": "index.html",
     "logo": "icon.png",
     "preload": "preload.js",
-    "pluginSetting": { "single": true, "height": 544 },
+    "pluginSetting": {
+        "single": true,
+        "height": 544
+    },
     "features": [
-        { "code": "hello", "explain": "示例", "cmds": ["hello", "你好"] }
+        {
+            "code": "hello",
+            "explain": "示例插件",
+            "cmds": ["hello", "你好"]
+        }
     ]
 }
 ```
 
-| 字段 | 说明 |
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `main` | ✅ | `.html` 文件路径，插件 UI 入口 |
+| `logo` | ✅ | 图标文件路径 |
+| `preload` | ❌ | 预加载脚本（可调 Node.js） |
+| `pluginSetting.single` | ❌ | 默认 `true`。单例：整个应用只一个 Runtime；`false` 允许多实例 |
+| `pluginSetting.height` | ❌ | 默认 `544`。插件初始高度 |
+| `features` | ✅ | 指令集合，最小 1 条 |
+| `features[].code` | ✅ | 功能编码，唯一 |
+| `features[].explain` | ❌ | 功能描述 |
+| `features[].icon` | ❌ | 功能图标 (.png/.jpg/.svg) |
+| `features[].cmds` | ✅ | 指令列表，字符串或匹配对象 |
+
+### cmds 匹配类型
+
+**功能指令**（字符串）：简短唯一，中文自动支持拼音和首字母搜索。
+
+**匹配指令**（对象）：
+
+| 类型 | 用途 |
 |---|---|
-| `pluginSetting.single` | 默认 `true`。单例：整个应用只一个 Runtime；`false` 允许多实例 |
+| `{ type: "regex", label, match, minLength?, maxLength? }` | 正则匹配文本 |
+| `{ type: "over", label, exclude?, minLength?, maxLength? }` | 匹配任意文本 |
+| `{ type: "img", label }` | 匹配图像 |
+| `{ type: "files", label, fileType?, extensions?, match?, minLength?, maxLength? }` | 匹配文件(夹) |
+| `{ type: "window", label, match: { app, title?, class? } }` | 匹配系统窗口 |
 
 ## 插件目录结构
 
@@ -46,6 +76,7 @@ my-plugin/
 | 存储 | `db.put/get/remove/bulkDocs/allDocs` + `dbStorage` + `dbCryptoStorage` |
 | 动态指令 | `getFeatures/setFeature/removeFeature` |
 | 模拟按键 | `simulateKeyboardTap/simulateMouseMove/Click/DoubleClick/RightClick` |
+| AI 工具 | `registerTool`（注册 tools 到 AI Agent） |
 
 ## 兼容策略
 
@@ -57,14 +88,13 @@ my-plugin/
 | C3 | 高级匹配 + 动态 feature | 后续 |
 | C4 | 高兼容，运行大部分 uTools 插件 | 不承诺 |
 
-### API 兼容性（MVP）
+### MVP 兼容 API
 
 - ✅ 生命周期 `onPluginEnter/out/detach`
 - ✅ 窗口 `setExpendHeight/hideMainWindow/showMainWindow/outPlugin`
 - ✅ Shell `openPath/showItemInFolder/openExternal/trashItem`
 - ✅ 剪贴板文本 `copyText/getCopyedFiles`
 - ✅ DB `put/get/remove/allDocs` + `dbStorage`
-- ✅ 文件图标 `getFileIcon`（异步缓存）
 - ⬜ 剪贴板文件/图像、子输入框、动态 feature、files/img/window 匹配类型
 
 ### 运行模式
