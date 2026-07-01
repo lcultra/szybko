@@ -1,5 +1,11 @@
 # 架构设计
 
+## 核心原则
+
+> **PluginRuntime 是唯一的运行实体，Host 只是展示容器。**
+
+Runtime 与 BrowserWindow 完全解耦。Runtime 不知道自己在哪个窗口，Host 不知道插件业务逻辑。
+
 ## 技术栈
 
 | 层 | 选型 |
@@ -12,23 +18,170 @@
 | 项目组织 | pnpm monorepo |
 | 打包 | electron-builder |
 
-## 分层
+## 架构图
 
 ```
-渲染进程 (React)  ↔  IPC (contextBridge)  ↔  主进程 (Node/TS)  ↔  napi-rs  ↔  Rust 核心
+                        Electron
+                            │
+               ┌────────────┴────────────┐
+               │                         │
+        PluginManager              WindowManager
+               │                         │
+               │                         │
+        RuntimeManager              HostManager
+               │                         │
+      ┌────────┴────────┐                │
+      │                 │                │
+ PluginRuntime    PluginRuntime        Host
+      │                 │                │
+ WebContentsView  WebContentsView  BrowserWindow
+      │                 │                │
+ WebContents      WebContents         布局/焦点/显示
+      │                 │
+ 插件 App          插件 App
 ```
-
-1. **渲染进程**只提供搜索外壳，不内置任何业务功能。所有功能（设置、剪贴板、计算器等）都是插件。
-2. **主进程**统一管理窗口、插件生命周期、权限校验，封装所有 Rust 调用为 `system.xxx()` API。
-3. **Rust 核心**只被主进程调用，不直接和渲染进程或插件通信。
 
 ## 通信
 
 - **渲染进程 ⇄ 主进程**: `contextBridge` + `ipcRenderer.invoke`/`on`。禁用 nodeIntegration。
-- **主进程 ⇄ Rust**: `require(.node)` 同进程调用，零序列化开销。
-- **插件 WebView ⇄ 主进程**: 插件可声明 `preload.js`（Node 访问），宿主同时注入 `utools` 全局 API。
+- **主进程 ⇄ Rust**: `require(.node)` 同进程调用。
+- **插件 Runtime ⇄ 主进程**: 插件可声明 `preload.js`（Node 访问），宿主注入 `utools` 全局 API。
 
-## 窗口
+## Runtime 与 Host
+
+### Host 接口
+
+```typescript
+interface Host {
+  id: string
+  attach(runtime: PluginRuntime): void
+  detach(runtime: PluginRuntime): void
+}
+```
+
+Host 的实现：
+- **LauncherHost** — 主搜索窗口内容区
+- **FloatingHost** — 独立分离窗口
+- **SidebarHost / SplitHost / DockHost** — 未来扩展
+
+Host 的职责：创建/管理 BrowserWindow、布局、Focus、显示/隐藏。**永远不知道插件业务**。
+
+### Runtime 接口
+
+```typescript
+interface PluginRuntime {
+  id: string
+  pluginId: string
+  instanceId: string        // 多实例时区分
+  webContents: WebContents
+  webContentsView: WebContentsView
+  host: Host | null
+  state: RuntimeState
+  cache: Map<string, any>
+}
+```
+
+Runtime 的职责：生命周期、WebContents、插件状态、IPC、缓存、权限。**永远不知道自己在哪个窗口**。
+
+### RuntimeManager
+
+管理所有 Runtime：
+
+```typescript
+class RuntimeManager {
+  getRuntime(pluginId: string): PluginRuntime[]
+  createRuntime(pluginId: string): PluginRuntime
+  destroyRuntime(runtimeId: string): void
+  attach(runtimeId: string, hostId: string): void
+  detach(runtimeId: string): void
+}
+```
+
+### WindowManager
+
+管理窗口和 Host：
+
+```typescript
+class WindowManager {
+  createHost(type: 'launcher' | 'floating'): Host
+  disposeHost(hostId: string): void
+  switchHost(runtimeId: string, targetHostId: string): void
+}
+```
+
+## 生命周期
+
+### Runtime 生命周期
+
+```
+Created → Activated → Attached → Detached → Attached → Suspended → Destroyed
+```
+
+| 状态 | 说明 |
+|---|---|
+| Created | Runtime 已创建，WebContents 初始化完毕 |
+| Activated | 插件代码开始执行 |
+| Attached | 当前挂载到了某个 Host（可见） |
+| Detached | 从 Host 移除了，但 Runtime 仍在运行 |
+| Suspended | Runtime 保留在内存，WebContents 不销毁 |
+| Destroyed | 销毁释放所有资源 |
+
+注意：**Attached 表示"当前挂载到了某个 Host"，不是"插件正在运行"**。插件从 Created 后就一直在运行。
+
+### Host 生命周期
+
+```
+Host Created → Attach Runtime → Running → Detach Runtime → Dispose Host
+```
+
+Dispose 的只是 Host，不是 Runtime。Runtime 可以切换 Host 继续运行。
+
+### 完整流程
+
+```
+安装 → Load → Register → Waiting → Activate → Attach Host → Running
+                                                                    │
+                                              ┌─────────────────────┤
+                                              │                     │
+                                          Suspend              Detach
+                                              │                     │
+                                          Resume           Attach New Host
+                                              │                     │
+                                          Running              Running
+                                              │
+                                          Destroy
+                                              │
+                                          Uninstall
+```
+
+## 单例 vs 多实例
+
+插件在 `plugin.json` 中声明 `singleton`：
+
+| singleton | 行为 |
+|---|---|
+| `true`（默认） | 整个应用只允许一个 Runtime。再次激活复用已有的。分离时移动，不重建。 |
+| `false` | 允许创建多个 Runtime。每次激活创建新实例。互不影响。 |
+
+### 单例示例（AI Chat）
+
+```
+Launcher → Runtime#1 → 分离 → Runtime#1 移动到 Floating → 返回 → Runtime#1 回到 Launcher
+```
+
+WebContents 始终不变。聊天记录、AI Session、滚动位置全部保留。
+
+### 多实例示例（Browser）
+
+```
+Launcher → Runtime#1 (Browser#1)
+Launcher → Runtime#2 (Browser#2)
+Floating  → Runtime#3 (Browser#3)
+```
+
+每个 Runtime 独立状态，互不影响。
+
+## Launcher 窗口规格
 
 | 属性 | 值 |
 |---|---|
@@ -37,31 +190,20 @@
 | 定位 | 鼠标所在屏幕 1/3 高度，水平居中 |
 | 装饰 | `frame: false` + `transparent: true`，圆角 + 毛玻璃 |
 
-## 插件生命周期
+## Host 切换流程（Launcher → Floating）
 
 ```
-安装 → 注册 → 等待 → 激活 → 运行 → 休眠
-                         ↑         ↓
-                         └─────────┘
-                         
-卸载 → 结束
+1. 用户点击"分离"
+2. 渲染进程 invoke 'plugin:detach'
+3. WindowManager.createHost('floating') → 创建新 BrowserWindow
+4. RuntimeManager.detach(runtimeId)      → 从 LauncherHost 移除 WebContentsView
+5. WindowManager 将 WebContentsView 添加到新窗口
+6. RuntimeManager.attach(runtimeId, floatingHostId)
+7. 主窗口回到搜索态
+8. 插件收到 onPluginDetach()
 ```
 
-| 阶段 | 说明 |
-|---|---|
-| 安装 | 放入 `plugins/` 或从商店下载 |
-| 注册 | 读取 `plugin.json` → 校验 → 注册关键词 → 建立搜索索引 |
-| 等待 | 已注册，可被搜索命中，无视图无资源 |
-| 激活 | 用户搜索命中关键词 → 创建/复用 `WebContentsView` |
-| 运行 | 搜索/UI/调系统 API，可分离到独立窗口 |
-| 休眠 | 用户离开，运行时保留（可配置超时销毁） |
-| 卸载 | 删除目录 → 清理关键词 → 销毁运行时 |
-
-**关键原则**:
-- 不分 `tab`/`detached`——激活就是运行，分离只是 WebContentsView 移到另一个窗口，插件的状态不变。
-- 休眠后再次激活 = 从休眠恢复，不是重新创建。
-- 容器使用 `WebContentsView`（不是 `<webview>` tag 或已废弃的 `BrowserView`）。
-- 预热池默认最多保留 3 个休眠插件，LRU 回收，TTL 10 分钟。
+整个过程 WebContents 不重建，插件 React/Solid 状态、AI Session、输入框内容全部保留。
 
 ## 性能预算
 
@@ -69,10 +211,9 @@
 |---|---|
 | Alt+Space 到输入框可输入 | p95 < 80ms |
 | 输入到首批结果渲染 | p95 < 30ms（内存）/ < 120ms（文件） |
-| 插件冷启动到 Tab 态 | p95 < 300ms |
-| 预热插件到 Tab 态 | p95 < 80ms |
-| 休眠插件数 | 不创建 WebContentsView |
-| 预热池 | 默认最多 3 个 |
+| 冷启动 Runtime | p95 < 300ms |
+| 切换 Host | p95 < 80ms（不重建 WebContents） |
+| Runtime 预热池 | 默认最多 3 个，LRU 回收，TTL 10 分钟 |
 
 ## 适配器模式
 
