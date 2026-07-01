@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Example Plugin</title>
+</head>
+<body>
+    <h1>示例插件</h1>
+    <p id="content">等待搜索...</p>
+    <script>
+        window.utools?.onPluginEnter?.(({ code, type, payload, from }) => {
+            document.getElementById('content').textContent = `进入: ${code}`
+        })
+    </script>
+</body>
+</html>

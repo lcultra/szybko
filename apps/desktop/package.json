@@ -1,6 +1,5 @@
 {
     "name": "@szybko/desktop",
-    "type": "module",
     "version": "0.1.0",
     "private": true,
     "main": "dist/main.js",
@@ -18,7 +17,7 @@
     "devDependencies": {
         "@types/node": "^26.0",
         "concurrently": "^10.0",
-        "electron": "^43.0",
+        "electron": "^33.0",
         "electron-builder": "^26.0",
         "typescript": "^6.0"
     }

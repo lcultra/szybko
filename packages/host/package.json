@@ -1,5 +1,6 @@
 {
-    "name": "@szybko/shared",
+    "name": "@szybko/host",
+    "type": "module",
     "version": "0.1.0",
     "private": true,
     "main": "./src/index.ts",
@@ -9,6 +10,10 @@
     },
     "scripts": {
         "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@szybko/shared": "workspace:*",
+        "electron": "^33.0"
     },
     "devDependencies": {
         "typescript": "^6.0"

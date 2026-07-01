@@ -1,0 +1,16 @@
+{
+    "main": "index.html",
+    "logo": "icon.png",
+    "preload": "preload.js",
+    "pluginSetting": {
+        "single": true,
+        "height": 400
+    },
+    "features": [
+        {
+            "code": "hello",
+            "explain": "示例插件",
+            "cmds": ["hello", "你好"]
+        }
+    ]
+}

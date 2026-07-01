@@ -1,1 +1,8 @@
 export { default as App } from './App.js'
+export { WindowFrame } from './components/WindowFrame.js'
+export { SearchBar } from './components/SearchBar.js'
+export { ResultList } from './components/ResultList.js'
+export { ResultItem } from './components/ResultItem.js'
+export { useSearch } from './hooks/useSearch.js'
+export { useKeyboard } from './hooks/useKeyboard.js'
+export { useWindowHeight } from './hooks/useWindowHeight.js'

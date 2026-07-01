@@ -1,24 +1,32 @@
 import antfu from '@antfu/eslint-config';
+import tailwindcss from 'eslint-plugin-tailwindcss';
 
-export default antfu({
-    formatters: true,
-    react: true,
-    markdown: true,
-    stylistic: {
-        indent: 4,
-        semi: true,
+export default antfu(
+    {
+        formatters: true,
+        react: true,
+        markdown: true,
+        typescript: true,
+        stylistic: {
+            indent: 4,
+            semi: true,
+        },
+        yaml: {
+            overrides: {
+                'yaml/indent': ['error', 2],
+            },
+        },
+        ignores: [
+            'node_modules',
+            '.claude',
+        ],
     },
-    yaml: {
-        overrides: {
-            stylistic: {
-                indent: 2,
+    {
+        extends: [tailwindcss.configs.recommended],
+        settings: {
+            tailwindcss: {
+                cssConfigPath: '/Users/pengcheng17/Documents/workspace/ai/szybko/packages/design-system/src/index.css',
             },
         },
     },
-    ignores: [
-        'node_modules',
-        '.comate',
-        '.claude',
-        '.agents',
-    ],
-});
+);

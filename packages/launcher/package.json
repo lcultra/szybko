@@ -9,10 +9,11 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@szybko/shared": "workspace:*",
         "@szybko/design-system": "workspace:*",
+        "@szybko/shared": "workspace:*",
         "react": "^19.0",
-        "react-dom": "^19.0"
+        "react-dom": "^19.0",
+        "zustand": "^5.0"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0",

@@ -1,5 +1,6 @@
 {
-    "name": "@szybko/shared",
+    "name": "@szybko/plugin-sdk",
+    "type": "module",
     "version": "0.1.0",
     "private": true,
     "main": "./src/index.ts",
@@ -9,6 +10,9 @@
     },
     "scripts": {
         "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@szybko/shared": "workspace:*"
     },
     "devDependencies": {
         "typescript": "^6.0"
