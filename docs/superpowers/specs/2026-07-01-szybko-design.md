@@ -26,7 +26,9 @@ Szybko（波兰语"快速"之意）是一个跨平台桌面生产力启动器，
 | 宿主框架 | Electron | 跨平台桌面应用容器 |
 | 系统核心 | Rust (napi-rs) | 编译为 `.node` 原生模块，处理性能敏感的系统调用 |
 | 前端 UI | React + Tailwind CSS v4 | 搜索框、内置插件、插件 UI |
-| 设计系统 | `@szybko/design-system` | 公共 Token + 基础组件，所有前端模块共享 |
+| 设计系统 | `@szybko/design-system` | 公共 Token + 图标库 + 无头 UI 组件 + 业务组件，所有前端模块共享 |
+| 图标库 | lucide-react | 统一图标风格，避免手动维护 SVG |
+| 无头 UI | @radix-ui/react-* | Popover、Dialog、Tabs 等无障碍原语，供 design-system 包装 |
 | 项目组织 | Monorepo (pnpm workspace) | 统一管理所有包，共享配置 |
 | 构建工具 | Turborepo (可选) | 加速 monorepo 构建 |
 | 打包 | electron-builder | 应用分发与自动更新 |
@@ -744,16 +746,18 @@ szybko/
 │   │   │   └── config.ts         # 应用配置
 │   │   └── tsconfig.json
 │   │
-│   ├── design-system/       # 设计系统 (Token + 基础组件)
-│   │   ├── package.json
+│   ├── design-system/       # 设计系统 (Token + 图标 + 组件)
+│   │   ├── package.json     # 依赖: lucide-react, @radix-ui/react-*
 │   │   ├── src/
 │   │   │   ├── tokens/
 │   │   │   │   ├── colors.css      # 浅色/深色调色板
 │   │   │   │   ├── typography.css  # 字阶 (Inter + PingFang SC)
 │   │   │   │   ├── spacing.css     # 间距尺度
 │   │   │   │   └── index.ts        # Tailwind v4 preset
+│   │   │   ├── icons/
+│   │   │   │   └── index.ts        # re-export lucide-react 图标
 │   │   │   └── components/
-│   │   │       ├── Button.tsx
+│   │   │       ├── Button.tsx      # 基于 Radix + 设计 Token
 │   │   │       ├── Input.tsx
 │   │   │       ├── Switch.tsx
 │   │   │       ├── Tabs.tsx
