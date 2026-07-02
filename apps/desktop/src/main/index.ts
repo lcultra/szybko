@@ -16,7 +16,7 @@ void app.whenReady().then(async () => {
     await pluginManager.init();
 
     const preloadPath = join(__dirname, '../preload/host.js');
-    const pluginPreloadPath = join(__dirname, '../preload/sandbox.js');
+    const pluginPreloadPath = join(__dirname, '../preload/plugin.js');
     const runtimeManager = new RuntimeManager(pluginManager, windowManager, pluginPreloadPath);
     await runtimeManager.startAll();
 

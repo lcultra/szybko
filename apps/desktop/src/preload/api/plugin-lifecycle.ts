@@ -1,3 +1,4 @@
+import type { PluginSearchContext, SearchResult } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
 import { ipcRenderer } from 'electron';
 import { on } from './ipc.js';
@@ -5,7 +6,7 @@ import { on } from './ipc.js';
 /**
  * 插件生命周期事件。
  * 宿主 → 插件 的通信协议：运行时状态变化、搜索请求、进入插件模式。
- * sandbox preload 全量使用，host preload 只使用 onRuntimeStateChanged。
+ * plugin preload 全量使用，host preload 只使用 onRuntimeStateChanged。
  */
 export function createPluginLifecycleApi() {
     return {
@@ -20,8 +21,8 @@ export function createPluginLifecycleApi() {
          * 这个回调需要同步返回 SearchResult[]，因为 ipcRenderer.send
          * 是异步非阻塞的，但 Electron 的 IPC 通道保证顺序。
          */
-        onSearch: (cb: (ctx: any) => any[]) => {
-            const handler = (_: any, ctx: any) => {
+        onSearch: (cb: (ctx: PluginSearchContext) => SearchResult[]) => {
+            const handler = (_: unknown, ctx: PluginSearchContext) => {
                 const results = cb(ctx);
                 ipcRenderer.send(IPC.PLUGIN_SEARCH_RESULT, {
                     queryId: ctx.queryId,

@@ -23,7 +23,7 @@ export default defineConfig({
             rollupOptions: {
                 input: {
                     host: 'src/preload/host.ts',
-                    sandbox: 'src/preload/sandbox.ts',
+                    plugin: 'src/preload/plugin.ts',
                 },
                 external: ['electron'],
                 output: {

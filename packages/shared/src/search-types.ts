@@ -12,6 +12,13 @@ export interface SearchBatch {
     isFinal: boolean;
 }
 
+export interface PluginSearchContext {
+    queryId: string;
+    keyword: string;
+    query: string;
+    fullQuery: string;
+}
+
 export interface SearchResult {
     id: string;
     title: string;

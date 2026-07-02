@@ -1,4 +1,4 @@
-import type { ActionDescriptor, SearchBatch, SearchRequest, SearchResult } from './search-types.js';
+import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest, SearchResult } from './search-types.js';
 
 // ── Plugin-facing API (exposed via window.szybko / window.utools) ─
 
@@ -6,7 +6,7 @@ export interface SzybkoPluginApi {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;
     switchHost: (pluginId: string, targetHost: 'launcher' | 'floating') => Promise<{ ok: boolean; hostId: string }>;
     onRuntimeStateChanged: (cb: (state: unknown) => void) => () => void;
-    onSearch: (cb: (ctx: unknown) => SearchResult[]) => () => void;
+    onSearch: (cb: (ctx: PluginSearchContext) => SearchResult[]) => () => void;
     onPluginEnter: (cb: (payload: unknown) => void) => () => void;
 }
 
