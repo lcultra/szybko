@@ -36,6 +36,7 @@ export class PluginManager {
             console.log(`[PluginManager]  checking ${dir.name}/dist/...`);
             const loaded = this.loader.loadOne(distPath);
             if (loaded) {
+                loaded.id = dir.name; // loadOne 取的 ID 是路径最后段 'dist'，用目录名覆写
                 console.log(`[PluginManager]  loaded plugin: ${dir.name}`);
                 this.plugins.set(dir.name, loaded);
                 const has = this.registry.has(dir.name);
@@ -49,7 +50,8 @@ export class PluginManager {
                         path: distPath,
                     });
                     console.log(`[PluginManager]  registered, listEnabled now: ${JSON.stringify(this.registry.listEnabled())}`);
-                } else if (!this.registry.isEnabled(dir.name)) {
+                }
+                else if (!this.registry.isEnabled(dir.name)) {
                     console.log(`[PluginManager]  re-enabling ${dir.name}...`);
                     this.registry.setEnabled(dir.name, true);
                 }
