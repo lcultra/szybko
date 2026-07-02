@@ -5,5 +5,7 @@
     "development": {
         "main": "http://127.0.0.1:5173/index.html"
     },
-    "features": []
+    "features": [
+        { "code": "launcher", "explain": "启动器", "cmds": ["测试", "test"] }
+    ]
 }
