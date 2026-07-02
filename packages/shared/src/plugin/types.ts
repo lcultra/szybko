@@ -22,8 +22,6 @@ export interface PluginManifest {
     };
     /** 必填。核心指令集合，最小长度 1。 */
     features: PluginFeature[];
-    /** 选填。向 AI Agent 暴露的可调用工具集合。 */
-    tools?: Record<string, unknown>;
 }
 
 /**
