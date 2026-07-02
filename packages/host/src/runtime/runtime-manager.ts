@@ -62,7 +62,7 @@ export class RuntimeManager {
 
     sendPluginSearch(req: SearchRequest): void {
         for (const [, entry] of this.entries) {
-            if (entry.runtime.state === 'created' || entry.runtime.state === 'attached') {
+            if (entry.runtime.state === 'created' || entry.runtime.state === 'activated' || entry.runtime.state === 'attached') {
                 const ctx: PluginSearchContext = {
                     queryId: req.queryId,
                     keyword: req.query.split(/\s+/)[0] || '',
