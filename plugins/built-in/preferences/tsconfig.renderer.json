@@ -1,9 +1,10 @@
 {
     "extends": "../../../tsconfig.base.json",
     "compilerOptions": {
-        "types": ["node"],
+        "jsx": "react-jsx",
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "rootDir": "src",
         "outDir": "dist-types"
     },
-    "include": ["src"]
+    "include": ["src/renderer"]
 }
