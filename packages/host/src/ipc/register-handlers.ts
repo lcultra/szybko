@@ -25,8 +25,12 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.SEARCH_QUERY,
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
-            // Built-in search
+            // Built-in search + plugin feature match
             const results = runBuiltinSearch(req.query);
+            if (runtimeManager) {
+                results.push(...runtimeManager.matchPluginFeatures(req.query));
+            }
+            results.sort((a, b) => b.score - a.score);
             const win = windowManager.getWindow();
 
             if (results.length > 0 && win && !win.isDestroyed()) {
