@@ -34,6 +34,10 @@ export interface IpcInvokeContract {
         request: { runtimeId: string };
         response: { ok: boolean };
     };
+    [IPC.SHOW_PLUGIN_MENU]: {
+        request: { runtimeId: string; pluginId: string };
+        response: { ok: boolean };
+    };
 }
 
 export interface IpcMainToRendererEventContract {

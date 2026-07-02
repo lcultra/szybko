@@ -155,6 +155,34 @@ export function registerIpcHandlers(
             return { ok: true };
         },
     );
+
+    // ── Plugin native menu ──────────────────────────────────────
+
+    const { Menu } = require('electron') as typeof import('electron');
+
+    ipcMain.handle(
+        IPC.SHOW_PLUGIN_MENU,
+        (_event, { runtimeId }: IpcRequest<typeof IPC.SHOW_PLUGIN_MENU>): IpcResponse<typeof IPC.SHOW_PLUGIN_MENU> => {
+            const menu = Menu.buildFromTemplate([
+                {
+                    label: '分离为独立窗口',
+                    accelerator: 'CmdOrCtrl+D',
+                    click: () => {
+                        // TODO: 分离窗口实现
+                    },
+                },
+                { type: 'separator' },
+                {
+                    label: '结束运行',
+                    click: () => {
+                        runtimeManager?.destroyFromWindow(runtimeId);
+                    },
+                },
+            ]);
+            menu.popup();
+            return { ok: true };
+        },
+    );
 }
 
 // ── Push notifications ────────────────────────────────────────────
