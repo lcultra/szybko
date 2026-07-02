@@ -1,5 +1,6 @@
 export { default as App } from './App.js';
-export { PluginContainer } from './components/PluginContainer.js';
+export { PluginHeader } from './components/PluginHeader.js';
+export { PluginScene } from './components/PluginScene.js';
 export { ResultItem } from './components/ResultItem.js';
 export { ResultList } from './components/ResultList.js';
 export { SearchBar } from './components/SearchBar.js';

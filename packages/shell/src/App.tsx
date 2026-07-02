@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { PluginContainer } from './components/PluginContainer.js';
+import { PluginScene } from './components/PluginScene.js';
 import { ResultList } from './components/ResultList.js';
 import { SearchBar } from './components/SearchBar.js';
 import { WindowFrame } from './components/WindowFrame.js';
@@ -60,7 +60,7 @@ export default function App() {
                 <SearchBar value={query} onChange={setQuery} />
                 {state === 'plugin'
                     ? (
-                            <PluginContainer />
+                            <PluginScene />
                         )
                     : (
                             <ResultList
