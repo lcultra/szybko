@@ -58,19 +58,21 @@ export default function App() {
         <div ref={rootRef}>
             <WindowFrame>
                 <SearchBar value={query} onChange={setQuery} />
-                {state === 'plugin' ? (
-                    <PluginContainer />
-                ) : (
-                    <ResultList
-                        results={results}
-                        selectedIndex={selectedIndex}
-                        onSelect={setSelectedIndex}
-                        onExecute={(i) => {
-                            if (results[i])
-                                window.szybko?.execute(results[i].action);
-                        }}
-                    />
-                )}
+                {state === 'plugin'
+                    ? (
+                            <PluginContainer />
+                        )
+                    : (
+                            <ResultList
+                                results={results}
+                                selectedIndex={selectedIndex}
+                                onSelect={setSelectedIndex}
+                                onExecute={(i) => {
+                                    if (results[i])
+                                        window.szybko?.execute(results[i].action);
+                                }}
+                            />
+                        )}
             </WindowFrame>
         </div>
     );

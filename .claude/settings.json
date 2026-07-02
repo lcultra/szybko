@@ -91,7 +91,12 @@
       "Bash(awk -F':' '{print $1}')",
       "Bash(git commit -m 'chore: cleanup tsbuildinfo artifacts, update docs and IPC types *)",
       "Bash(git commit -m 'chore: add plugin workspace, update electron-vite to beta, update docs *)",
-      "Bash(git commit -m 'refactor: rename sandbox to plugin, add PluginSearchContext types *)"
+      "Bash(git commit -m 'refactor: rename sandbox to plugin, add PluginSearchContext types *)",
+      "Bash(tsconfig.node.json)",
+      "Bash(tsconfig.web.json)",
+      "Bash(tsconfig.base.json)",
+      "Bash(types: [\"node\"])",
+      "Bash(packages/shell/src/vite-env.d.ts)"
     ],
     "additionalDirectories": [
       "/Users/pengcheng17/Documents/workspace/ai/szybko/packages/shared",
