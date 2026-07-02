@@ -2,8 +2,7 @@
     "main": "index.html",
     "preload": "preload.js",
     "pluginSetting": { "single": true, "height": 520 },
-    "development": {
-        "main": "http://127.0.0.1:5173/index.html"
-    },
-    "features": []
+    "features": [
+        { "code": "prefs", "explain": "首选项", "cmds": ["设置", "preferences", "prefs"], "icon": "⚙️" }
+    ]
 }
