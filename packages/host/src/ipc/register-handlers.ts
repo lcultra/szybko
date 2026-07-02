@@ -141,8 +141,8 @@ export function registerIpcHandlers(
     // ── Plugin detach ────────────────────────────────────────────
 
     ipcMain.handle(
-        IPC.RUNTIME_DETACH,
-        (_event, { runtimeId }: IpcRequest<typeof IPC.RUNTIME_DETACH>): IpcResponse<typeof IPC.RUNTIME_DETACH> => {
+        IPC.PLUGIN_CLOSE,
+        (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_CLOSE>): IpcResponse<typeof IPC.PLUGIN_CLOSE> => {
             runtimeManager?.detachFromWindow(runtimeId);
             return { ok: true };
         },
