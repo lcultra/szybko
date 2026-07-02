@@ -14,7 +14,10 @@ export class PluginManager {
     private loader = new PluginLoader();
     private plugins: Map<string, PluginInfo> = new Map();
 
-    constructor(private registry: PluginRegistry) {}
+    constructor(
+        private registry: PluginRegistry,
+        private pluginsBaseDir?: string,
+    ) {}
 
     async init(): Promise<void> {
         await this.registry.init();
@@ -23,7 +26,7 @@ export class PluginManager {
 
     scan() {
         this.plugins.clear();
-        const root = process.cwd();
+        const root = this.pluginsBaseDir ?? process.cwd();
 
         // Scan built-in plugins
         const builtInDir = join(root, 'plugins', 'built-in');
