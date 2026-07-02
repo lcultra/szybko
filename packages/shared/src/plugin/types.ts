@@ -6,6 +6,9 @@ export interface PluginManifest {
         single?: boolean;
         height?: number;
     };
+    development?: {
+        main?: string;
+    };
     features: PluginFeature[];
 }
 

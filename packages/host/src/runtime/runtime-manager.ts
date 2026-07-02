@@ -3,7 +3,7 @@ import type { PluginManager } from '../plugins/plugin-manager.js';
 import type { WindowManager } from '../window/window-manager.js';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
-import { WebContentsView } from 'electron';
+import { app, WebContentsView } from 'electron';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
@@ -50,13 +50,17 @@ export class RuntimeManager {
 
         this.entries.set(runtime.id, { runtime, view });
 
-        const indexPath = join(plugin.path, plugin.manifest.main);
-
         view.webContents.on('did-finish-load', () => {
             runtime.state = 'activated';
         });
 
-        view.webContents.loadFile(indexPath);
+        const devUrl = !app.isPackaged && plugin.manifest.development?.main;
+        if (devUrl) {
+            view.webContents.loadURL(devUrl);
+        } else {
+            const indexPath = join(plugin.path, plugin.manifest.main);
+            view.webContents.loadFile(indexPath);
+        }
         return runtime;
     }
 
