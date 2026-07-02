@@ -117,7 +117,7 @@ export function registerIpcHandlers(
                 if (!runtime) {
                     return { ok: false, error: `Plugin "${action.payload.pluginId}" not found` };
                 }
-                runtimeManager.attachToWindow(runtime.id);
+                runtimeManager.attachToWindow(runtime.id, action.payload.featureCode);
                 return { ok: true };
             }
             return executeAction(action);

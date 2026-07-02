@@ -97,29 +97,15 @@ export class RuntimeManager {
                     // TODO: 后续支持 MatchCommand 类型（regex / over / files 等）
                 });
                 if (match) {
-                    if (feature.action) {
-                        // 静态指令：feature 有直接动作，返回该动作的结果
-                        results.push({
-                            id: `plugin-cmd-${plugin.id}-${feature.code}`,
-                            title: feature.explain || feature.code,
-                            subtitle: '',
-                            icon: feature.icon || '🧩',
-                            group: plugin.id,
-                            score: 90,
-                            action: feature.action,
-                        });
-                    } else {
-                        // 无直接动作：返回"打开插件"激活结果
-                        results.push({
-                            id: `plugin-activate-${plugin.id}-${feature.code}`,
-                            title: feature.explain || feature.code,
-                            subtitle: `打开 ${plugin.id}`,
-                            icon: '🧩',
-                            group: '插件',
-                            score: 90,
-                            action: { type: 'plugin.open', payload: { pluginId: plugin.id, url: '' } },
-                        });
-                    }
+                    results.push({
+                        id: `plugin-activate-${plugin.id}-${feature.code}`,
+                        title: feature.explain || feature.code,
+                        subtitle: `打开 ${plugin.id}`,
+                        icon: feature.icon || '🧩',
+                        group: '插件',
+                        score: 90,
+                        action: { type: 'plugin.open', payload: { pluginId: plugin.id, featureCode: feature.code } },
+                    });
                 }
             }
         }
@@ -129,7 +115,7 @@ export class RuntimeManager {
     // ── Activation / Deactivation ───────────────────────────
 
     /** 激活插件：挂载 view 到窗口，通知 Launcher 和插件自身 */
-    attachToWindow(runtimeId: string): void {
+    attachToWindow(runtimeId: string, featureCode?: string): void {
         const entry = this.entries.get(runtimeId);
         if (!entry) {
             console.warn(`[RuntimeManager] attachToWindow: runtime ${runtimeId} not found`);
@@ -149,8 +135,11 @@ export class RuntimeManager {
             });
         }
 
-        // 通知插件进入
-        entry.view.webContents.send(IPC.PLUGIN_ENTER, { pluginId: entry.runtime.pluginId });
+        // 通知插件进入，携带 featureCode
+        entry.view.webContents.send(IPC.PLUGIN_ENTER, {
+            pluginId: entry.runtime.pluginId,
+            featureCode,
+        });
     }
 
     /** 分离插件：从窗口移除 view，保留 Runtime 状态 */

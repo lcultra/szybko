@@ -1,5 +1,30 @@
 <!doctype html>
 <html lang="zh-CN">
     <head><meta charset="UTF-8" /><title>Launcher</title></head>
-    <body></body>
+    <body>
+        <script>
+            window.szybko?.onPluginEnter?.((payload) => {
+                const feature = payload?.featureCode;
+
+                const actions = {
+                    lock: () => {
+                        // macOS 锁屏
+                        window.szybko?.execute({ type: 'shell.openPath', payload: { path: '/System/Library/CoreServices/ScreenSaverEngine.app' } });
+                    },
+                    sleep: () => {
+                        window.szybko?.execute({ type: 'shell.openPath', payload: { path: '/System/Library/CoreServices/Menu Extras/Sleep.menu' } });
+                    },
+                    restart: () => {
+                        window.szybko?.execute({ type: 'shell.openUrl', payload: { url: 'restart:' } });
+                    },
+                    shutdown: () => {
+                        window.szybko?.execute({ type: 'shell.openUrl', payload: { url: 'shutdown:' } });
+                    },
+                };
+
+                const fn = actions[feature];
+                if (fn) fn();
+            });
+        </script>
+    </body>
 </html>
