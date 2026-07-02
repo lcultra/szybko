@@ -2,23 +2,20 @@
     "name": "@szybko/desktop",
     "version": "0.1.0",
     "private": true,
-    "main": "dist/main.js",
+    "main": "./out/main/index.js",
     "scripts": {
-        "dev:renderer": "pnpm --filter @szybko/launcher dev",
-        "dev:main": "tsc && NODE_ENV=development electron .",
-        "dev": "concurrently \"pnpm dev:renderer\" \"sleep 3 && pnpm dev:main\"",
-        "build:renderer": "pnpm --filter @szybko/launcher build",
-        "build:main": "tsc && cp -r ../packages/launcher/dist dist/renderer",
-        "build": "pnpm build:renderer && pnpm build:main"
+        "dev": "electron-vite dev",
+        "build": "electron-vite build",
+        "preview": "electron-vite preview",
+        "postinstall": "electron-builder install-app-deps"
     },
     "dependencies": {
         "@szybko/shared": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^26.0",
-        "concurrently": "^10.0",
         "electron": "^43.0",
         "electron-builder": "^26.0",
-        "typescript": "^6.0"
+        "electron-vite": "^5.0.0"
     }
 }
