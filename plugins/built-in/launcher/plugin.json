@@ -2,9 +2,6 @@
     "main": "index.html",
     "preload": "preload.js",
     "pluginSetting": { "single": true },
-    "development": {
-        "main": "http://127.0.0.1:5173/index.html"
-    },
     "features": [
         { "code": "launcher", "explain": "启动器", "cmds": ["测试", "test"] }
     ]
