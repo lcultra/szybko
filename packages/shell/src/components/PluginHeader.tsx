@@ -5,13 +5,17 @@ import { useAppStore } from '../stores/app-store.js';
 export function PluginHeader() {
     const pluginName = useAppStore(s => s.activePluginName);
     const featureExplain = useAppStore(s => s.activeFeatureExplain);
+    const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
     const clearActivePlugin = useAppStore(s => s.setActivePlugin);
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     const handleClose = useCallback(() => {
+        if (activeRuntimeId) {
+            window.szybkoInternal?.detachPlugin(activeRuntimeId);
+        }
         clearActivePlugin(null);
-    }, [clearActivePlugin]);
+    }, [activeRuntimeId, clearActivePlugin]);
 
     return (
         <header className="flex h-[68px] shrink-0 items-center gap-2 border-b border-border px-3">

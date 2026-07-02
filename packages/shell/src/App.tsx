@@ -13,6 +13,7 @@ import './app.css';
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
     const state = useAppStore(s => s.state);
+    const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
     const setActivePlugin = useAppStore(s => s.setActivePlugin);
     const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
 
@@ -22,7 +23,7 @@ export default function App() {
     useEffect(() => {
         const cleanup = window.szybko?.onRuntimeStateChanged?.((payload: any) => {
             if (payload?.state === 'attached') {
-                setActivePlugin(payload.pluginId, payload.pluginName, payload.featureExplain);
+                setActivePlugin(payload.pluginId, payload.runtimeId, payload.pluginName, payload.featureExplain);
             }
             else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
                 setActivePlugin(null);
@@ -43,6 +44,9 @@ export default function App() {
         },
         onEscape: () => {
             if (state === 'plugin') {
+                if (activeRuntimeId) {
+                    window.szybkoInternal?.detachPlugin(activeRuntimeId);
+                }
                 setActivePlugin(null);
             }
             else if (query) {

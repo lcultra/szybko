@@ -137,6 +137,16 @@ export function registerIpcHandlers(
             }
         },
     );
+
+    // ── Plugin detach ────────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.RUNTIME_DETACH,
+        (_event, { runtimeId }: IpcRequest<typeof IPC.RUNTIME_DETACH>): IpcResponse<typeof IPC.RUNTIME_DETACH> => {
+            runtimeManager?.detachFromWindow(runtimeId);
+            return { ok: true };
+        },
+    );
 }
 
 // ── Push notifications ────────────────────────────────────────────

@@ -26,6 +26,10 @@ export interface IpcInvokeContract {
         request: { pluginId: string; targetHost: 'launcher' | 'floating' };
         response: { ok: boolean; hostId?: string; error?: string };
     };
+    [IPC.RUNTIME_DETACH]: {
+        request: { runtimeId: string };
+        response: { ok: boolean };
+    };
 }
 
 export interface IpcMainToRendererEventContract {
