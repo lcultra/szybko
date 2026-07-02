@@ -1,5 +1,18 @@
 <!doctype html>
 <html lang="zh-CN">
     <head><meta charset="UTF-8" /><title>Launcher</title></head>
-    <body></body>
+    <body>
+        <script>
+            window.szybko?.onSearch?.((ctx) => {
+                return [{
+                    id: 'launcher-test',
+                    title: `插件测试: ${ctx.query}`,
+                    subtitle: '来自启动器插件',
+                    icon: '🧪',
+                    score: 40,
+                    action: { type: 'clipboard.writeText', payload: { text: ctx.query } },
+                }];
+            });
+        </script>
+    </body>
 </html>

@@ -3,6 +3,6 @@
     "preload": "preload.js",
     "pluginSetting": { "single": true },
     "features": [
-        { "code": "launcher", "explain": "启动器", "cmds": ["测试", "test"] }
+        { "code": "launcher", "explain": "启动器", "cmds": ["测试", "test", "启动器", "launcher"] }
     ]
 }
