@@ -4,9 +4,11 @@
     "private": true,
     "packageManager": "pnpm@10.34.3",
     "scripts": {
-        "dev": "pnpm build:plugins && pnpm --parallel --filter @szybko/desktop --filter './plugins/**' dev",
+        "dev": "pnpm build:plugins && concurrently -n 🖥️,🧩 -c cyan,green \"pnpm run dev:desktop\" \"pnpm run dev:plugins\"",
         "build": "pnpm build:plugins && pnpm -r build",
         "build:plugins": "pnpm --filter './plugins/**' build",
+        "dev:desktop": "pnpm --filter @szybko/desktop dev",
+        "dev:plugins": "pnpm --filter './plugins/**' dev",
         "typecheck": "pnpm -r run typecheck",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix"
@@ -16,6 +18,7 @@
         "@eslint-react/eslint-plugin": "^5.9",
         "@tailwindcss/vite": "^4.3.2",
         "@vitejs/plugin-react": "^6.0.3",
+        "concurrently": "^10.0.3",
         "eslint": "^10.0",
         "eslint-plugin-format": "^2.0",
         "eslint-plugin-react-refresh": "^0.5",
