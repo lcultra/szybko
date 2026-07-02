@@ -5,7 +5,7 @@ import { invoke, on } from './ipc.js';
 /**
  * 窗口控制 API。
  */
-export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'hidePlugin' | 'onShowMainWindow'> {
+export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'hidePlugin' | 'destroyPlugin' | 'onShowMainWindow'> {
     return {
         resizeWindow: height => invoke(IPC.WINDOW_RESIZE)({ height }),
         hideWindow: () => invoke(IPC.WINDOW_HIDE)(undefined),
