@@ -1,6 +1,7 @@
 import type { Host } from '@szybko/shared';
+import type { WebContentsView } from 'electron';
 import { DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
-import { BrowserWindow, type WebContentsView, screen } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 
 import { FloatingHost } from './hosts/floating-host.js';
 import { LauncherHost } from './hosts/launcher-host.js';
@@ -83,7 +84,8 @@ export class WindowManager {
 
     /** 将插件 View 定位到搜索栏下方的区域 */
     private updatePluginBounds(): void {
-        if (!this.pluginView || !this.window) return;
+        if (!this.pluginView || !this.window)
+            return;
         const [, height] = this.window.getSize();
         this.pluginView.setBounds({
             x: 0,

@@ -14,7 +14,9 @@
         "@szybko/design-system": "workspace:*",
         "@szybko/host": "workspace:*",
         "@szybko/launcher": "workspace:*",
-        "@szybko/shared": "workspace:*"
+        "@szybko/shared": "workspace:*",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7"
     },
     "devDependencies": {
         "@types/node": "^26.0",
