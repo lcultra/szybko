@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "vite build --config vite.preload.config.ts --watch",
-        "build": "vite build --config vite.preload.config.ts && cp plugin.json dist/ && printf '<!doctype html><html lang=\"zh-CN\"><meta charset=\"UTF-8\"><title>Launcher</title><body>' > dist/index.html",
+        "build": "vite build --config vite.preload.config.ts && cp index.html plugin.json dist/",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
