@@ -1,15 +1,21 @@
-import type { SearchResult } from '@szybko/shared'
-import { ResultItem } from './ResultItem.js'
+import type { SearchResult } from '@szybko/shared';
+import { ResultItem } from './ResultItem.js';
 
 interface ResultListProps {
-    results: SearchResult[]
-    selectedIndex: number
-    onSelect: (index: number) => void
-    onExecute: (index: number) => void
+    results: SearchResult[];
+    selectedIndex: number;
+    onSelect: (index: number) => void;
+    onExecute: (index: number) => void;
 }
 
-export function ResultList({ results, selectedIndex, onSelect, onExecute }: ResultListProps) {
-    if (results.length === 0) return null
+export function ResultList({
+    results,
+    selectedIndex,
+    onSelect,
+    onExecute,
+}: ResultListProps) {
+    if (results.length === 0)
+        return null;
 
     return (
         <div className="border-t border-border px-2 pb-2">
@@ -24,5 +30,5 @@ export function ResultList({ results, selectedIndex, onSelect, onExecute }: Resu
                 ))}
             </div>
         </div>
-    )
+    );
 }

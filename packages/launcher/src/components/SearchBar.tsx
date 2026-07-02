@@ -1,19 +1,21 @@
-import { useRef, useEffect } from 'react'
-import { Input } from '@szybko/design-system'
+import { Input } from '@szybko/design-system';
+import { useEffect, useRef } from 'react';
 
 interface SearchBarProps {
-    value: string
-    onChange: (value: string) => void
-    placeholder?: string
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
 }
 
 export function SearchBar({ value, onChange, placeholder = '搜索应用、命令、文件、插件...' }: SearchBarProps) {
-    const inputRef = useRef<HTMLInputElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => { inputRef.current?.focus() }, [])
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
 
     return (
-        <div className="flex items-center h-[68px] px-4">
+        <div className="flex h-[68px] items-center px-4">
             <Input
                 ref={inputRef}
                 value={value}
@@ -21,5 +23,5 @@ export function SearchBar({ value, onChange, placeholder = '搜索应用、命�
                 placeholder={placeholder}
             />
         </div>
-    )
+    );
 }

@@ -17,7 +17,9 @@ export default antfu(
             },
         },
         ignores: [
-            'node_modules',
+            '**/dist/**',
+            '**/out/**',
+            '**/node_modules**/',
             '.claude',
         ],
     },

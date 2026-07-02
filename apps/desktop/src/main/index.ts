@@ -2,7 +2,7 @@
 // This file will be replaced with: import { bootstrap } from '@szybko/host'
 // after Task D1 creates the host package.
 
-import path from 'node:path';
+import path, { join } from 'node:path';
 import process from 'node:process';
 import { app, BrowserWindow } from 'electron';
 
@@ -16,19 +16,18 @@ function createWindow() {
         transparent: true,
         resizable: false,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: join(__dirname, '../preload/index.js'),
             contextIsolation: true,
             nodeIntegration: false,
         },
     });
 
-    if (process.env.NODE_ENV === 'development') {
-        mainWindow.loadURL('http://localhost:5173');
+    if (process.env.ELECTRON_RENDERER_URL) {
+        mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
     }
     else {
         mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
-
     mainWindow.on('blur', () => mainWindow?.hide());
 }
 
