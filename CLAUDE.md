@@ -18,6 +18,8 @@
 - `pnpm build` — 构建 TS 包
 - `pnpm --filter @szybko/core-rust build` — 构建 Rust 核心
 
-## 已知问题
+## 工具链
 
-**pnpm + Electron 模块解析**: `require('electron')` 在 pnpm 的 symlink 结构下会解析到 npm 包的 `index.js`（返回路径字符串），而非 Electron 内置 API。标准解法是使用 `electron-vite` 或 `tsx` + esbuild 打包 main 进程。当前 desktop 的 `src/main.ts` 直接从 `electron` import，需要等工具链方案落地后才能运行。
+- **electron-vite** 负责 main + preload 的 esbuild 打包，renderer 指向 `packages/launcher`
+- `electron` 模块通过 esbuild 的 `external` 处理，避免 pnpm symlink 问题
+- 独立的 tsc 编译仅用于 typecheck
