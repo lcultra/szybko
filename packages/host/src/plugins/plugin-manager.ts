@@ -29,30 +29,21 @@ export class PluginManager {
             console.warn(`[PluginManager] plugins dir not found: ${this.pluginsBaseDir}`);
             return;
         }
-        const dirs = readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory());
-        console.log(`[PluginManager] scanning ${this.pluginsBaseDir}, found ${dirs.length} dirs`);
-        for (const dir of dirs) {
+        for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
             const distPath = join(this.pluginsBaseDir, dir.name, 'dist');
-            console.log(`[PluginManager]  checking ${dir.name}/dist/...`);
             const loaded = this.loader.loadOne(distPath);
             if (loaded) {
-                loaded.id = dir.name; // loadOne 取的 ID 是路径最后段 'dist'，用目录名覆写
-                console.log(`[PluginManager]  loaded plugin: ${dir.name}`);
+                loaded.id = dir.name;
                 this.plugins.set(dir.name, loaded);
-                const has = this.registry.has(dir.name);
-                console.log(`[PluginManager]  registry.has('${dir.name}')=${has}`);
-                if (!has) {
-                    console.log(`[PluginManager]  registering ${dir.name}...`);
+                if (!this.registry.has(dir.name)) {
                     this.registry.register(dir.name, {
                         source: 'built-in',
                         enabled: true,
                         installedAt: new Date().toISOString(),
                         path: distPath,
                     });
-                    console.log(`[PluginManager]  registered, listEnabled now: ${JSON.stringify(this.registry.listEnabled())}`);
                 }
                 else if (!this.registry.isEnabled(dir.name)) {
-                    console.log(`[PluginManager]  re-enabling ${dir.name}...`);
                     this.registry.setEnabled(dir.name, true);
                 }
             }
@@ -75,15 +66,8 @@ export class PluginManager {
     }
 
     getEnabled(): PluginInfo[] {
-        const enabled = this.registry.listEnabled();
-        const result = enabled
+        return this.registry.listEnabled()
             .map(id => this.plugins.get(id))
-            .filter((p): p is PluginInfo => {
-                if (!p)
-                    console.log(`[PluginManager] getEnabled: plugin ${p} not found in map`);
-                return !!p;
-            });
-        console.log(`[PluginManager] getEnabled: listEnabled=${JSON.stringify(enabled)}, this.plugins.size=${this.plugins.size}, result=${result.length}`);
-        return result;
+            .filter((p): p is PluginInfo => !!p);
     }
 }

@@ -90,10 +90,7 @@ export class RuntimeManager {
         if (!lower)
             return results;
 
-        const enabled = this.pluginManager.getEnabled();
-        console.log(`[RuntimeManager] matchPluginFeatures: query="${query}", enabled plugins=${enabled.length}`);
-        for (const plugin of enabled) {
-            console.log(`[RuntimeManager]  plugin: ${plugin.id}, features: ${plugin.manifest.features.length}`);
+        for (const plugin of this.pluginManager.getEnabled()) {
             for (const feature of plugin.manifest.features) {
                 const match = (feature.cmds || []).some((cmd) => {
                     if (typeof cmd === 'string')
@@ -162,11 +159,8 @@ export class RuntimeManager {
     getOrCreate(pluginId: string): PluginRuntime | null {
         const existing = Array.from(this.entries.values())
             .find(e => e.runtime.pluginId === pluginId);
-        if (existing) {
-            console.log(`[RuntimeManager] getOrCreate: found existing runtime ${existing.runtime.id} state=${existing.runtime.state}`);
+        if (existing)
             return existing.runtime;
-        }
-        console.log(`[RuntimeManager] getOrCreate: no existing runtime, creating new for ${pluginId}`);
         return this.create(pluginId);
     }
 }
