@@ -1,6 +1,6 @@
 import type { Host } from '@szybko/shared';
-import { DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
-import { BrowserWindow, screen } from 'electron';
+import { DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
+import { BrowserWindow, type WebContentsView, screen } from 'electron';
 
 import { FloatingHost } from './hosts/floating-host.js';
 import { LauncherHost } from './hosts/launcher-host.js';
@@ -8,6 +8,7 @@ import { LauncherHost } from './hosts/launcher-host.js';
 export class WindowManager {
     private window: BrowserWindow | null = null;
     private hosts: Map<string, Host> = new Map();
+    private pluginView: WebContentsView | null = null;
 
     createMainWindow(preloadPath: string): BrowserWindow {
         this.repositionToCursor();
@@ -42,6 +43,7 @@ export class WindowManager {
     resize(height: number) {
         const clamped = Math.min(Math.max(height, MIN_WINDOW_HEIGHT), MAX_WINDOW_HEIGHT);
         this.window?.setSize(DEFAULT_WINDOW_WIDTH, clamped);
+        this.updatePluginBounds();
     }
 
     hide() { this.window?.hide(); }
@@ -59,5 +61,35 @@ export class WindowManager {
         if (type === 'launcher')
             return new LauncherHost(`launcher-${Date.now()}`);
         return new FloatingHost(`floating-${Date.now()}`);
+    }
+
+    // ── Plugin WebContentsView management ──────────────────────────
+
+    /** 挂载插件 View 到主窗口搜索栏下方 */
+    attachPluginView(view: WebContentsView): void {
+        this.detachPluginView();
+        this.window?.contentView.addChildView(view);
+        this.pluginView = view;
+        this.updatePluginBounds();
+    }
+
+    /** 从主窗口移除插件 View（不销毁，保留 Runtime 状态） */
+    detachPluginView(): void {
+        if (this.pluginView && this.window && !this.window.isDestroyed()) {
+            this.window.contentView.removeChildView(this.pluginView);
+        }
+        this.pluginView = null;
+    }
+
+    /** 将插件 View 定位到搜索栏下方的区域 */
+    private updatePluginBounds(): void {
+        if (!this.pluginView || !this.window) return;
+        const [, height] = this.window.getSize();
+        this.pluginView.setBounds({
+            x: 0,
+            y: SEARCHBAR_HEIGHT,
+            width: DEFAULT_WINDOW_WIDTH,
+            height: Math.max(height - SEARCHBAR_HEIGHT, 0),
+        });
     }
 }
