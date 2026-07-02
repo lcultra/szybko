@@ -1,4 +1,4 @@
-import type { PluginManifest } from './plugin-types.js';
+import type { PluginManifest } from '../plugin/types.js';
 
 export interface Host {
     id: string;
