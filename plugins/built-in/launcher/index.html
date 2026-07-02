@@ -7,6 +7,9 @@
                 const feature = payload?.featureCode;
 
                 const actions = {
+                    test: () => {
+                        window.szybko?.execute({ type: 'clipboard.writeText', payload: { text: '插件测试成功 ✅' } });
+                    },
                     lock: () => {
                         // macOS 锁屏
                         window.szybko?.execute({ type: 'shell.openPath', payload: { path: '/System/Library/CoreServices/ScreenSaverEngine.app' } });
