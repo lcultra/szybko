@@ -10,7 +10,7 @@ export default defineConfig({
             fileName: () => 'preload.js',
         },
         minify: false,
-        emptyOutDir: true,
+        emptyOutDir: false,
         copyPublicDir: false,
     },
 });
