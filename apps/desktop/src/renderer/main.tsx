@@ -1,5 +1,5 @@
 import { initTheme } from '@szybko/design-system';
-import { App } from '@szybko/launcher';
+import { App } from '@szybko/shell';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 

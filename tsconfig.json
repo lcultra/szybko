@@ -2,7 +2,7 @@
     "references": [
         { "path": "./packages/shared" },
         { "path": "./packages/host" },
-        { "path": "./packages/launcher" },
+        { "path": "./packages/shell" },
         { "path": "./packages/design-system" },
         { "path": "./packages/plugin-sdk" },
         { "path": "./apps/desktop" },

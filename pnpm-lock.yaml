@@ -47,12 +47,12 @@ importers:
       '@szybko/host':
         specifier: workspace:*
         version: link:../../packages/host
-      '@szybko/launcher':
-        specifier: workspace:*
-        version: link:../../packages/launcher
       '@szybko/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@szybko/shell':
+        specifier: workspace:*
+        version: link:../../packages/shell
       react:
         specifier: ^19.2.7
         version: 19.2.7
@@ -123,7 +123,23 @@ importers:
         specifier: ^6.0
         version: 6.0.3
 
-  packages/launcher:
+  packages/plugin-sdk:
+    dependencies:
+      '@szybko/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^6.0
+        version: 6.0.3
+
+  packages/shared:
+    devDependencies:
+      typescript:
+        specifier: ^6.0
+        version: 6.0.3
+
+  packages/shell:
     dependencies:
       '@szybko/design-system':
         specifier: workspace:*
@@ -147,22 +163,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.0
         version: 19.2.3(@types/react@19.2.17)
-      typescript:
-        specifier: ^6.0
-        version: 6.0.3
-
-  packages/plugin-sdk:
-    dependencies:
-      '@szybko/shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      typescript:
-        specifier: ^6.0
-        version: 6.0.3
-
-  packages/shared:
-    devDependencies:
       typescript:
         specifier: ^6.0
         version: 6.0.3
