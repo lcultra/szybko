@@ -1,8 +1,9 @@
 {
     "extends": "../../../tsconfig.base.json",
     "compilerOptions": {
+        "jsx": "react-jsx",
         "rootDir": "src",
-        "outDir": "../../../apps/desktop/out/plugins/built-in/preferences"
+        "outDir": "dist-types"
     },
     "include": ["src"]
 }
