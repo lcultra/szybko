@@ -61,8 +61,8 @@ importers:
         specifier: ^26.0
         version: 26.15.3(electron-builder-squirrel-windows@26.15.3)
       electron-vite:
-        specifier: ^5.0.0
-        version: 5.0.0(vite@8.1.2(@types/node@26.1.0)(jiti@2.7.0)(yaml@2.9.0))
+        specifier: 6.0.0-beta.1
+        version: 6.0.0-beta.1(vite@8.1.2(@types/node@26.1.0)(jiti@2.7.0)(yaml@2.9.0))
       vite-plugin-rebundle:
         specifier: ^2.1.0
         version: 2.1.0(@types/node@26.1.0)(jiti@2.7.0)(yaml@2.9.0)
@@ -157,6 +157,8 @@ importers:
       typescript:
         specifier: ^6.0
         version: 6.0.3
+
+  plugins/example-plugin: {}
 
 packages:
 
@@ -1393,10 +1395,6 @@ packages:
     resolution: {integrity: sha512-U1Z/ob71V/bXfVABvNr/Kumf5VyeQRBEm6Txb0PQ6S7V5GpBM3w4Cbqz/xPDicR5tN0uvDifng8C+5qECeGwyQ==}
     engines: {node: '>=6.0.0'}
 
-  cac@6.7.14:
-    resolution: {integrity: sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==}
-    engines: {node: '>=8'}
-
   cac@7.0.0:
     resolution: {integrity: sha512-tixWYgm5ZoOD+3g6UTea91eow5z6AAHaho3g0V9CNSNb45gM8SmflpAc+GRd1InC4AqN/07Unrgp56Y94N9hJQ==}
     engines: {node: '>=20.19.0'}
@@ -1623,13 +1621,13 @@ packages:
   electron-to-chromium@1.5.383:
     resolution: {integrity: sha512-I2484/KkAvl8lm9VyjH2JnbOIV0d/UCqT7gbzs6l+o6Vmn9wgB66uVcKX+Vk6HrXtY6fbWTOEXuv8waDTuFNCw==}
 
-  electron-vite@5.0.0:
-    resolution: {integrity: sha512-OHp/vjdlubNlhNkPkL/+3JD34ii5ov7M0GpuXEVdQeqdQ3ulvVR7Dg/rNBLfS5XPIFwgoBLDf9sjjrL+CuDyRQ==}
+  electron-vite@6.0.0-beta.1:
+    resolution: {integrity: sha512-jltST77AwNxIeTTDtYhnIEA8ZM0RW9jmSJcqS8x/dQcgeeLlxlcJoYNNJ1tv7/Swor0AbXMYteBGdezoAOt+Nw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
       '@swc/core': ^1.0.0
-      vite: ^5.0.0 || ^6.0.0 || ^7.0.0
+      vite: ^6.0.0 || ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
       '@swc/core':
         optional: true
@@ -4593,8 +4591,6 @@ snapshots:
 
   bytestreamjs@2.0.1: {}
 
-  cac@6.7.14: {}
-
   cac@7.0.0: {}
 
   cacheable-lookup@5.0.4: {}
@@ -4822,11 +4818,11 @@ snapshots:
 
   electron-to-chromium@1.5.383: {}
 
-  electron-vite@5.0.0(vite@8.1.2(@types/node@26.1.0)(jiti@2.7.0)(yaml@2.9.0)):
+  electron-vite@6.0.0-beta.1(vite@8.1.2(@types/node@26.1.0)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
       '@babel/core': 7.29.7
       '@babel/plugin-transform-arrow-functions': 7.29.7(@babel/core@7.29.7)
-      cac: 6.7.14
+      cac: 7.0.0
       esbuild: 0.25.12
       magic-string: 0.30.21
       picocolors: 1.1.1

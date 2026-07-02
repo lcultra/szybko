@@ -9,7 +9,9 @@ szybko/
 ├── eslint.config.mjs         # @antfu/eslint-config flat config
 ├── tsconfig.base.json        # 共享 TS 配置
 ├── CLAUDE.md                 # AI 会话入口
-└── .editorconfig
+├── .editorconfig
+└── plugins/                  # 插件源码工作区，参与 pnpm workspace
+    └── example-plugin/       # 示例插件源码，不是运行时安装目录
 ```
 
 ## apps/
@@ -71,7 +73,10 @@ launcher      →  shared, design-system
 design-system →  lucide-react, @radix-ui/react
 shared        →  无运行时外部依赖
 core-rust     →  napi-rs (独立编译)
+plugins/*     →  插件源码包，可按插件自身技术栈定义脚本
 ```
+
+运行时安装的第三方插件不放在仓库根目录的 `plugins/` 下，建议放到应用数据目录，例如 `~/.szybko/plugins`。
 
 ## 拆分规则（超阈值时必须拆）
 

@@ -4,6 +4,7 @@ trustPolicy: no-downgrade
 packages:
   - 'apps/*'
   - 'packages/*'
+  # Plugin source packages used for development. Runtime-installed plugins live outside the repo.
   - 'plugins/*'
 
 onlyBuiltDependencies:

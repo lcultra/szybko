@@ -1,0 +1,8 @@
+{
+    "name": "@szybko/plugin-example",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "typecheck": "node --check preload.js"
+    }
+}
