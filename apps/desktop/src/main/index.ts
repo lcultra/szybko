@@ -7,7 +7,7 @@ const windowManager = new WindowManager();
 const shortcutManager = new ShortcutManager();
 
 app.whenReady().then(() => {
-    const preloadPath = join(__dirname, '../preload/launcher.mjs');
+    const preloadPath = join(__dirname, '../preload/launcher.js');
     const win = windowManager.createMainWindow(preloadPath);
 
     if (process.env.ELECTRON_RENDERER_URL) {

@@ -20,6 +20,7 @@ export class WindowManager {
             resizable: false,
             webPreferences: {
                 preload: preloadPath,
+                sandbox: false,
                 contextIsolation: true,
                 nodeIntegration: false,
             },

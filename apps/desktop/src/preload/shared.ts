@@ -1,53 +1,51 @@
-import type { SzybkoInternalApi, SzybkoPluginApi } from '@szybko/shared';
-import { IPC } from '@szybko/shared';
 import { ipcRenderer } from 'electron';
 
-// ── Plugin API factory (used by both launcher and plugin preloads) ─
+export const C = {
+    SEARCH: 'search',
+    SEARCH_BATCH: 'search-batch',
+    SEARCH_CANCEL: 'search-cancel',
+    EXECUTE: 'execute',
+    RUNTIME_STATE_CHANGED: 'runtime:state-changed',
+    HOST_SWITCH: 'host:switch',
+    WINDOW_RESIZE: 'window:resize',
+    WINDOW_HIDE: 'window:hide',
+    SHOW_MAIN_WINDOW: 'show-main-window',
+    THEME_CHANGED: 'theme:changed',
+} as const;
 
-export function createPluginApi(): SzybkoPluginApi {
+export function createPluginApi() {
     return {
-        execute: (action: any) =>
-            ipcRenderer.invoke(IPC.EXECUTE, { action }),
-
+        execute: (action: any) => ipcRenderer.invoke(C.EXECUTE, { action }),
         switchHost: (pluginId: string, targetHost: 'launcher' | 'floating') =>
-            ipcRenderer.invoke(IPC.HOST_SWITCH, { pluginId, targetHost }),
-
+            ipcRenderer.invoke(C.HOST_SWITCH, { pluginId, targetHost }),
         onRuntimeStateChanged: (cb: (state: any) => void) => {
             const handler = (_: any, state: any) => cb(state);
-            ipcRenderer.on(IPC.RUNTIME_STATE_CHANGED, handler);
-            return () => ipcRenderer.removeListener(IPC.RUNTIME_STATE_CHANGED, handler);
+            ipcRenderer.on(C.RUNTIME_STATE_CHANGED, handler);
+            return () => ipcRenderer.removeListener(C.RUNTIME_STATE_CHANGED, handler);
         },
     };
 }
 
-// ── Internal API factory (launcher only) ─────────────────────────
-
-export function createInternalApi(): SzybkoInternalApi {
+export function createInternalApi() {
     return {
-        search: (req: { queryId: string; query: string; timestamp: number }) =>
-            ipcRenderer.invoke(IPC.SEARCH, req),
-        searchCancel: (queryId: string) =>
-            ipcRenderer.invoke(IPC.SEARCH_CANCEL, { queryId }),
-
-        resizeWindow: (height: number) =>
-            ipcRenderer.invoke(IPC.WINDOW_RESIZE, { height }),
-        hideWindow: () =>
-            ipcRenderer.invoke(IPC.WINDOW_HIDE, {}),
-
+        search: (req: any) => ipcRenderer.invoke(C.SEARCH, req),
+        searchCancel: (queryId: string) => ipcRenderer.invoke(C.SEARCH_CANCEL, { queryId }),
+        resizeWindow: (height: number) => ipcRenderer.invoke(C.WINDOW_RESIZE, { height }),
+        hideWindow: () => ipcRenderer.invoke(C.WINDOW_HIDE, {}),
         onSearchBatch: (cb: (batch: any) => void) => {
             const handler = (_: any, batch: any) => cb(batch);
-            ipcRenderer.on(IPC.SEARCH_BATCH, handler);
-            return () => ipcRenderer.removeListener(IPC.SEARCH_BATCH, handler);
+            ipcRenderer.on(C.SEARCH_BATCH, handler);
+            return () => ipcRenderer.removeListener(C.SEARCH_BATCH, handler);
         },
         onShowMainWindow: (cb: () => void) => {
             const handler = () => cb();
-            ipcRenderer.on(IPC.SHOW_MAIN_WINDOW, handler);
-            return () => ipcRenderer.removeListener(IPC.SHOW_MAIN_WINDOW, handler);
+            ipcRenderer.on(C.SHOW_MAIN_WINDOW, handler);
+            return () => ipcRenderer.removeListener(C.SHOW_MAIN_WINDOW, handler);
         },
-        onThemeChanged: (cb: (theme: { isDark: boolean }) => void) => {
-            const handler = (_: any, theme: { isDark: boolean }) => cb(theme);
-            ipcRenderer.on(IPC.THEME_CHANGED, handler);
-            return () => ipcRenderer.removeListener(IPC.THEME_CHANGED, handler);
+        onThemeChanged: (cb: (theme: any) => void) => {
+            const handler = (_: any, theme: any) => cb(theme);
+            ipcRenderer.on(C.THEME_CHANGED, handler);
+            return () => ipcRenderer.removeListener(C.THEME_CHANGED, handler);
         },
     };
 }
