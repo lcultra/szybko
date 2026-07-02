@@ -5,7 +5,7 @@ export interface SzybkoInternalApi {
     searchCancel: (queryId: string) => Promise<{ ok: boolean }>;
     resizeWindow: (height: number) => Promise<{ ok: boolean }>;
     hideWindow: () => Promise<{ ok: boolean }>;
-    closePlugin: (runtimeId: string) => Promise<{ ok: boolean }>;
+    hidePlugin: (runtimeId: string) => Promise<{ ok: boolean }>;
     onSearchBatch: (cb: (batch: SearchBatch) => void) => () => void;
     onShowMainWindow: (cb: () => void) => () => void;
     onThemeChanged: (cb: (theme: { isDark: boolean }) => void) => () => void;

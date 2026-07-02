@@ -45,7 +45,7 @@ export default function App() {
         onEscape: () => {
             if (state === 'plugin') {
                 if (activeRuntimeId) {
-                    window.szybkoInternal?.closePlugin(activeRuntimeId);
+                    window.szybkoInternal?.hidePlugin(activeRuntimeId);
                 }
                 setActivePlugin(null);
             }

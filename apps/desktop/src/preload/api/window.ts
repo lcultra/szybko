@@ -5,11 +5,11 @@ import { invoke, on } from './ipc.js';
 /**
  * 窗口控制 API。
  */
-export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'closePlugin' | 'onShowMainWindow'> {
+export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'hidePlugin' | 'onShowMainWindow'> {
     return {
         resizeWindow: height => invoke(IPC.WINDOW_RESIZE)({ height }),
         hideWindow: () => invoke(IPC.WINDOW_HIDE)(undefined),
-        closePlugin: runtimeId => invoke(IPC.PLUGIN_CLOSE)({ runtimeId }),
+        hidePlugin: runtimeId => invoke(IPC.PLUGIN_HIDE)({ runtimeId }),
         onShowMainWindow: on(IPC.WINDOW_SHOW),
     };
 }
