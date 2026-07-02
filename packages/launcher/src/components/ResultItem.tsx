@@ -3,13 +3,15 @@ import type { SearchResult } from '@szybko/shared';
 interface ResultItemProps {
     item: SearchResult;
     selected: boolean;
+    onSelect: () => void;
     onExecute: () => void;
 }
 
-export function ResultItem({ item, selected, onExecute }: ResultItemProps) {
+export function ResultItem({ item, selected, onSelect, onExecute }: ResultItemProps) {
     return (
         <button
             onClick={onExecute}
+            onMouseEnter={onSelect}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-2 text-left transition-colors ${
                 selected
                     ? 'border border-ring/40 bg-surface-hover'

@@ -11,7 +11,7 @@ interface ResultListProps {
 export function ResultList({
     results,
     selectedIndex,
-    _onSelect,
+    onSelect,
     onExecute,
 }: ResultListProps) {
     if (results.length === 0)
@@ -25,6 +25,7 @@ export function ResultList({
                         key={item.id}
                         item={item}
                         selected={i === selectedIndex}
+                        onSelect={() => onSelect(i)}
                         onExecute={() => onExecute(i)}
                     />
                 ))}

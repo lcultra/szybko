@@ -20,7 +20,7 @@ export default function App() {
         onSelectDown: () => setSelectedIndex(i => Math.min(results.length - 1, i + 1)),
         onExecute: () => {
             if (results[selectedIndex]) {
-                window.utools?.execute(results[selectedIndex].action);
+                window.szybko?.execute(results[selectedIndex].action);
             }
         },
         onEscape: () => {
@@ -29,7 +29,7 @@ export default function App() {
                 setSelectedIndex(0);
             }
             else {
-                window.utools?.hideWindow();
+                window.szybkoInternal?.hideWindow();
             }
         },
     });
@@ -44,7 +44,7 @@ export default function App() {
                     onSelect={setSelectedIndex}
                     onExecute={(i) => {
                         if (results[i])
-                            window.utools?.execute(results[i].action);
+                            window.szybko?.execute(results[i].action);
                     }}
                 />
             </WindowFrame>
