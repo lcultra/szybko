@@ -51,6 +51,11 @@ export class RuntimeManager {
         this.entries.set(runtime.id, { runtime, view });
 
         const indexPath = join(plugin.path, plugin.manifest.main);
+
+        view.webContents.on('did-finish-load', () => {
+            runtime.state = 'activated';
+        });
+
         view.webContents.loadFile(indexPath);
         return runtime;
     }
@@ -71,5 +76,50 @@ export class RuntimeManager {
 
     get runtimeCount(): number {
         return this.entries.size;
+    }
+
+    // ── Activation / Deactivation ───────────────────────────
+
+    /** 激活插件：挂载 view 到窗口，通知 Launcher 和插件自身 */
+    attachToWindow(runtimeId: string): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry) {
+            console.warn(`[RuntimeManager] attachToWindow: runtime ${runtimeId} not found`);
+            return;
+        }
+
+        this.windowManager.attachPluginView(entry.view);
+        entry.runtime.state = 'attached';
+
+        // 通知渲染进程状态变更
+        const win = this.windowManager.getWindow();
+        if (win && !win.isDestroyed()) {
+            win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
+                runtimeId: entry.runtime.id,
+                pluginId: entry.runtime.pluginId,
+                state: 'attached',
+            });
+        }
+
+        // 通知插件进入
+        entry.view.webContents.send(IPC.PLUGIN_ENTER, { pluginId: entry.runtime.pluginId });
+    }
+
+    /** 分离插件：从窗口移除 view，保留 Runtime 状态 */
+    detachFromWindow(runtimeId: string): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry) return;
+
+        this.windowManager.detachPluginView();
+        entry.runtime.state = 'detached';
+        entry.runtime.host = null;
+    }
+
+    /** 获取或创建 Runtime — 先查找已有实例，没有再创建 */
+    getOrCreate(pluginId: string): PluginRuntime | null {
+        const existing = Array.from(this.entries.values())
+            .find(e => e.runtime.pluginId === pluginId);
+        if (existing) return existing.runtime;
+        return this.create(pluginId);
     }
 }
