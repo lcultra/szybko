@@ -1,16 +1,15 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
 
 export default defineConfig({
     build: {
-        outDir: '../../../apps/desktop/out/plugins/built-in/preferences',
-        lib: {
-            entry: resolve(__dirname, 'src/preload.ts'),
-            formats: ['cjs'],
-            fileName: () => 'preload.js',
+        outDir: 'dist',
+        rollupOptions: {
+            input: {
+                index: resolve(__dirname, 'index.html'),
+            },
         },
         minify: false,
-        emptyOutDir: true,
-        copyPublicDir: false,
+        emptyOutDir: false,
     },
 });

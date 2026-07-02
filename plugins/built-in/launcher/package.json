@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "vite build --watch",
-        "build": "vite build && cp index.html plugin.json ../../../apps/desktop/out/plugins/built-in/launcher/",
+        "build": "vite build && cp index.html plugin.json dist/",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

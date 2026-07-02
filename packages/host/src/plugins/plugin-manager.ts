@@ -30,8 +30,8 @@ export class PluginManager {
             return;
         }
         for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
-            const pluginPath = join(this.pluginsBaseDir, dir.name);
-            const loaded = this.loader.loadOne(pluginPath);
+            const distPath = join(this.pluginsBaseDir, dir.name, 'dist');
+            const loaded = this.loader.loadOne(distPath);
             if (loaded) {
                 this.plugins.set(dir.name, loaded);
                 if (!this.registry.has(dir.name)) {
@@ -39,7 +39,7 @@ export class PluginManager {
                         source: 'built-in',
                         enabled: true,
                         installedAt: new Date().toISOString(),
-                        path: pluginPath,
+                        path: distPath,
                     });
                 }
             }

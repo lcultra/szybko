@@ -11,8 +11,10 @@ void app.whenReady().then(async () => {
     const store = new Store(join(app.getPath('userData'), 'szybko.json'), { plugins: {} });
     const registry = new PluginRegistry(store);
 
-    // 插件从 out/plugins/built-in/ 加载
-    const pluginsDir = join(__dirname, '../plugins/built-in');
+    // 插件目录：dev 时从 repo 根加载；prod 时用 resources path（随后实现）
+    const pluginsDir = app.isPackaged
+        ? join(process.resourcesPath, 'plugins', 'built-in')
+        : join(__dirname, '..', '..', '..', '..', 'plugins', 'built-in');
     const pluginManager = new PluginManager(registry, pluginsDir);
     await pluginManager.init();
 
