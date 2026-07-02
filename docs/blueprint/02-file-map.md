@@ -18,18 +18,24 @@ szybko/
 apps/desktop/                 # Electron 打包薄壳（从 host 引入 main）
 ├── package.json
 ├── electron-builder.yml
-└── resources/icon.icns
+├── electron.vite.config.ts
+├── resources/icon.icns
+└── src/
+    ├── main/                 # Electron 应用入口，组合 host 能力
+    ├── preload/              # contextBridge，暴露内部 API 与插件 API
+    └── renderer/             # 渲染入口，挂载 launcher UI
 ```
 
 ## packages/
 
 ```
 packages/
-├── shared/                   # 纯类型，无运行时依赖
-│   └── src/ (search-types, plugin-types, runtime-types, adapter-interfaces, constants)
+├── shared/                   # 跨进程契约：类型、IPC channel、窗口/搜索常量
+│   └── src/ (search-types, plugin-types, runtime-types, api-types, ipc-channels, constants)
 
 ├── core-rust/                # napi-rs 编译为 .node
-│   └── src/ (lib.rs, types.rs, adapters/macos/{fs,clipboard,process}.rs)
+│   ├── src/ (lib.rs, types.rs, adapters/macos/{fs}.rs)
+│   └── lib/                  # napi 构建产物：index.js、index.d.ts、*.node
 
 ├── host/                     # Electron 主进程
 │   └── src/
@@ -42,29 +48,28 @@ packages/
 │       ├── plugin-loader.ts      # 读取/校验 plugin.json
 │       ├── adapter-bridge.ts     # TS → Rust 桥接
 │       ├── shortcut-manager.ts   # 全局快捷键
-│       ├── theme.ts              # 主题检测
-│       └── preload.ts            # contextBridge: window.utools
+│       └── theme.ts              # 主题检测
 
 ├── design-system/            # 设计系统 (@szybko/design-system)
-│   └── src/ (tokens/, components/ Button/Input/Switch/Tabs/Card...)
+│   └── src/ (tokens/, components/ Button/Input/Card...)
 
 ├── launcher/                 # 搜索外壳 UI（渲染进程）
 │   └── src/ (App, WindowFrame, SearchBar, ResultList, ResultItem,
-│              hooks/ useSearch/useKeyboard/useWindowHeight/useRuntimeIPC,
-│              zustand store, styles/)
+│              hooks/ useSearch/useKeyboard/useWindowHeight,
+│              zustand store, app.css)
 
 ├── plugin-sdk/               # 插件开发者工具包 (d.ts)
-└── plugin-store/             # Phase 4
+└── plugin-store/             # Phase 4，当前未实现
 ```
 
 ## 包依赖
 
 ```
 apps/desktop  →  host, launcher, shared
-host          →  shared (+ 运行时 require core-rust)
+host          →  shared, core-rust, electron(peer)
 launcher      →  shared, design-system
 design-system →  lucide-react, @radix-ui/react
-shared        →  无
+shared        →  无运行时外部依赖
 core-rust     →  napi-rs (独立编译)
 ```
 

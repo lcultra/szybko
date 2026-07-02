@@ -11,13 +11,16 @@
     "scripts": {
         "typecheck": "tsc --noEmit"
     },
+    "peerDependencies": {
+        "electron": "^43.0"
+    },
     "dependencies": {
         "@szybko/core-rust": "workspace:*",
         "@szybko/shared": "workspace:*",
-        "electron": "^33.0",
         "lowdb": "^7.0.1"
     },
     "devDependencies": {
+        "electron": "^43.0",
         "typescript": "^6.0"
     }
 }

@@ -6,7 +6,8 @@
     "types": "lib/index.d.ts",
     "scripts": {
         "build": "napi build --platform --release lib",
-        "build:debug": "napi build --platform lib"
+        "build:debug": "napi build --platform lib",
+        "typecheck": "tsc --noEmit"
     },
     "napi": {
         "name": "szybko-core",

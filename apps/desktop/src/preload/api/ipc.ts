@@ -25,6 +25,7 @@ const IPC_API = {
     THEME_CHANGED: 'onThemeChanged',
     WINDOW_SHOW: 'onShowMainWindow',
     PLUGIN_RUNTIME_STATE: 'onRuntimeStateChanged',
+    PLUGIN_ENTER: 'onPluginEnter',
 } as const satisfies Record<string, keyof CombinedApi>;
 
 type IpcMap = {
