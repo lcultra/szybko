@@ -1,17 +1,34 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { PluginContainer } from './components/PluginContainer.js';
 import { ResultList } from './components/ResultList.js';
 import { SearchBar } from './components/SearchBar.js';
 import { WindowFrame } from './components/WindowFrame.js';
 import { useKeyboard } from './hooks/useKeyboard.js';
 import { useSearch } from './hooks/useSearch.js';
 import { useWindowHeight } from './hooks/useWindowHeight.js';
+import { useAppStore } from './stores/app-store.js';
 import './app.css';
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
+    const state = useAppStore(s => s.state);
+    const setActivePlugin = useAppStore(s => s.setActivePlugin);
     const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
 
     useWindowHeight(rootRef);
+
+    // 监听运行时状态变更 → 切换 plugin / idle 模式
+    useEffect(() => {
+        const cleanup = window.szybko?.onRuntimeStateChanged?.((payload: any) => {
+            if (payload?.state === 'attached') {
+                setActivePlugin(payload.pluginId);
+            }
+            else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
+                setActivePlugin(null);
+            }
+        });
+        return () => cleanup?.();
+    }, [setActivePlugin]);
 
     useKeyboard({
         selectedIndex,
@@ -24,7 +41,10 @@ export default function App() {
             }
         },
         onEscape: () => {
-            if (query) {
+            if (state === 'plugin') {
+                setActivePlugin(null);
+            }
+            else if (query) {
                 setQuery('');
                 setSelectedIndex(0);
             }
@@ -38,15 +58,19 @@ export default function App() {
         <div ref={rootRef}>
             <WindowFrame>
                 <SearchBar value={query} onChange={setQuery} />
-                <ResultList
-                    results={results}
-                    selectedIndex={selectedIndex}
-                    onSelect={setSelectedIndex}
-                    onExecute={(i) => {
-                        if (results[i])
-                            window.szybko?.execute(results[i].action);
-                    }}
-                />
+                {state === 'plugin' ? (
+                    <PluginContainer />
+                ) : (
+                    <ResultList
+                        results={results}
+                        selectedIndex={selectedIndex}
+                        onSelect={setSelectedIndex}
+                        onExecute={(i) => {
+                            if (results[i])
+                                window.szybko?.execute(results[i].action);
+                        }}
+                    />
+                )}
             </WindowFrame>
         </div>
     );
