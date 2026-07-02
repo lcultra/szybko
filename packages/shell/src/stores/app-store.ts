@@ -9,11 +9,13 @@ interface AppStore {
     results: SearchResult[];
     selectedIndex: number;
     activePluginId: string | null;
+    activePluginName: string;
+    activeFeatureExplain: string;
     setQuery: (query: string) => void;
     setResults: (results: SearchResult[]) => void;
     setSelectedIndex: (index: number) => void;
     setState: (state: AppState) => void;
-    setActivePlugin: (pluginId: string | null) => void;
+    setActivePlugin: (id: string | null, name?: string, explain?: string) => void;
 }
 
 export const useAppStore = create<AppStore>(set => ({
@@ -22,9 +24,16 @@ export const useAppStore = create<AppStore>(set => ({
     results: [],
     selectedIndex: 0,
     activePluginId: null,
+    activePluginName: '',
+    activeFeatureExplain: '',
     setQuery: query => set({ query, state: query ? 'searching' : 'idle' }),
     setResults: results => set({ results }),
     setSelectedIndex: selectedIndex => set({ selectedIndex }),
     setState: state => set({ state }),
-    setActivePlugin: activePluginId => set({ activePluginId, state: activePluginId ? 'plugin' : 'idle' }),
+    setActivePlugin: (id, name = '', explain = '') => set({
+        activePluginId: id,
+        activePluginName: name,
+        activeFeatureExplain: explain,
+        state: id ? 'plugin' : 'idle',
+    }),
 }));

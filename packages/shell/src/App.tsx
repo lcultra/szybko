@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { PluginHeader } from './components/PluginHeader.js';
 import { PluginScene } from './components/PluginScene.js';
 import { ResultList } from './components/ResultList.js';
 import { SearchBar } from './components/SearchBar.js';
@@ -21,7 +22,7 @@ export default function App() {
     useEffect(() => {
         const cleanup = window.szybko?.onRuntimeStateChanged?.((payload: any) => {
             if (payload?.state === 'attached') {
-                setActivePlugin(payload.pluginId);
+                setActivePlugin(payload.pluginId, payload.pluginName, payload.featureExplain);
             }
             else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
                 setActivePlugin(null);
@@ -57,7 +58,7 @@ export default function App() {
     return (
         <div ref={rootRef}>
             <WindowFrame>
-                <SearchBar value={query} onChange={setQuery} />
+                {state === 'plugin' ? <PluginHeader /> : <SearchBar value={query} onChange={setQuery} />}
                 {state === 'plugin'
                     ? (
                             <PluginScene />
