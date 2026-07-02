@@ -12,7 +12,7 @@ export function PluginHeader() {
 
     const handleClose = useCallback(() => {
         if (activeRuntimeId) {
-            window.szybkoInternal?.detachPlugin(activeRuntimeId);
+            window.szybkoInternal?.closePlugin(activeRuntimeId);
         }
         clearActivePlugin(null);
     }, [activeRuntimeId, clearActivePlugin]);

@@ -158,15 +158,25 @@ export class RuntimeManager {
         });
     }
 
-    /** 分离插件：从窗口移除 view，保留 Runtime 状态 */
-    detachFromWindow(runtimeId: string): void {
+    /** 关闭插件：销毁 Runtime 和 WebContentsView */
+    closeFromWindow(runtimeId: string): void {
         const entry = this.entries.get(runtimeId);
         if (!entry)
             return;
 
         this.windowManager.detachPluginView();
-        entry.runtime.state = 'detached';
-        entry.runtime.host = null;
+        entry.view.webContents.close();
+        this.entries.delete(runtimeId);
+
+        // 通知渲染进程
+        const win = this.windowManager.getWindow();
+        if (win && !win.isDestroyed()) {
+            win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
+                runtimeId: entry.runtime.id,
+                pluginId: entry.runtime.pluginId,
+                state: 'destroyed',
+            });
+        }
     }
 
     /** 获取或创建 Runtime — 先查找已有实例，没有再创建 */

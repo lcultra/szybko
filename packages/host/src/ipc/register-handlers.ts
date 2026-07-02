@@ -138,12 +138,12 @@ export function registerIpcHandlers(
         },
     );
 
-    // ── Plugin detach ────────────────────────────────────────────
+    // ── Plugin close ─────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.PLUGIN_CLOSE,
         (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_CLOSE>): IpcResponse<typeof IPC.PLUGIN_CLOSE> => {
-            runtimeManager?.detachFromWindow(runtimeId);
+            runtimeManager?.closeFromWindow(runtimeId);
             return { ok: true };
         },
     );
