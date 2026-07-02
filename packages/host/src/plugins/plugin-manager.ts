@@ -66,8 +66,14 @@ export class PluginManager {
     }
 
     getEnabled(): PluginInfo[] {
-        return this.registry.listEnabled()
+        const enabled = this.registry.listEnabled();
+        const result = enabled
             .map(id => this.plugins.get(id))
-            .filter((p): p is PluginInfo => !!p);
+            .filter((p): p is PluginInfo => {
+                if (!p) console.log(`[PluginManager] getEnabled: plugin ${p} not found in map`);
+                return !!p;
+            });
+        console.log(`[PluginManager] getEnabled: listEnabled=${JSON.stringify(enabled)}, this.plugins.size=${this.plugins.size}, result=${result.length}`);
+        return result;
     }
 }
