@@ -1,28 +1,31 @@
-import { readdirSync, readFileSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
-import type { PluginManifest } from '@szybko/shared'
+import type { PluginManifest } from '@szybko/shared';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-const PLUGINS_DIR = join(process.cwd(), 'plugins')
+const PLUGINS_DIR = join(process.cwd(), 'plugins');
 
 export class PluginLoader {
     scan(): { id: string; manifest: PluginManifest; path: string }[] {
-        if (!existsSync(PLUGINS_DIR)) return []
+        if (!existsSync(PLUGINS_DIR))
+            return [];
 
         return readdirSync(PLUGINS_DIR, { withFileTypes: true })
             .filter(e => e.isDirectory())
-            .map(e => {
-                const pluginPath = join(PLUGINS_DIR, e.name)
-                const manifestPath = join(pluginPath, 'plugin.json')
-                if (!existsSync(manifestPath)) return null
+            .map((e) => {
+                const pluginPath = join(PLUGINS_DIR, e.name);
+                const manifestPath = join(pluginPath, 'plugin.json');
+                if (!existsSync(manifestPath))
+                    return null;
                 try {
-                    const manifest: PluginManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-                    console.log(`[plugin-loader] Registered: ${e.name}`)
-                    return { id: e.name, manifest, path: pluginPath }
-                } catch (err) {
-                    console.error(`[plugin-loader] Failed to load ${e.name}:`, err)
-                    return null
+                    const manifest: PluginManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+                    console.log(`[plugin-loader] Registered: ${e.name}`);
+                    return { id: e.name, manifest, path: pluginPath };
+                }
+                catch (err) {
+                    console.error(`[plugin-loader] Failed to load ${e.name}:`, err);
+                    return null;
                 }
             })
-            .filter(Boolean) as { id: string; manifest: PluginManifest; path: string }[]
+            .filter(Boolean) as { id: string; manifest: PluginManifest; path: string }[];
     }
 }

@@ -10,6 +10,8 @@
         "postinstall": "electron-builder install-app-deps"
     },
     "dependencies": {
+        "@szybko/design-system": "workspace:*",
+        "@szybko/launcher": "workspace:*",
         "@szybko/shared": "workspace:*"
     },
     "devDependencies": {
