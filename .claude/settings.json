@@ -90,7 +90,8 @@
       "Bash(pnpm -r run typecheck)",
       "Bash(awk -F':' '{print $1}')",
       "Bash(git commit -m 'chore: cleanup tsbuildinfo artifacts, update docs and IPC types *)",
-      "Bash(git commit -m 'chore: add plugin workspace, update electron-vite to beta, update docs *)"
+      "Bash(git commit -m 'chore: add plugin workspace, update electron-vite to beta, update docs *)",
+      "Bash(git commit -m 'refactor: rename sandbox to plugin, add PluginSearchContext types *)"
     ],
     "additionalDirectories": [
       "/Users/pengcheng17/Documents/workspace/ai/szybko/packages/shared",

@@ -1,6 +1,6 @@
 import type { PluginRuntime, PluginSearchContext, SearchRequest } from '@szybko/shared';
-import type { PluginManager } from './plugin-manager.js';
-import type { WindowManager } from './window-manager.js';
+import type { PluginManager } from '../plugins/plugin-manager.js';
+import type { WindowManager } from '../window/window-manager.js';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { WebContentsView } from 'electron';

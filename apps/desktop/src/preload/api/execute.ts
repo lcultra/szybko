@@ -8,7 +8,6 @@ import { invoke } from './ipc.js';
 export function createExecuteApi(): Pick<SzybkoPluginApi, 'execute' | 'switchHost'> {
     return {
         execute: action => invoke(IPC.PLUGIN_EXEC)({ action }),
-        switchHost: async (pluginId, targetHost) =>
-            invoke(IPC.HOST_SWITCH)({ pluginId, targetHost }) as Promise<{ ok: boolean; hostId: string }>,
+        switchHost: (pluginId, targetHost) => invoke(IPC.HOST_SWITCH)({ pluginId, targetHost }),
     };
 }
