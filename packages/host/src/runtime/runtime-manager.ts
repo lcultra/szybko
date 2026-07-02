@@ -127,12 +127,26 @@ export class RuntimeManager {
         this.windowManager.attachPluginView(entry.view);
         entry.runtime.state = 'attached';
 
+        // 查询插件展示信息
+        let pluginName = entry.runtime.pluginId;
+        let featureExplain = '';
+        const plugin = this.pluginManager.get(entry.runtime.pluginId);
+        if (plugin) {
+            const feature = plugin.manifest.features.find(f => f.code === featureCode);
+            if (feature) {
+                pluginName = feature.explain || plugin.id;
+                featureExplain = feature.explain || '';
+            }
+        }
+
         // 通知渲染进程状态变更
         const win = this.windowManager.getWindow();
         if (win && !win.isDestroyed()) {
             win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
                 runtimeId: entry.runtime.id,
                 pluginId: entry.runtime.pluginId,
+                pluginName,
+                featureExplain,
                 state: 'attached',
             });
         }
