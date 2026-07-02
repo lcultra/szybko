@@ -1,0 +1,8 @@
+{
+    "extends": "../../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "../../../apps/desktop/out/plugins/built-in/launcher",
+        "rootDir": "src"
+    },
+    "include": ["src"]
+}
