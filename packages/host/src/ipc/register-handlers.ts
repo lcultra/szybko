@@ -104,6 +104,18 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.PLUGIN_EXEC,
         (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): IpcResponse<typeof IPC.PLUGIN_EXEC> => {
+            // plugin.open 需要激活 Runtime，不走 executeAction 纯函数
+            if (action.type === 'plugin.open') {
+                if (!runtimeManager) {
+                    return { ok: false, error: 'RuntimeManager not initialized' };
+                }
+                const runtime = runtimeManager.getOrCreate(action.payload.pluginId);
+                if (!runtime) {
+                    return { ok: false, error: `Plugin "${action.payload.pluginId}" not found` };
+                }
+                runtimeManager.attachToWindow(runtime.id);
+                return { ok: true };
+            }
             return executeAction(action);
         },
     );
