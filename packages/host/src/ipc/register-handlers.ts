@@ -138,12 +138,20 @@ export function registerIpcHandlers(
         },
     );
 
-    // ── Plugin close ─────────────────────────────────────────────
+    // ── Plugin hide / destroy ─────────────────────────────────────
 
     ipcMain.handle(
         IPC.PLUGIN_HIDE,
         (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_HIDE>): IpcResponse<typeof IPC.PLUGIN_HIDE> => {
             runtimeManager?.detachFromWindow(runtimeId);
+            return { ok: true };
+        },
+    );
+
+    ipcMain.handle(
+        IPC.PLUGIN_DESTROY,
+        (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_DESTROY>): IpcResponse<typeof IPC.PLUGIN_DESTROY> => {
+            runtimeManager?.destroyFromWindow(runtimeId);
             return { ok: true };
         },
     );

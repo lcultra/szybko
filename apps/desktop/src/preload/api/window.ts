@@ -10,6 +10,7 @@ export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hid
         resizeWindow: height => invoke(IPC.WINDOW_RESIZE)({ height }),
         hideWindow: () => invoke(IPC.WINDOW_HIDE)(undefined),
         hidePlugin: runtimeId => invoke(IPC.PLUGIN_HIDE)({ runtimeId }),
+        destroyPlugin: runtimeId => invoke(IPC.PLUGIN_DESTROY)({ runtimeId }),
         onShowMainWindow: on(IPC.WINDOW_SHOW),
     };
 }

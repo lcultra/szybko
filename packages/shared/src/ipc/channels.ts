@@ -16,4 +16,5 @@ export const IPC = {
     PLUGIN_SEARCH_RESULT: 'plugin:search-result',
     PLUGIN_ENTER: 'plugin:enter',
     PLUGIN_HIDE: 'plugin:hide',
+    PLUGIN_DESTROY: 'plugin:destroy',
 } as const;

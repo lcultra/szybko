@@ -30,6 +30,10 @@ export interface IpcInvokeContract {
         request: { runtimeId: string };
         response: { ok: boolean };
     };
+    [IPC.PLUGIN_DESTROY]: {
+        request: { runtimeId: string };
+        response: { ok: boolean };
+    };
 }
 
 export interface IpcMainToRendererEventContract {
