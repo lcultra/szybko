@@ -2,7 +2,7 @@
     "name": "@szybko/plugin-launcher",
     "private": true,
     "scripts": {
-        "build": "tsc --project tsconfig.json && cp index.html ../../apps/desktop/out/plugins/launcher/",
+        "build": "tsc --project tsconfig.json && cp index.html plugin.json ../../apps/desktop/out/plugins/launcher/",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

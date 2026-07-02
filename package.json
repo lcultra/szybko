@@ -4,8 +4,9 @@
     "private": true,
     "packageManager": "pnpm@10.34.3",
     "scripts": {
-        "dev": "pnpm --filter @szybko/desktop dev",
-        "build": "pnpm -r build",
+        "dev": "pnpm build:plugins && pnpm --filter @szybko/desktop dev",
+        "build": "pnpm build:plugins && pnpm -r build",
+        "build:plugins": "pnpm --filter './plugins/**' build",
         "typecheck": "pnpm -r run typecheck",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix"

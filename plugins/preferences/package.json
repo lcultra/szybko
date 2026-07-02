@@ -2,7 +2,7 @@
     "name": "@szybko/plugin-preferences",
     "private": true,
     "scripts": {
-        "build": "tsc --project tsconfig.json && cp index.html ../../apps/desktop/out/plugins/preferences/",
+        "build": "tsc --project tsconfig.json && cp index.html plugin.json ../../apps/desktop/out/plugins/preferences/",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
