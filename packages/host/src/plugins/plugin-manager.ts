@@ -49,6 +49,9 @@ export class PluginManager {
                         path: distPath,
                     });
                     console.log(`[PluginManager]  registered, listEnabled now: ${JSON.stringify(this.registry.listEnabled())}`);
+                } else if (!this.registry.isEnabled(dir.name)) {
+                    console.log(`[PluginManager]  re-enabling ${dir.name}...`);
+                    this.registry.setEnabled(dir.name, true);
                 }
             }
         }
