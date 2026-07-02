@@ -1,7 +1,7 @@
+import type { PluginRegistry } from './plugin-registry.js';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { PluginLoader } from './plugin-loader.js';
-import type { PluginRegistry } from './plugin-registry.js';
 
 export interface PluginInfo {
     id: string;
@@ -38,13 +38,17 @@ export class PluginManager {
             if (loaded) {
                 console.log(`[PluginManager]  loaded plugin: ${dir.name}`);
                 this.plugins.set(dir.name, loaded);
-                if (!this.registry.has(dir.name)) {
+                const has = this.registry.has(dir.name);
+                console.log(`[PluginManager]  registry.has('${dir.name}')=${has}`);
+                if (!has) {
+                    console.log(`[PluginManager]  registering ${dir.name}...`);
                     this.registry.register(dir.name, {
                         source: 'built-in',
                         enabled: true,
                         installedAt: new Date().toISOString(),
                         path: distPath,
                     });
+                    console.log(`[PluginManager]  registered, listEnabled now: ${JSON.stringify(this.registry.listEnabled())}`);
                 }
             }
         }
@@ -70,7 +74,8 @@ export class PluginManager {
         const result = enabled
             .map(id => this.plugins.get(id))
             .filter((p): p is PluginInfo => {
-                if (!p) console.log(`[PluginManager] getEnabled: plugin ${p} not found in map`);
+                if (!p)
+                    console.log(`[PluginManager] getEnabled: plugin ${p} not found in map`);
                 return !!p;
             });
         console.log(`[PluginManager] getEnabled: listEnabled=${JSON.stringify(enabled)}, this.plugins.size=${this.plugins.size}, result=${result.length}`);
