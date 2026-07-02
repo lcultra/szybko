@@ -1,12 +1,12 @@
-export { ConfigManager } from './services/config-manager.js';
-export { FloatingHost } from './window/hosts/floating-host.js';
-export { LauncherHost } from './window/hosts/launcher-host.js';
 export { notifyShowMainWindow, registerIpcHandlers } from './ipc/register-handlers.js';
 export { PluginLoader } from './plugins/plugin-loader.js';
 export { PluginManager } from './plugins/plugin-manager.js';
 export { PluginRegistry } from './plugins/plugin-registry.js';
-export { RuntimeManager } from './runtime/runtime-manager.js';
-export { ShortcutManager } from './window/shortcut-manager.js';
 export { Store } from './plugins/store.js';
+export { RuntimeManager } from './runtime/runtime-manager.js';
+export { ConfigManager } from './services/config-manager.js';
+export { FloatingHost } from './window/hosts/floating-host.js';
+export { LauncherHost } from './window/hosts/launcher-host.js';
+export { ShortcutManager } from './window/shortcut-manager.js';
 export { ThemeManager } from './window/theme.js';
 export { WindowManager } from './window/window-manager.js';
