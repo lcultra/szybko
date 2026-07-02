@@ -11,8 +11,8 @@ void app.whenReady().then(async () => {
     const store = new Store(join(app.getPath('userData'), 'szybko.json'), { plugins: {} });
     const registry = new PluginRegistry(store);
 
-    // Plugin system — plugins 在 monorepo 根目录
-    const pluginsDir = join(__dirname, '..', '..', '..', '..');
+    // 插件从 out/plugins/ 加载（与打包产物同路径）
+    const pluginsDir = join(__dirname, '../plugins');
     const pluginManager = new PluginManager(registry, pluginsDir);
     await pluginManager.init();
 

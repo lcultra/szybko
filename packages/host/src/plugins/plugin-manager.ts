@@ -1,8 +1,7 @@
-import type { PluginRegistry } from './plugin-registry.js';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import process from 'node:process';
 import { PluginLoader } from './plugin-loader.js';
+import type { PluginRegistry } from './plugin-registry.js';
 
 export interface PluginInfo {
     id: string;
@@ -16,7 +15,7 @@ export class PluginManager {
 
     constructor(
         private registry: PluginRegistry,
-        private pluginsBaseDir?: string,
+        private pluginsBaseDir: string,
     ) {}
 
     async init(): Promise<void> {
@@ -26,50 +25,27 @@ export class PluginManager {
 
     scan() {
         this.plugins.clear();
-        const root = this.pluginsBaseDir ?? process.cwd();
-
-        // Scan built-in plugins
-        const builtInDir = join(root, 'plugins', 'built-in');
-        if (existsSync(builtInDir)) {
-            for (const dir of readdirSync(builtInDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
-                const pluginPath = join(builtInDir, dir.name);
-                const loaded = this.loader.loadOne(pluginPath);
-                if (loaded) {
-                    this.plugins.set(dir.name, loaded);
-                    // Auto-register built-in plugins
-                    if (!this.registry.has(dir.name)) {
-                        this.registry.register(dir.name, {
-                            source: 'built-in',
-                            enabled: true,
-                            installedAt: new Date().toISOString(),
-                            path: pluginPath,
-                        });
-                    }
+        if (!existsSync(this.pluginsBaseDir)) {
+            console.warn(`[PluginManager] plugins dir not found: ${this.pluginsBaseDir}`);
+            return;
+        }
+        for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
+            const pluginPath = join(this.pluginsBaseDir, dir.name);
+            const loaded = this.loader.loadOne(pluginPath);
+            if (loaded) {
+                this.plugins.set(dir.name, loaded);
+                if (!this.registry.has(dir.name)) {
+                    this.registry.register(dir.name, {
+                        source: 'built-in',
+                        enabled: true,
+                        installedAt: new Date().toISOString(),
+                        path: pluginPath,
+                    });
                 }
             }
         }
 
-        // Scan user-installed plugins
-        const userDir = join(root, 'plugins', 'user');
-        if (existsSync(userDir)) {
-            for (const dir of readdirSync(userDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
-                const pluginPath = join(userDir, dir.name);
-                const loaded = this.loader.loadOne(pluginPath);
-                if (loaded) {
-                    this.plugins.set(dir.name, loaded);
-                    if (!this.registry.has(dir.name)) {
-                        this.registry.register(dir.name, {
-                            source: 'user-installed',
-                            enabled: true,
-                            installedAt: new Date().toISOString(),
-                            path: pluginPath,
-                        });
-                    }
-                }
-            }
-        }
-
-        // Sync registry: remove entries for plugins that no longer exist on disk
+        // Sync registry: disable entries for plugins no longer on disk
         for (const id of this.registry.listEnabled()) {
             if (!this.plugins.has(id)) {
                 this.registry.setEnabled(id, false);
