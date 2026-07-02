@@ -1,14 +1,18 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react';
+import { Slot } from '@radix-ui/react-slot';
 
 interface CardProps {
-    children: ReactNode
-    className?: string
+    asChild?: boolean;
+    children: ReactNode;
+    className?: string;
+    ref?: Ref<HTMLDivElement>;
 }
 
-export function Card({ children, className = '' }: CardProps) {
+export function Card({ asChild, children, className = '', ref }: CardProps) {
+    const Comp = asChild ? Slot : 'div';
     return (
-        <div className={`rounded-xl border border-border bg-surface-card p-4 ${className}`}>
+        <Comp ref={ref} className={`rounded-xl border border-border bg-surface-card p-4 ${className}`}>
             {children}
-        </div>
-    )
+        </Comp>
+    );
 }

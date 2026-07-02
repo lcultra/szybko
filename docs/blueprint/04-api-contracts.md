@@ -76,7 +76,7 @@ send('runtime:state-changed', {
 ### window:resize (R→M)
 
 ```typescript
-invoke('window:resize', { height: number })
+invoke('window:resize', { height: number });
 // height 由 ResizeObserver 测量，主进程 clamp 到 [96, 520]
 ```
 

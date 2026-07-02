@@ -1,6 +1,7 @@
 import type { PluginManifest } from '@szybko/shared';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import process from 'node:process';
 
 const PLUGINS_DIR = join(process.cwd(), 'plugins');
 
@@ -18,7 +19,7 @@ export class PluginLoader {
                     return null;
                 try {
                     const manifest: PluginManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-                    console.log(`[plugin-loader] Registered: ${e.name}`);
+                    console.warn(`[plugin-loader] Registered: ${e.name}`);
                     return { id: e.name, manifest, path: pluginPath };
                 }
                 catch (err) {

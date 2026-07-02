@@ -7,7 +7,8 @@
         "dev": "pnpm --filter @szybko/desktop dev",
         "build": "pnpm -r build",
         "typecheck": "pnpm -r exec tsc --noEmit",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix"
     },
     "devDependencies": {
         "@antfu/eslint-config": "^9.1.0",

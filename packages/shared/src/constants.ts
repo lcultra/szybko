@@ -1,6 +1,6 @@
-export const DEFAULT_WINDOW_WIDTH = 820
-export const MIN_WINDOW_HEIGHT = 96
-export const MAX_WINDOW_HEIGHT = 520
-export const WINDOW_TOP_OFFSET_RATIO = 1 / 3
-export const SEARCH_DEBOUNCE_MS = 80
-export const PLUGIN_SEARCH_TIMEOUT_MS = 5000
+export const DEFAULT_WINDOW_WIDTH = 820;
+export const MIN_WINDOW_HEIGHT = 96;
+export const MAX_WINDOW_HEIGHT = 520;
+export const WINDOW_TOP_OFFSET_RATIO = 1 / 3;
+export const SEARCH_DEBOUNCE_MS = 80;
+export const PLUGIN_SEARCH_TIMEOUT_MS = 5000;

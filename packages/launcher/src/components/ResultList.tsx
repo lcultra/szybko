@@ -11,7 +11,7 @@ interface ResultListProps {
 export function ResultList({
     results,
     selectedIndex,
-    onSelect,
+    _onSelect,
     onExecute,
 }: ResultListProps) {
     if (results.length === 0)

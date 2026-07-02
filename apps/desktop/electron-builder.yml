@@ -1,10 +1,10 @@
 appId: com.szybko.app
 productName: Szybko
-files:
-  - dist-electron/**/*
-  - dist/**/*
 directories:
   output: release
+files:
+  - out/**/*
+  - package.json
 mac:
   target: dmg
   icon: resources/icon.icns

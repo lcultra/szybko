@@ -12,4 +12,4 @@ export const IPC = {
     SHOW_MAIN_WINDOW: 'show-main-window',
     THEME_CHANGED: 'theme:changed',
     THEME_GET: 'theme:get',
-} as const
+} as const;

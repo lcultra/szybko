@@ -1,18 +1,19 @@
-import { nativeTheme, BrowserWindow } from 'electron'
-import { IPC } from '@szybko/shared'
+import type { BrowserWindow } from 'electron';
+import { IPC } from '@szybko/shared';
+import { nativeTheme } from 'electron';
 
 export class ThemeManager {
     setupListener(mainWindow: BrowserWindow) {
         nativeTheme.on('updated', () => {
-            mainWindow.webContents.send(IPC.THEME_CHANGED, { isDark: this.isDark() })
-        })
+            mainWindow.webContents.send(IPC.THEME_CHANGED, { isDark: this.isDark() });
+        });
     }
 
     isDark(): boolean {
-        return nativeTheme.shouldUseDarkColors
+        return nativeTheme.shouldUseDarkColors;
     }
 
     handleGet() {
-        return { isDark: this.isDark() }
+        return { isDark: this.isDark() };
     }
 }

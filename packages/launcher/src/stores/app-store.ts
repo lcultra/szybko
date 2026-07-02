@@ -1,19 +1,19 @@
-import { create } from 'zustand'
-import type { SearchResult } from '@szybko/shared'
+import type { SearchResult } from '@szybko/shared';
+import { create } from 'zustand';
 
-type AppState = 'idle' | 'searching' | 'plugin'
+type AppState = 'idle' | 'searching' | 'plugin';
 
 interface AppStore {
-    state: AppState
-    query: string
-    results: SearchResult[]
-    selectedIndex: number
-    activePluginId: string | null
-    setQuery: (query: string) => void
-    setResults: (results: SearchResult[]) => void
-    setSelectedIndex: (index: number) => void
-    setState: (state: AppState) => void
-    setActivePlugin: (pluginId: string | null) => void
+    state: AppState;
+    query: string;
+    results: SearchResult[];
+    selectedIndex: number;
+    activePluginId: string | null;
+    setQuery: (query: string) => void;
+    setResults: (results: SearchResult[]) => void;
+    setSelectedIndex: (index: number) => void;
+    setState: (state: AppState) => void;
+    setActivePlugin: (pluginId: string | null) => void;
 }
 
 export const useAppStore = create<AppStore>(set => ({
@@ -27,4 +27,4 @@ export const useAppStore = create<AppStore>(set => ({
     setSelectedIndex: selectedIndex => set({ selectedIndex }),
     setState: state => set({ state }),
     setActivePlugin: activePluginId => set({ activePluginId, state: activePluginId ? 'plugin' : 'idle' }),
-}))
+}));

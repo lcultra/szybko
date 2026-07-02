@@ -21,6 +21,7 @@ export default antfu(
             '**/out/**',
             '**/node_modules**/',
             '.claude',
+            '**/docs/**',
         ],
     },
     {

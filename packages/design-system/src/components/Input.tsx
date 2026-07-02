@@ -1,16 +1,18 @@
-import { forwardRef, type InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, Ref } from 'react';
+import { Slot } from '@radix-ui/react-slot';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {}
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+    asChild?: boolean;
+    ref?: Ref<HTMLInputElement>;
+}
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-    ({ className = '', ...props }, ref) => {
-        return (
-            <input
-                ref={ref}
-                className={`w-full bg-transparent border-none outline-none text-text text-2xl placeholder-text-muted focus:ring-0 ${className}`}
-                {...props}
-            />
-        )
-    },
-)
-Input.displayName = 'Input'
+export function Input({ asChild, className = '', ref, ...props }: InputProps) {
+    const Comp = asChild ? Slot : 'input';
+    return (
+        <Comp
+            ref={ref}
+            className={`w-full border-none bg-transparent text-2xl text-text placeholder-text-muted outline-none focus:ring-0 ${className}`}
+            {...props}
+        />
+    );
+}

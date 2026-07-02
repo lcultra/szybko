@@ -70,12 +70,12 @@ core-rust     →  napi-rs (独立编译)
 
 ## 拆分规则（超阈值时必须拆）
 
-| 文件 | 阈值 | 拆分为 |
-|---|---|---|
-| `host/runtime-manager.ts` | 300 行 | runtime-manager + runtime-pool (预热/LRU) |
-| `host/window-manager.ts` | 200 行 | window-manager + host-factory |
-| `host/main.ts` | 150 行 | main + setup |
-| `launcher/App.tsx` | 200 行 | SearchView + RuntimeView (宿主切换时只有 view 变) |
-| `launcher/store.ts` | 200 行 | zustand slices (search/runtime/window) |
-| `core-rust/lib.rs` | 200 行 | 模块级 `#[napi]` pub use |
-| `host/adapter-bridge.ts` | 150 行 | bridge + rust-loader |
+| 文件                      | 阈值   | 拆分为                                            |
+| ------------------------- | ------ | ------------------------------------------------- |
+| `host/runtime-manager.ts` | 300 行 | runtime-manager + runtime-pool (预热/LRU)         |
+| `host/window-manager.ts`  | 200 行 | window-manager + host-factory                     |
+| `host/main.ts`            | 150 行 | main + setup                                      |
+| `launcher/App.tsx`         | 200 行 | SearchView + RuntimeView (宿主切换时只有 view 变) |
+| `launcher/store.ts`        | 200 行 | zustand slices (search/runtime/window)            |
+| `core-rust/lib.rs`        | 200 行 | 模块级 `#[napi]` pub use                          |
+| `host/adapter-bridge.ts`  | 150 行 | bridge + rust-loader                              |

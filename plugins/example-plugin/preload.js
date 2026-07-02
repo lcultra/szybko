@@ -1,2 +1,2 @@
 // Example plugin preload
-console.log('Example plugin loaded')
+console.error('Example plugin loaded');

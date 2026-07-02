@@ -1,18 +1,18 @@
-import type { Host, PluginRuntime } from '@szybko/shared'
+import type { Host, PluginRuntime } from '@szybko/shared';
 
 export class LauncherHost implements Host {
-    id: string
-    type: 'launcher' = 'launcher'
+    id: string;
+    type = 'launcher' as const;
 
-    constructor(id: string) { this.id = id }
+    constructor(id: string) { this.id = id; }
 
     attach(runtime: PluginRuntime) {
-        runtime.state = 'attached'
-        runtime.host = this
+        runtime.state = 'attached';
+        runtime.host = this;
     }
 
     detach(runtime: PluginRuntime) {
-        runtime.state = 'detached'
-        runtime.host = null
+        runtime.state = 'detached';
+        runtime.host = null;
     }
 }

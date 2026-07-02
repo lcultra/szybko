@@ -1,17 +1,17 @@
-import { useEffect, useCallback } from 'react'
+import { useCallback, useEffect } from 'react';
 
 interface UseKeyboardOptions {
-    selectedIndex: number
-    totalItems: number
-    onSelectUp: () => void
-    onSelectDown: () => void
-    onExecute: () => void
-    onEscape: () => void
+    selectedIndex: number;
+    totalItems: number;
+    onSelectUp: () => void;
+    onSelectDown: () => void;
+    onExecute: () => void;
+    onEscape: () => void;
 }
 
 export function useKeyboard({
-    selectedIndex,
-    totalItems,
+    selectedIndex: _selectedIndex,
+    totalItems: _totalItems,
     onSelectUp,
     onSelectDown,
     onExecute,
@@ -21,28 +21,28 @@ export function useKeyboard({
         (e: KeyboardEvent) => {
             switch (e.key) {
                 case 'ArrowUp':
-                    e.preventDefault()
-                    onSelectUp()
-                    break
+                    e.preventDefault();
+                    onSelectUp();
+                    break;
                 case 'ArrowDown':
-                    e.preventDefault()
-                    onSelectDown()
-                    break
+                    e.preventDefault();
+                    onSelectDown();
+                    break;
                 case 'Enter':
-                    e.preventDefault()
-                    onExecute()
-                    break
+                    e.preventDefault();
+                    onExecute();
+                    break;
                 case 'Escape':
-                    e.preventDefault()
-                    onEscape()
-                    break
+                    e.preventDefault();
+                    onEscape();
+                    break;
             }
         },
         [onSelectUp, onSelectDown, onExecute, onEscape],
-    )
+    );
 
     useEffect(() => {
-        document.addEventListener('keydown', handleKeyDown)
-        return () => document.removeEventListener('keydown', handleKeyDown)
-    }, [handleKeyDown])
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [handleKeyDown]);
 }

@@ -81,7 +81,11 @@
       "Bash(/Users/pengcheng17/Documents/workspace/ai/szybko/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron /tmp/test-electron.mjs)",
       "Bash(echo 'import { app } from \"electron\"; console.log\\(\"app:\", typeof app, \"BrowserWindow:\", typeof BrowserWindow\\)' > /tmp/test-e33.mjs && npx electron /tmp/test-e33.mjs 2>&1)",
       "Bash(pnpm --filter @szybko/desktop build)",
-      "Bash(git commit -m 'fix: enable Tailwind CSS v4 utility class generation for workspace packages *)"
+      "Bash(git commit -m 'fix: enable Tailwind CSS v4 utility class generation for workspace packages *)",
+      "Bash(pnpm --filter @szybko/desktop dev)",
+      "Bash(lsof -ti:5173 -ti:5174 -ti:5175)",
+      "Bash(xargs kill -9)",
+      "Bash(pnpm lint *)"
     ],
     "additionalDirectories": [
       "/Users/pengcheng17/Documents/workspace/ai/szybko/packages/shared",

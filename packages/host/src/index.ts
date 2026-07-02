@@ -1,6 +1,7 @@
 export { ConfigManager } from './config-manager.js';
 export { FloatingHost } from './hosts/floating-host.js';
 export { LauncherHost } from './hosts/launcher-host.js';
+export { notifyShowMainWindow, registerIpcHandlers } from './ipc-handlers.js';
 export { PluginLoader } from './plugin-loader.js';
 export { PluginManager } from './plugin-manager.js';
 export { RuntimeManager } from './runtime-manager.js';
