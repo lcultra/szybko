@@ -2,9 +2,9 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "jsx": "react-jsx",
-        "rootDir": "./src",
+        "rootDir": "./src/renderer",
         "types": ["vite/client"],
-        "outDir": "./dist"
+        "outDir": "./out/renderer"
     },
-    "include": ["src"]
+    "include": ["src/renderer"]
 }

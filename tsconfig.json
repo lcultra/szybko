@@ -1,0 +1,13 @@
+{
+    "references": [
+        { "path": "./packages/shared" },
+        { "path": "./packages/host" },
+        { "path": "./packages/launcher" },
+        { "path": "./packages/design-system" },
+        { "path": "./packages/plugin-sdk" },
+        { "path": "./apps/desktop" },
+        { "path": "./apps/desktop/tsconfig.web.json" },
+        { "path": "./apps/desktop/tsconfig.node.json" }
+    ],
+    "files": []
+}

@@ -1,5 +1,6 @@
 import type { ActionDescriptor, SearchResult } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
+import type { RuntimeManager } from './runtime-manager.js';
 import type { WindowManager } from './window-manager.js';
 import { exec } from 'node:child_process';
 import { IPC } from '@szybko/shared';
@@ -13,7 +14,6 @@ interface SearchSource {
 }
 
 function calculate(query: string): SearchResult[] {
-    // Only allow safe math expressions: digits, operators, parentheses, dots, spaces
     if (!/^[\d+\-*/.()%\s]+$/.test(query.trim()))
         return [];
 
@@ -93,8 +93,7 @@ const SOURCES: SearchSource[] = [
         search: (query: string) => {
             const lower = query.toLowerCase();
             return STATIC_APPS.filter(
-                app => app.title.toLowerCase().includes(lower)
-                    || app.subtitle?.toLowerCase().includes(lower),
+                app => app.title.toLowerCase().includes(lower) || app.subtitle?.toLowerCase().includes(lower),
             ).map((app, i) => ({ ...app, score: app.score - i * 5 }));
         },
     },
@@ -106,8 +105,7 @@ function runBuiltinSearch(query: string): SearchResult[] {
 
     const results: SearchResult[] = [];
     for (const source of SOURCES) {
-        const hits = source.search(query);
-        results.push(...hits);
+        results.push(...source.search(query));
     }
     results.sort((a, b) => b.score - a.score);
     return results.slice(0, 10);
@@ -121,22 +119,25 @@ function executeAction(action: ActionDescriptor): { ok: boolean; error?: string 
             shell.openPath(action.payload.path);
             return { ok: true };
         }
-
         case 'shell.openUrl': {
             shell.openExternal(action.payload.url);
             return { ok: true };
         }
-
         case 'clipboard.writeText': {
             clipboard.writeText(action.payload.text);
             return { ok: true };
         }
-
         case 'process.launchApp': {
             exec(`open -b "${action.payload.bundleId}"`);
             return { ok: true };
         }
-
+        case 'plugin.open':
+        case 'plugin.runCommand': {
+            // Plugin actions are handled by the plugin's WebContentsView directly.
+            // The main process just acknowledges the action.
+            console.warn(`[execute] plugin action: ${action.type}`, action.payload);
+            return { ok: true };
+        }
         default:
             return { ok: false, error: `Unknown action type: ${(action as any).type}` };
     }
@@ -144,29 +145,66 @@ function executeAction(action: ActionDescriptor): { ok: boolean; error?: string 
 
 // ── Register all IPC handlers ─────────────────────────────────────
 
-export function registerIpcHandlers(windowManager: WindowManager) {
-    // ── Internal API (__szybko_internal__) ────────────────────────
+export function registerIpcHandlers(
+    windowManager: WindowManager,
+    runtimeManager?: RuntimeManager,
+) {
+    // ── Search ─────────────────────────────────────────────────────
 
-    ipcMain.handle(IPC.SEARCH, (_event, req: { queryId: string; query: string; timestamp: number }) => {
+    ipcMain.handle(IPC.SEARCH_QUERY, (_event, req: { queryId: string; query: string; timestamp: number }) => {
+        // Built-in search
         const results = runBuiltinSearch(req.query);
-        if (results.length > 0) {
-            const win = windowManager.getWindow();
-            if (win && !win.isDestroyed()) {
-                win.webContents.send(IPC.SEARCH_BATCH, {
-                    queryId: req.queryId,
-                    batchSeq: 0,
-                    source: 'builtin',
-                    results,
-                    isFinal: true,
-                });
-            }
+        const win = windowManager.getWindow();
+
+        if (results.length > 0 && win && !win.isDestroyed()) {
+            win.webContents.send(IPC.SEARCH_BATCH, {
+                queryId: req.queryId,
+                batchSeq: 0,
+                source: 'builtin',
+                results,
+                isFinal: false,
+            });
         }
+
+        // Plugin search (async — results come back via plugin:search-result)
+        if (runtimeManager) {
+            runtimeManager.sendPluginSearch(req);
+        }
+
+        // Final batch (empty, signals end of built-in results)
+        if (win && !win.isDestroyed()) {
+            win.webContents.send(IPC.SEARCH_BATCH, {
+                queryId: req.queryId,
+                batchSeq: 1,
+                source: 'builtin',
+                results: [],
+                isFinal: true,
+            });
+        }
+
         return { ok: true };
     });
 
     ipcMain.handle(IPC.SEARCH_CANCEL, () => {
         return { ok: true };
     });
+
+    // ── Plugin search results ──────────────────────────────────────
+
+    ipcMain.on(IPC.PLUGIN_SEARCH_RESULT, (event, batch: { queryId: string; results: any[] }) => {
+        const win = windowManager.getWindow();
+        if (win && !win.isDestroyed()) {
+            win.webContents.send(IPC.SEARCH_BATCH, {
+                queryId: batch.queryId,
+                batchSeq: 0,
+                source: 'plugin',
+                results: batch.results,
+                isFinal: true,
+            });
+        }
+    });
+
+    // ── Window control ─────────────────────────────────────────────
 
     ipcMain.handle(IPC.WINDOW_RESIZE, (_event, { height }: { height: number }) => {
         windowManager.resize(height);
@@ -178,11 +216,13 @@ export function registerIpcHandlers(windowManager: WindowManager) {
         return { ok: true };
     });
 
-    // ── Public API (szybko / utools) ──────────────────────────────
+    // ── Execute ────────────────────────────────────────────────────
 
-    ipcMain.handle(IPC.EXECUTE, (_event, { action }: { action: ActionDescriptor }) => {
+    ipcMain.handle(IPC.PLUGIN_EXEC, (_event, { action }: { action: ActionDescriptor }) => {
         return executeAction(action);
     });
+
+    // ── Host switch ────────────────────────────────────────────────
 
     ipcMain.handle(IPC.HOST_SWITCH, (_event, { pluginId: _pluginId, targetHost }: { pluginId: string; targetHost: string }) => {
         try {
@@ -196,10 +236,10 @@ export function registerIpcHandlers(windowManager: WindowManager) {
     });
 }
 
-// ── Push notifications (main → renderer) ──────────────────────────
+// ── Push notifications ────────────────────────────────────────────
 
 export function notifyShowMainWindow(win: BrowserWindow) {
     if (!win.isDestroyed()) {
-        win.webContents.send(IPC.SHOW_MAIN_WINDOW);
+        win.webContents.send(IPC.WINDOW_SHOW);
     }
 }

@@ -1,23 +1,36 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { registerIpcHandlers, ShortcutManager, WindowManager } from '@szybko/host';
+import { PluginManager, PluginRegistry, registerIpcHandlers, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
 import { app } from 'electron';
 
 const windowManager = new WindowManager();
 const shortcutManager = new ShortcutManager();
 
-app.whenReady().then(() => {
-    const preloadPath = join(__dirname, '../preload/launcher.js');
+void app.whenReady().then(async () => {
+    // Persistence
+    const store = new Store(join(app.getPath('userData'), 'szybko.json'), { plugins: {} });
+    const registry = new PluginRegistry(store);
+
+    // Plugin system
+    const pluginManager = new PluginManager(registry);
+    await pluginManager.init();
+
+    const preloadPath = join(__dirname, '../preload/host.js');
+    const pluginPreloadPath = join(__dirname, '../preload/sandbox.js');
+    const runtimeManager = new RuntimeManager(pluginManager, windowManager, pluginPreloadPath);
+    await runtimeManager.startAll();
+
+    // Window
     const win = windowManager.createMainWindow(preloadPath);
 
     if (process.env.ELECTRON_RENDERER_URL) {
-        win.loadURL(process.env.ELECTRON_RENDERER_URL);
+        void win.loadURL(process.env.ELECTRON_RENDERER_URL);
     }
     else {
-        win.loadFile(path.join(__dirname, 'renderer/index.html'));
+        void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
 
-    registerIpcHandlers(windowManager);
+    registerIpcHandlers(windowManager, runtimeManager);
     shortcutManager.registerToggle(windowManager);
 });
 

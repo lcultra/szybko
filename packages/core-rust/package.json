@@ -2,9 +2,11 @@
     "name": "@szybko/core-rust",
     "version": "0.1.0",
     "private": true,
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
     "scripts": {
-        "build": "napi build --release --platform",
-        "build:debug": "napi build --platform"
+        "build": "napi build --platform --release lib",
+        "build:debug": "napi build --platform lib"
     },
     "napi": {
         "name": "szybko-core",
@@ -13,6 +15,6 @@
         }
     },
     "devDependencies": {
-        "@napi-rs/cli": "^3.0"
+        "@napi-rs/cli": "^2.18.4"
     }
 }

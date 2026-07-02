@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "rootDir": "./lib",
+        "allowJs": true
+    },
+    "include": [
+        "lib/index.d.ts"
+    ]
+}

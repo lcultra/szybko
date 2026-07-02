@@ -1,13 +1,13 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
-        "jsx": "react-jsx",
+        "composite": true,
+        "target": "esnext",
         "module": "ESNext",
         "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "strict": true,
         "declaration": true,
-        "sourceMap": true,
+        "declarationMap": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
@@ -16,6 +16,7 @@
     "exclude": [
         "node_modules",
         "dist",
-        "target"
+        "target",
+        "out"
     ]
 }

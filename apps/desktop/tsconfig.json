@@ -1,10 +1,13 @@
 {
-    "extends": "../../tsconfig.base.json",
+    "extends": "../../tsconfig.node.json",
     "compilerOptions": {
         "rootDir": "./src",
         "types": ["node"],
         "outDir": "./out"
     },
-    "include": ["src/main", "src/preload"],
+    "include": [
+        "src/main",
+        "src/preload"
+    ],
     "exclude": ["out"]
 }

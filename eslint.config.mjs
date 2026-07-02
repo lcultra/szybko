@@ -18,11 +18,16 @@ export default antfu(
         },
         ignores: [
             '**/dist/**',
+            '**/lib/**',
             '**/out/**',
-            '**/node_modules**/',
+            '**/node_modules/**',
             '.claude',
             '**/docs/**',
         ],
+        rules: {
+            // no-unsafe-as
+            'ts/no-unsafe-assignment': 'off',
+        },
     },
     {
         extends: [tailwindcss.configs.recommended],

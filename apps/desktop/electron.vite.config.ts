@@ -22,8 +22,8 @@ export default defineConfig({
         build: {
             rollupOptions: {
                 input: {
-                    launcher: 'src/preload/launcher.ts',
-                    plugin: 'src/preload/plugin.ts',
+                    host: 'src/preload/host.ts',
+                    sandbox: 'src/preload/sandbox.ts',
                 },
                 external: ['electron'],
                 output: {

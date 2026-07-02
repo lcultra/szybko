@@ -85,7 +85,10 @@
       "Bash(pnpm --filter @szybko/desktop dev)",
       "Bash(lsof -ti:5173 -ti:5174 -ti:5175)",
       "Bash(xargs kill -9)",
-      "Bash(pnpm lint *)"
+      "Bash(pnpm lint *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm -r run typecheck)",
+      "Bash(awk -F':' '{print $1}')"
     ],
     "additionalDirectories": [
       "/Users/pengcheng17/Documents/workspace/ai/szybko/packages/shared",

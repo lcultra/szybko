@@ -3,30 +3,36 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 
-const PLUGINS_DIR = join(process.cwd(), 'plugins');
+export interface LoadedPlugin {
+    id: string;
+    manifest: PluginManifest;
+    path: string;
+}
 
 export class PluginLoader {
-    scan(): { id: string; manifest: PluginManifest; path: string }[] {
-        if (!existsSync(PLUGINS_DIR))
+    loadOne(pluginPath: string): LoadedPlugin | null {
+        const manifestPath = join(pluginPath, 'plugin.json');
+        if (!existsSync(manifestPath))
+            return null;
+
+        try {
+            const manifest: PluginManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+            const id = pluginPath.split('/').pop() || pluginPath.split('\\').pop() || 'unknown';
+            return { id, manifest, path: pluginPath };
+        }
+        catch (err) {
+            console.error(`[plugin-loader] Failed to load ${pluginPath}:`, err);
+            return null;
+        }
+    }
+
+    scan(dir: string = join(process.cwd(), 'plugins')): LoadedPlugin[] {
+        if (!existsSync(dir))
             return [];
 
-        return readdirSync(PLUGINS_DIR, { withFileTypes: true })
+        return readdirSync(dir, { withFileTypes: true })
             .filter(e => e.isDirectory())
-            .map((e) => {
-                const pluginPath = join(PLUGINS_DIR, e.name);
-                const manifestPath = join(pluginPath, 'plugin.json');
-                if (!existsSync(manifestPath))
-                    return null;
-                try {
-                    const manifest: PluginManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-                    console.warn(`[plugin-loader] Registered: ${e.name}`);
-                    return { id: e.name, manifest, path: pluginPath };
-                }
-                catch (err) {
-                    console.error(`[plugin-loader] Failed to load ${e.name}:`, err);
-                    return null;
-                }
-            })
-            .filter(Boolean) as { id: string; manifest: PluginManifest; path: string }[];
+            .map(e => this.loadOne(join(dir, e.name)))
+            .filter((p): p is LoadedPlugin => !!p);
     }
 }

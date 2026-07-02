@@ -12,8 +12,10 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@szybko/core-rust": "workspace:*",
         "@szybko/shared": "workspace:*",
-        "electron": "^33.0"
+        "electron": "^33.0",
+        "lowdb": "^7.0.1"
     },
     "devDependencies": {
         "typescript": "^6.0"
