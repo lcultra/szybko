@@ -7,8 +7,8 @@ import { invoke, on } from './ipc.js';
  */
 export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'onShowMainWindow'> {
     return {
-        resizeWindow: invoke(IPC.WINDOW_RESIZE),
-        hideWindow: invoke(IPC.WINDOW_HIDE),
+        resizeWindow: height => invoke(IPC.WINDOW_RESIZE)({ height }),
+        hideWindow: () => invoke(IPC.WINDOW_HIDE)(undefined),
         onShowMainWindow: on(IPC.WINDOW_SHOW),
     };
 }

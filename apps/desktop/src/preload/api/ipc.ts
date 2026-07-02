@@ -1,56 +1,34 @@
-import type { IPC, SzybkoInternalApi, SzybkoPluginApi } from '@szybko/shared';
+import type {
+    IpcInvokeContract,
+    IpcMainToRendererEventContract,
+    IpcRendererToMainEventContract,
+} from '@szybko/shared';
 import { ipcRenderer } from 'electron';
 
-// ── 类型工具 ─────────────────────────────────────────────────────
+type InvokePayload<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
+type InvokeResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
+type MainEventPayload<C extends keyof IpcMainToRendererEventContract> = IpcMainToRendererEventContract[C];
+type RendererEventPayload<C extends keyof IpcRendererToMainEventContract> = IpcRendererToMainEventContract[C];
 
-type InvokeRet<T> = T extends (...args: any[]) => Promise<infer R> ? R : never;
-type OnData<T> = T extends (cb: (data: infer D) => void) => () => void ? D : never;
-
-type CombinedApi = SzybkoInternalApi & SzybkoPluginApi;
-
-/**
- * IPC 通道名 → API 方法名 映射。
- * 每个值必须是 CombinedApi 上的真实方法名（satisfies 校验）。
- * 新增 IPC 通道时，在这里加一行即可。
- */
-// eslint-disable-next-line unused-imports/no-unused-vars
-const IPC_API = {
-    SEARCH_QUERY: 'search',
-    SEARCH_CANCEL: 'searchCancel',
-    PLUGIN_EXEC: 'execute',
-    WINDOW_RESIZE: 'resizeWindow',
-    WINDOW_HIDE: 'hideWindow',
-    HOST_SWITCH: 'switchHost',
-    SEARCH_BATCH: 'onSearchBatch',
-    THEME_CHANGED: 'onThemeChanged',
-    WINDOW_SHOW: 'onShowMainWindow',
-    PLUGIN_RUNTIME_STATE: 'onRuntimeStateChanged',
-    PLUGIN_ENTER: 'onPluginEnter',
-} as const satisfies Record<string, keyof CombinedApi>;
-
-type IpcMap = {
-    [K in keyof typeof IPC_API as (typeof IPC)[K]]: CombinedApi[(typeof IPC_API)[K]];
-};
-
-// ── IPC 工具函数 ─────────────────────────────────────────────────
-
-export function invoke<C extends keyof IpcMap>(
+export function invoke<C extends keyof IpcInvokeContract>(
     channel: C,
-): (payload?: any) => Promise<InvokeRet<IpcMap[C]>> {
-    return async (payload?: any) =>
-        ipcRenderer.invoke(channel, payload) as Promise<InvokeRet<IpcMap[C]>>;
+): (payload: InvokePayload<C>) => Promise<InvokeResponse<C>> {
+    return async (payload: InvokePayload<C>) =>
+        ipcRenderer.invoke(channel, payload) as Promise<InvokeResponse<C>>;
 }
 
-export function on<C extends keyof IpcMap>(
+export function on<C extends keyof IpcMainToRendererEventContract>(
     channel: C,
-): (cb: (data: OnData<IpcMap[C]>) => void) => () => void {
-    return (cb: (data: OnData<IpcMap[C]>) => void) => {
-        const handler = (_: any, data: OnData<IpcMap[C]>) => cb(data);
+): (cb: (data: MainEventPayload<C>) => void) => () => void {
+    return (cb: (data: MainEventPayload<C>) => void) => {
+        const handler = (_: unknown, data: MainEventPayload<C>) => cb(data);
         ipcRenderer.on(channel, handler);
         return () => ipcRenderer.removeListener(channel, handler);
     };
 }
 
-export function send<C extends string>(channel: C) {
-    return (payload?: any) => ipcRenderer.send(channel, payload);
+export function send<C extends keyof IpcRendererToMainEventContract>(
+    channel: C,
+): (payload: RendererEventPayload<C>) => void {
+    return (payload: RendererEventPayload<C>) => ipcRenderer.send(channel, payload);
 }

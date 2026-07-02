@@ -1,7 +1,6 @@
 import type { PluginSearchContext, SearchResult } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
-import { ipcRenderer } from 'electron';
-import { on } from './ipc.js';
+import { on, send } from './ipc.js';
 
 /**
  * 插件生命周期事件。
@@ -18,22 +17,22 @@ export function createPluginLifecycleApi() {
          * 插件注册回调，在收到搜索查询时返回匹配的结果列表。
          * 结果通过 IPC.PLUGIN_SEARCH_RESULT 发送回宿主。
          *
-         * 这个回调需要同步返回 SearchResult[]，因为 ipcRenderer.send
+         * 这个回调需要同步返回 SearchResult[]，因为 IPC send
          * 是异步非阻塞的，但 Electron 的 IPC 通道保证顺序。
          */
         onSearch: (cb: (ctx: PluginSearchContext) => SearchResult[]) => {
-            const handler = (_: unknown, ctx: PluginSearchContext) => {
+            const sendSearchResult = send(IPC.PLUGIN_SEARCH_RESULT);
+
+            return on(IPC.PLUGIN_SEARCH)(ctx => {
                 const results = cb(ctx);
-                ipcRenderer.send(IPC.PLUGIN_SEARCH_RESULT, {
+                sendSearchResult({
                     queryId: ctx.queryId,
                     batchSeq: 0,
                     source: 'plugin',
                     results,
                     isFinal: true,
                 });
-            };
-            ipcRenderer.on(IPC.PLUGIN_SEARCH, handler);
-            return () => ipcRenderer.removeListener(IPC.PLUGIN_SEARCH, handler);
+            });
         },
 
         /** 用户选中插件 feature，插件进入自身 UI 模式 */
