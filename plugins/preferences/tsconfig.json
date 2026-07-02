@@ -1,0 +1,9 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "../../apps/desktop/out/plugins/preferences",
+        "rootDir": "src",
+        "composite": true
+    },
+    "include": ["src"]
+}

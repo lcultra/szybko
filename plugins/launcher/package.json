@@ -1,0 +1,14 @@
+{
+    "name": "@szybko/plugin-launcher",
+    "private": true,
+    "scripts": {
+        "build": "tsc --project tsconfig.json && cp src/index.html ../../apps/desktop/out/plugins/launcher/",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@szybko/shared": "workspace:*"
+    },
+    "devDependencies": {
+        "typescript": "^6.0"
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "main": "index.html",
+    "preload": "preload.js",
+    "pluginSetting": { "single": true },
+    "features": []
+}
