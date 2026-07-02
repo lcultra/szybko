@@ -1,10 +1,19 @@
-import type { ActionDescriptor, SearchResult } from '@szybko/shared';
+import type {
+    ActionDescriptor,
+    IpcInvokeContract,
+    IpcRendererToMainEventContract,
+    SearchResult,
+} from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
 import type { RuntimeManager } from './runtime-manager.js';
 import type { WindowManager } from './window-manager.js';
 import { exec } from 'node:child_process';
 import { IPC } from '@szybko/shared';
 import { clipboard, ipcMain, shell } from 'electron';
+
+type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
+type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
+type RendererEvent<C extends keyof IpcRendererToMainEventContract> = IpcRendererToMainEventContract[C];
 
 // ── Built-in search sources ──────────────────────────────────────
 
@@ -151,47 +160,53 @@ export function registerIpcHandlers(
 ) {
     // ── Search ─────────────────────────────────────────────────────
 
-    ipcMain.handle(IPC.SEARCH_QUERY, (_event, req: { queryId: string; query: string; timestamp: number }) => {
-        // Built-in search
-        const results = runBuiltinSearch(req.query);
-        const win = windowManager.getWindow();
+    ipcMain.handle(
+        IPC.SEARCH_QUERY,
+        (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
+            // Built-in search
+            const results = runBuiltinSearch(req.query);
+            const win = windowManager.getWindow();
 
-        if (results.length > 0 && win && !win.isDestroyed()) {
-            win.webContents.send(IPC.SEARCH_BATCH, {
-                queryId: req.queryId,
-                batchSeq: 0,
-                source: 'builtin',
-                results,
-                isFinal: false,
-            });
-        }
+            if (results.length > 0 && win && !win.isDestroyed()) {
+                win.webContents.send(IPC.SEARCH_BATCH, {
+                    queryId: req.queryId,
+                    batchSeq: 0,
+                    source: 'builtin',
+                    results,
+                    isFinal: false,
+                });
+            }
 
-        // Plugin search (async — results come back via plugin:search-result)
-        if (runtimeManager) {
-            runtimeManager.sendPluginSearch(req);
-        }
+            // Plugin search (async — results come back via plugin:search-result)
+            if (runtimeManager) {
+                runtimeManager.sendPluginSearch(req);
+            }
 
-        // Final batch (empty, signals end of built-in results)
-        if (win && !win.isDestroyed()) {
-            win.webContents.send(IPC.SEARCH_BATCH, {
-                queryId: req.queryId,
-                batchSeq: 1,
-                source: 'builtin',
-                results: [],
-                isFinal: true,
-            });
-        }
+            // Final batch (empty, signals end of built-in results)
+            if (win && !win.isDestroyed()) {
+                win.webContents.send(IPC.SEARCH_BATCH, {
+                    queryId: req.queryId,
+                    batchSeq: 1,
+                    source: 'builtin',
+                    results: [],
+                    isFinal: true,
+                });
+            }
 
-        return { ok: true };
-    });
+            return { ok: true };
+        },
+    );
 
-    ipcMain.handle(IPC.SEARCH_CANCEL, () => {
-        return { ok: true };
-    });
+    ipcMain.handle(
+        IPC.SEARCH_CANCEL,
+        (): IpcResponse<typeof IPC.SEARCH_CANCEL> => {
+            return { ok: true };
+        },
+    );
 
     // ── Plugin search results ──────────────────────────────────────
 
-    ipcMain.on(IPC.PLUGIN_SEARCH_RESULT, (event, batch: { queryId: string; results: any[] }) => {
+    ipcMain.on(IPC.PLUGIN_SEARCH_RESULT, (_event, batch: RendererEvent<typeof IPC.PLUGIN_SEARCH_RESULT>) => {
         const win = windowManager.getWindow();
         if (win && !win.isDestroyed()) {
             win.webContents.send(IPC.SEARCH_BATCH, {
@@ -206,34 +221,46 @@ export function registerIpcHandlers(
 
     // ── Window control ─────────────────────────────────────────────
 
-    ipcMain.handle(IPC.WINDOW_RESIZE, (_event, { height }: { height: number }) => {
-        windowManager.resize(height);
-        return { ok: true };
-    });
+    ipcMain.handle(
+        IPC.WINDOW_RESIZE,
+        (_event, { height }: IpcRequest<typeof IPC.WINDOW_RESIZE>): IpcResponse<typeof IPC.WINDOW_RESIZE> => {
+            windowManager.resize(height);
+            return { ok: true };
+        },
+    );
 
-    ipcMain.handle(IPC.WINDOW_HIDE, () => {
-        windowManager.hide();
-        return { ok: true };
-    });
+    ipcMain.handle(
+        IPC.WINDOW_HIDE,
+        (): IpcResponse<typeof IPC.WINDOW_HIDE> => {
+            windowManager.hide();
+            return { ok: true };
+        },
+    );
 
     // ── Execute ────────────────────────────────────────────────────
 
-    ipcMain.handle(IPC.PLUGIN_EXEC, (_event, { action }: { action: ActionDescriptor }) => {
-        return executeAction(action);
-    });
+    ipcMain.handle(
+        IPC.PLUGIN_EXEC,
+        (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): IpcResponse<typeof IPC.PLUGIN_EXEC> => {
+            return executeAction(action);
+        },
+    );
 
     // ── Host switch ────────────────────────────────────────────────
 
-    ipcMain.handle(IPC.HOST_SWITCH, (_event, { pluginId: _pluginId, targetHost }: { pluginId: string; targetHost: string }) => {
-        try {
-            const host = windowManager.createHost(targetHost as 'launcher' | 'floating');
-            windowManager.registerHost(host.id, host);
-            return { ok: true, hostId: host.id };
-        }
-        catch (err) {
-            return { ok: false, error: String(err) };
-        }
-    });
+    ipcMain.handle(
+        IPC.HOST_SWITCH,
+        (_event, { pluginId: _pluginId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
+            try {
+                const host = windowManager.createHost(targetHost);
+                windowManager.registerHost(host.id, host);
+                return { ok: true, hostId: host.id };
+            }
+            catch (err) {
+                return { ok: false, error: String(err) };
+            }
+        },
+    );
 }
 
 // ── Push notifications ────────────────────────────────────────────

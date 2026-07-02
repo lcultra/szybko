@@ -1,4 +1,4 @@
-import type { PluginRuntime } from '@szybko/shared';
+import type { PluginRuntime, PluginSearchContext, SearchRequest } from '@szybko/shared';
 import type { PluginManager } from './plugin-manager.js';
 import type { WindowManager } from './window-manager.js';
 import { join } from 'node:path';
@@ -55,15 +55,16 @@ export class RuntimeManager {
         return runtime;
     }
 
-    sendPluginSearch(req: { queryId: string; query: string; timestamp: number }): void {
+    sendPluginSearch(req: SearchRequest): void {
         for (const [, entry] of this.entries) {
             if (entry.runtime.state === 'created' || entry.runtime.state === 'attached') {
-                entry.view.webContents.send(IPC.PLUGIN_SEARCH, {
+                const ctx: PluginSearchContext = {
                     queryId: req.queryId,
                     keyword: req.query.split(/\s+/)[0] || '',
                     query: req.query,
                     fullQuery: req.query,
-                });
+                };
+                entry.view.webContents.send(IPC.PLUGIN_SEARCH, ctx);
             }
         }
     }
