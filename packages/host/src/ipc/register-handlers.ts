@@ -111,13 +111,18 @@ export function registerIpcHandlers(
             // plugin.open 需要激活 Runtime，不走 executeAction 纯函数
             if (action.type === 'plugin.open') {
                 if (!runtimeManager) {
+                    console.error('[exec] RuntimeManager not initialized');
                     return { ok: false, error: 'RuntimeManager not initialized' };
                 }
+                console.log(`[exec] plugin.open: pluginId=${action.payload.pluginId}, featureCode=${action.payload.featureCode}`);
                 const runtime = runtimeManager.getOrCreate(action.payload.pluginId);
                 if (!runtime) {
+                    console.error(`[exec] Plugin "${action.payload.pluginId}" not found`);
                     return { ok: false, error: `Plugin "${action.payload.pluginId}" not found` };
                 }
+                console.log(`[exec] runtime found: ${runtime.id}, state=${runtime.state}`);
                 runtimeManager.attachToWindow(runtime.id, action.payload.featureCode);
+                console.log(`[exec] attachToWindow done`);
                 return { ok: true };
             }
             return executeAction(action);

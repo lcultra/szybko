@@ -162,8 +162,11 @@ export class RuntimeManager {
     getOrCreate(pluginId: string): PluginRuntime | null {
         const existing = Array.from(this.entries.values())
             .find(e => e.runtime.pluginId === pluginId);
-        if (existing)
+        if (existing) {
+            console.log(`[RuntimeManager] getOrCreate: found existing runtime ${existing.runtime.id} state=${existing.runtime.state}`);
             return existing.runtime;
+        }
+        console.log(`[RuntimeManager] getOrCreate: no existing runtime, creating new for ${pluginId}`);
         return this.create(pluginId);
     }
 }
