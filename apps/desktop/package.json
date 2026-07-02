@@ -13,8 +13,8 @@
     "dependencies": {
         "@szybko/design-system": "workspace:*",
         "@szybko/host": "workspace:*",
-        "@szybko/shell": "workspace:*",
         "@szybko/shared": "workspace:*",
+        "@szybko/shell": "workspace:*",
         "react": "^19.2.7",
         "react-dom": "^19.2.7"
     },

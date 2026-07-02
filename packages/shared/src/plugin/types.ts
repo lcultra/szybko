@@ -12,11 +12,15 @@ export interface PluginManifest {
     features: PluginFeature[];
 }
 
+import type { ActionDescriptor } from '../search/types.js';
+
 export interface PluginFeature {
     code: string;
     explain?: string;
     icon?: string;
     cmds: (string | MatchCommand)[];
+    /** 静态指令的直接动作。设置后匹配 cmd 时直接返回此动作，而非"打开插件"。 */
+    action?: ActionDescriptor;
     mainHide?: boolean;
     mainPush?: boolean;
 }

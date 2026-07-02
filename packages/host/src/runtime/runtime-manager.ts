@@ -97,15 +97,29 @@ export class RuntimeManager {
                     // TODO: 后续支持 MatchCommand 类型（regex / over / files 等）
                 });
                 if (match) {
-                    results.push({
-                        id: `plugin-activate-${plugin.id}-${feature.code}`,
-                        title: feature.explain || feature.code,
-                        subtitle: `打开 ${plugin.id}`,
-                        icon: '🧩',
-                        group: '插件',
-                        score: 90,
-                        action: { type: 'plugin.open', payload: { pluginId: plugin.id, url: '' } },
-                    });
+                    if (feature.action) {
+                        // 静态指令：feature 有直接动作，返回该动作的结果
+                        results.push({
+                            id: `plugin-cmd-${plugin.id}-${feature.code}`,
+                            title: feature.explain || feature.code,
+                            subtitle: '',
+                            icon: feature.icon || '🧩',
+                            group: plugin.id,
+                            score: 90,
+                            action: feature.action,
+                        });
+                    } else {
+                        // 无直接动作：返回"打开插件"激活结果
+                        results.push({
+                            id: `plugin-activate-${plugin.id}-${feature.code}`,
+                            title: feature.explain || feature.code,
+                            subtitle: `打开 ${plugin.id}`,
+                            icon: '🧩',
+                            group: '插件',
+                            score: 90,
+                            action: { type: 'plugin.open', payload: { pluginId: plugin.id, url: '' } },
+                        });
+                    }
                 }
             }
         }

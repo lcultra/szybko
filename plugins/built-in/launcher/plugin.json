@@ -3,6 +3,9 @@
     "preload": "preload.js",
     "pluginSetting": { "single": true },
     "features": [
-        { "code": "launcher", "explain": "启动器", "cmds": ["测试", "test", "启动器", "launcher"] }
+        { "code": "lock", "explain": "锁定屏幕", "cmds": ["锁屏", "lock"], "icon": "🔒", "action": { "type": "clipboard.writeText", "payload": { "text": "lock" } } },
+        { "code": "sleep", "explain": "休眠", "cmds": ["休眠", "sleep"], "icon": "💤", "action": { "type": "clipboard.writeText", "payload": { "text": "sleep" } } },
+        { "code": "restart", "explain": "重新启动", "cmds": ["重启", "restart", "重新启动"], "icon": "🔄", "action": { "type": "clipboard.writeText", "payload": { "text": "restart" } } },
+        { "code": "shutdown", "explain": "关机", "cmds": ["关机", "shutdown"], "icon": "⏻", "action": { "type": "clipboard.writeText", "payload": { "text": "shutdown" } } }
     ]
 }
