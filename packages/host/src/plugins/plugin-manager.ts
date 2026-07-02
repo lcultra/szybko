@@ -29,10 +29,14 @@ export class PluginManager {
             console.warn(`[PluginManager] plugins dir not found: ${this.pluginsBaseDir}`);
             return;
         }
-        for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
+        const dirs = readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory());
+        console.log(`[PluginManager] scanning ${this.pluginsBaseDir}, found ${dirs.length} dirs`);
+        for (const dir of dirs) {
             const distPath = join(this.pluginsBaseDir, dir.name, 'dist');
+            console.log(`[PluginManager]  checking ${dir.name}/dist/...`);
             const loaded = this.loader.loadOne(distPath);
             if (loaded) {
+                console.log(`[PluginManager]  loaded plugin: ${dir.name}`);
                 this.plugins.set(dir.name, loaded);
                 if (!this.registry.has(dir.name)) {
                     this.registry.register(dir.name, {

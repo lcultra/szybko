@@ -57,7 +57,8 @@ export class RuntimeManager {
         const devUrl = !app.isPackaged && plugin.manifest.development?.main;
         if (devUrl) {
             view.webContents.loadURL(devUrl);
-        } else {
+        }
+        else {
             const indexPath = join(plugin.path, plugin.manifest.main);
             view.webContents.loadFile(indexPath);
         }
@@ -86,11 +87,15 @@ export class RuntimeManager {
     matchPluginFeatures(query: string): SearchResult[] {
         const results: SearchResult[] = [];
         const lower = query.trim().toLowerCase();
-        if (!lower) return results;
+        if (!lower)
+            return results;
 
-        for (const plugin of this.pluginManager.getEnabled()) {
+        const enabled = this.pluginManager.getEnabled();
+        console.log(`[RuntimeManager] matchPluginFeatures: query="${query}", enabled plugins=${enabled.length}`);
+        for (const plugin of enabled) {
+            console.log(`[RuntimeManager]  plugin: ${plugin.id}, features: ${plugin.manifest.features.length}`);
             for (const feature of plugin.manifest.features) {
-                const match = (feature.cmds || []).some(cmd => {
+                const match = (feature.cmds || []).some((cmd) => {
                     if (typeof cmd === 'string')
                         return cmd.toLowerCase() === lower;
                     return false;
@@ -145,7 +150,8 @@ export class RuntimeManager {
     /** 分离插件：从窗口移除 view，保留 Runtime 状态 */
     detachFromWindow(runtimeId: string): void {
         const entry = this.entries.get(runtimeId);
-        if (!entry) return;
+        if (!entry)
+            return;
 
         this.windowManager.detachPluginView();
         entry.runtime.state = 'detached';
@@ -156,7 +162,8 @@ export class RuntimeManager {
     getOrCreate(pluginId: string): PluginRuntime | null {
         const existing = Array.from(this.entries.values())
             .find(e => e.runtime.pluginId === pluginId);
-        if (existing) return existing.runtime;
+        if (existing)
+            return existing.runtime;
         return this.create(pluginId);
     }
 }
