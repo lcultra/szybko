@@ -4,11 +4,9 @@
     "private": true,
     "packageManager": "pnpm@10.34.3",
     "scripts": {
-        "dev": "pnpm build:plugins && pnpm run --parallel dev:desktop dev:plugins:watch",
+        "dev": "pnpm build:plugins && pnpm --parallel --filter @szybko/desktop --filter './plugins/**' dev",
         "build": "pnpm build:plugins && pnpm -r build",
         "build:plugins": "pnpm --filter './plugins/**' build",
-        "dev:desktop": "pnpm --filter @szybko/desktop dev",
-        "dev:plugins:watch": "pnpm --filter './plugins/**' build --watch",
         "typecheck": "pnpm -r run typecheck",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix"

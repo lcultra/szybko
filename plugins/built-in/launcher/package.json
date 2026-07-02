@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
+        "dev": "vite build --watch",
         "build": "vite build && cp index.html plugin.json ../../../apps/desktop/out/plugins/built-in/launcher/",
         "typecheck": "tsc --noEmit"
     },
