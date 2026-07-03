@@ -34,7 +34,7 @@ void app.whenReady().then(async () => {
         void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
 
-    registerIpcHandlers(windowManager, runtimeManager);
+    registerIpcHandlers(windowManager, runtimeManager, pluginManager);
     shortcutManager.registerToggle(windowManager);
 });
 

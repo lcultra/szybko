@@ -1,3 +1,4 @@
+import type { SearchResult } from '@szybko/shared';
 import type { PluginRegistry } from './plugin-registry';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -69,5 +70,36 @@ export class PluginCatalog {
         return this.registry.listEnabled()
             .map(id => this.plugins.get(id))
             .filter((p): p is PluginInfo => !!p);
+    }
+
+    /** Match plugin features cmds against a query string. */
+    matchFeatures(query: string): SearchResult[] {
+        const results: SearchResult[] = [];
+        const lower = query.trim().toLowerCase();
+        if (!lower)
+            return results;
+
+        for (const plugin of this.getEnabled()) {
+            for (const feature of plugin.manifest.features) {
+                const match = (feature.cmds || []).some((cmd) => {
+                    if (typeof cmd === 'string')
+                        return cmd.toLowerCase() === lower;
+                    return false;
+                    // TODO: support MatchCommand type (regex / over / files, etc.)
+                });
+                if (match) {
+                    results.push({
+                        id: `plugin-activate-${plugin.id}-${feature.code}`,
+                        title: feature.explain || feature.code,
+                        subtitle: `打开 ${plugin.id}`,
+                        icon: feature.icon || '🧩',
+                        group: '插件',
+                        score: 90,
+                        action: { type: 'plugin.open', payload: { pluginId: plugin.id, featureCode: feature.code } },
+                    });
+                }
+            }
+        }
+        return results;
     }
 }

@@ -5,6 +5,7 @@ import type {
 import type { BrowserWindow } from 'electron';
 import type { RuntimeManager } from '../runtime/runtime-manager';
 import type { WindowManager } from '../window/window-manager';
+import type { PluginCatalog } from '../plugins/plugin-catalog';
 import { IPC } from '@szybko/shared';
 import { ipcMain, Menu } from 'electron';
 import { runBuiltinSearch } from './builtin-search';
@@ -19,6 +20,7 @@ type RendererEvent<C extends keyof IpcRendererToMainEventContract> = IpcRenderer
 export function registerIpcHandlers(
     windowManager: WindowManager,
     runtimeManager?: RuntimeManager,
+    pluginCatalog?: PluginCatalog,
 ) {
     // ── Search ─────────────────────────────────────────────────────
 
@@ -27,8 +29,8 @@ export function registerIpcHandlers(
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
             // Built-in search + plugin feature match
             const results = runBuiltinSearch(req.query);
-            if (runtimeManager) {
-                results.push(...runtimeManager.matchPluginFeatures(req.query));
+            if (pluginCatalog) {
+                results.push(...pluginCatalog.matchFeatures(req.query));
             }
             results.sort((a, b) => b.score - a.score);
             const win = windowManager.getWindow();

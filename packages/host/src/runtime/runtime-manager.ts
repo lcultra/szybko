@@ -1,4 +1,4 @@
-import type { LoadState, MountState, PluginRuntime, PluginSearchContext, SearchRequest, SearchResult } from '@szybko/shared';
+import type { LoadState, MountState, PluginRuntime, PluginSearchContext, SearchRequest } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
@@ -88,37 +88,6 @@ export class RuntimeManager {
 
     get runtimeCount(): number {
         return this.entries.size;
-    }
-
-    /** 匹配插件 features[].cmds，如果用户输入匹配某条命令就返回"打开插件"结果 */
-    matchPluginFeatures(query: string): SearchResult[] {
-        const results: SearchResult[] = [];
-        const lower = query.trim().toLowerCase();
-        if (!lower)
-            return results;
-
-        for (const plugin of this.pluginManager.getEnabled()) {
-            for (const feature of plugin.manifest.features) {
-                const match = (feature.cmds || []).some((cmd) => {
-                    if (typeof cmd === 'string')
-                        return cmd.toLowerCase() === lower;
-                    return false;
-                    // TODO: 后续支持 MatchCommand 类型（regex / over / files 等）
-                });
-                if (match) {
-                    results.push({
-                        id: `plugin-activate-${plugin.id}-${feature.code}`,
-                        title: feature.explain || feature.code,
-                        subtitle: `打开 ${plugin.id}`,
-                        icon: feature.icon || '🧩',
-                        group: '插件',
-                        score: 90,
-                        action: { type: 'plugin.open', payload: { pluginId: plugin.id, featureCode: feature.code } },
-                    });
-                }
-            }
-        }
-        return results;
     }
 
     // ── State transitions ──────────────────────────────────────────
