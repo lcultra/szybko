@@ -39,6 +39,7 @@ export class RuntimeManager {
                 nodeIntegration: false,
             },
         });
+        view.setBorderRadius(8);
 
         const runtime: PluginRuntime = {
             id: `${pluginId}-${this.nextInstanceId++}`,
