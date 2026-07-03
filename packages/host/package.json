@@ -9,7 +9,10 @@
     "main": "./src/index.ts",
     "types": "./src/index.ts",
     "scripts": {
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "db:generate": "drizzle-kit generate --config drizzle.config.ts"
     },
     "peerDependencies": {
         "electron": "^43.0"
@@ -18,10 +21,13 @@
         "@szybko/core-rust": "workspace:*",
         "@szybko/plugin-launcher": "workspace:*",
         "@szybko/shared": "workspace:*",
+        "drizzle-orm": "^0.45.2",
         "lowdb": "^7.0.1"
     },
     "devDependencies": {
+        "drizzle-kit": "^0.31.10",
         "electron": "^43.0",
-        "typescript": "^6.0"
+        "typescript": "^6.0",
+        "vitest": "^4.1.9"
     }
 }
