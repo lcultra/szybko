@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { usePluginRuntime } from '../../hooks/usePluginRuntime';
@@ -16,11 +16,27 @@ export default function App() {
     const state = useAppStore(s => s.state);
     const setState = useAppStore(s => s.setState);
     const runtimeId = useRuntimeStore(s => s.slot.runtimeId);
+    const pluginId = useRuntimeStore(s => s.slot.pluginId);
     const clearSlot = useRuntimeStore(s => s.clearSlot);
     const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
 
     useWindowHeight(rootRef);
     usePluginRuntime();
+
+    // CmdOrCtrl+D → 插件模式时分离到浮动窗口
+    useEffect(() => {
+        if (state !== 'plugin') return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+                e.preventDefault();
+                if (pluginId) {
+                    PluginRuntimeService.switchHost(pluginId, 'floating');
+                }
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [state, pluginId]);
 
     useKeyboard({
         selectedIndex,
