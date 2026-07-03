@@ -1,5 +1,5 @@
 import type { PluginFeature } from '@szybko/shared';
-import { hashStable, normalizeFeature, stableJson } from './feature-normalizer';
+import { computePinyin, hashStable, normalizeFeature, normalizeTextKey, stableJson } from './feature-normalizer';
 
 export interface ManifestFeatureInput {
     code: string;
@@ -35,20 +35,27 @@ export interface CommandTriggerProjection {
     featureCode: string;
     cmdKey: string;
     triggerIndex: number;
-    source: 'feature_cmd';
     type: 'text' | 'regex' | 'over' | 'img' | 'files' | 'window';
     label: string | null;
     matcherJson: string;
-    normalizedKey: string | null;
-    aliasId: null;
-    targetCmdKey: null;
     scoreBase: number;
     rebuiltAt: number;
+}
+
+export interface CommandTriggerSearchProjection {
+    pluginId: string;
+    featureCode: string;
+    cmdKey: string;
+    searchText: string;
+    source: 'cmd' | 'alias';
+    matchLevel: 1 | 2 | 3;
+    aliasId: number | null;
 }
 
 export interface CommandProjection {
     effectiveFeatures: EffectiveFeatureProjection[];
     commandTriggers: CommandTriggerProjection[];
+    commandTriggerSearch: CommandTriggerSearchProjection[];
     meta: {
         pluginId: string;
         manifestHash: string;
@@ -56,6 +63,34 @@ export interface CommandProjection {
         indexVersion: number;
         rebuiltAt: number;
     };
+}
+
+function buildSearchEntries(
+    pluginId: string,
+    featureCode: string,
+    cmdKey: string,
+    text: string,
+    source: 'cmd' | 'alias',
+    aliasId: number | null,
+): CommandTriggerSearchProjection[] {
+    const normalized = normalizeTextKey(text);
+    if (!normalized) return [];
+
+    const entries: CommandTriggerSearchProjection[] = [];
+
+    // Exact original text
+    entries.push({ pluginId, featureCode, cmdKey, searchText: normalized, source, matchLevel: 3, aliasId });
+
+    // Full pinyin + initials
+    const pinyins = computePinyin(normalized);
+    if (pinyins.full && pinyins.full !== normalized) {
+        entries.push({ pluginId, featureCode, cmdKey, searchText: pinyins.full, source, matchLevel: 2, aliasId });
+    }
+    if (pinyins.initials && pinyins.initials !== normalized && pinyins.initials !== pinyins.full) {
+        entries.push({ pluginId, featureCode, cmdKey, searchText: pinyins.initials, source, matchLevel: 1, aliasId });
+    }
+
+    return entries;
 }
 
 export function buildCommandProjection(input: BuildProjectionInput): CommandProjection {
@@ -86,6 +121,7 @@ export function buildCommandProjection(input: BuildProjectionInput): CommandProj
 
     const effectiveFeatures: EffectiveFeatureProjection[] = [];
     const commandTriggers: CommandTriggerProjection[] = [];
+    const commandTriggerSearch: CommandTriggerSearchProjection[] = [];
 
     for (const [code, record] of [...map.entries()].sort((a, b) => a[1].featureOrder - b[1].featureOrder)) {
         const normalized = normalizeFeature(record.feature);
@@ -105,16 +141,24 @@ export function buildCommandProjection(input: BuildProjectionInput): CommandProj
                 featureCode: code,
                 cmdKey: command.cmdKey,
                 triggerIndex: command.triggerIndex,
-                source: 'feature_cmd',
                 type: command.type,
                 label: command.label ?? null,
                 matcherJson: command.matcherJson,
-                normalizedKey: command.normalizedKey,
-                aliasId: null,
-                targetCmdKey: null,
                 scoreBase: 90,
                 rebuiltAt: input.now,
             });
+
+            if (command.type === 'text' && command.normalizedKey) {
+                const searchEntries = buildSearchEntries(
+                    input.pluginId,
+                    code,
+                    command.cmdKey,
+                    command.normalizedKey,
+                    'cmd',
+                    null,
+                );
+                commandTriggerSearch.push(...searchEntries);
+            }
         }
     }
 
@@ -123,6 +167,7 @@ export function buildCommandProjection(input: BuildProjectionInput): CommandProj
     return {
         effectiveFeatures,
         commandTriggers,
+        commandTriggerSearch,
         meta: {
             pluginId: input.pluginId,
             manifestHash: input.manifestHash,
