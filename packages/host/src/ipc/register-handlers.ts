@@ -4,10 +4,15 @@ import type {
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
 import type { CommandCatalog } from '../commands/command-catalog';
+import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { ipcMain } from 'electron';
+import { collectFromSearch } from '../input/input-context-collector';
+import { runPipeline } from '../input/matcher-pipeline';
+import { MatchSessionManager } from '../input/match-session-manager';
+import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { runBuiltinSearch } from './builtin-search';
 import { executeAction } from './execute-action';
 
@@ -21,7 +26,9 @@ export function registerIpcHandlers(
     windowManager: WindowManager,
     coordinator: RuntimeCoordinator,
     commandCatalog: CommandCatalog,
+    platformDb?: PlatformDatabase,
 ) {
+    const sessionManager = new MatchSessionManager();
     // ── Search ─────────────────────────────────────────────────────
 
     ipcMain.handle(
@@ -29,7 +36,40 @@ export function registerIpcHandlers(
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
             // Built-in search
             const results = runBuiltinSearch(req.query);
-            results.push(...commandCatalog.match(req.query));
+            results.sort((a, b) => b.score - a.score);
+
+            // Matcher pipeline (text/regex/over against command triggers)
+            if (platformDb) {
+                const repo = new CommandProjectionRepository(platformDb.drizzle());
+                const snapshot = collectFromSearch(req);
+                const types: Array<'text' | 'regex' | 'over'> = ['text', 'regex', 'over'];
+                const triggers = repo.listTriggersByType(types);
+                const matches = runPipeline(snapshot, triggers);
+
+                if (matches.length > 0) {
+                    const session = sessionManager.create(snapshot);
+                    sessionManager.addMatches(session.sessionId, matches);
+
+                    const pipelineResults = matches.map(m => ({
+                        id: m.matchId,
+                        title: m.label || m.featureCode,
+                        subtitle: `打开 ${m.pluginId}`,
+                        icon: '🧩',
+                        group: '插件',
+                        score: m.score,
+                        action: {
+                            type: 'plugin.open' as const,
+                            payload: {
+                                pluginId: m.pluginId,
+                                featureCode: m.featureCode,
+                                matchId: m.matchId,
+                            },
+                        },
+                    }));
+                    results.push(...pipelineResults);
+                }
+            }
+
             results.sort((a, b) => b.score - a.score);
             const win = windowManager.getWindow();
 
@@ -108,6 +148,28 @@ export function registerIpcHandlers(
         (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): IpcResponse<typeof IPC.PLUGIN_EXEC> => {
             // plugin.open 需要激活 Runtime，不走 executeAction 纯函数
             if (action.type === 'plugin.open') {
+                // Resolve match context from session manager if matchId is present
+                if (action.payload.matchId) {
+                    const resolved = sessionManager.resolve(action.payload.matchId);
+                    if (resolved) {
+                        coordinator.activatePlugin(
+                            action.payload.pluginId,
+                            action.payload.featureCode,
+                            {
+                                code: resolved.match.featureCode,
+                                type: resolved.match.enterType,
+                                payload: resolved.match.payload,
+                                option: resolved.match.option ?? undefined,
+                                from: resolved.match.from,
+                                keyword: resolved.match.matchedSource,
+                                query: resolved.match.matchedSource,
+                                matchId: resolved.match.matchId,
+                            },
+                        );
+                        return { ok: true };
+                    }
+                }
+                // Fall back to simple activation without match context
                 coordinator.activatePlugin(action.payload.pluginId, action.payload.featureCode);
                 return { ok: true };
             }

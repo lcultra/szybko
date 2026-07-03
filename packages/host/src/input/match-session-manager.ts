@@ -1,5 +1,5 @@
 import type { InputContextSnapshot, MatchSession, TriggerMatch } from '@szybko/shared';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 
 const SESSION_TTL_MS = 60_000;
 

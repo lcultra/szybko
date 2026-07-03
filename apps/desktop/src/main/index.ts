@@ -66,7 +66,7 @@ void app.whenReady().then(async () => {
         }
     });
 
-    registerIpcHandlers(windowManager, coordinator, commandCatalog);
+    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb);
     shortcutManager.registerToggle(windowManager);
 });
 

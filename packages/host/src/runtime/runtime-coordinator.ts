@@ -1,4 +1,4 @@
-import type { SearchRequest } from '@szybko/shared';
+import type { PluginEnterPayload, SearchRequest } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
 import type { Closable } from '../window/hosts/capabilities';
@@ -24,7 +24,7 @@ export class RuntimeCoordinator {
      * Activate a plugin: get or create its runtime, detach any active
      * runtime from the launcher host, then attach to the launcher.
      */
-    activatePlugin(pluginId: string, featureCode?: string): void {
+    activatePlugin(pluginId: string, featureCode?: string, enterPayload?: Partial<PluginEnterPayload>): void {
         const runtime = this.runtimeManager.getOrCreate(pluginId);
         if (!runtime)
             return;
@@ -37,7 +37,7 @@ export class RuntimeCoordinator {
         }
 
         const host = this.hostRegistry.getOrCreateLauncherHost();
-        this.runtimeManager.attachToHost(runtime.info.id, host, featureCode);
+        this.runtimeManager.attachToHost(runtime.info.id, host, featureCode, enterPayload);
     }
 
     /**

@@ -1,4 +1,4 @@
-import type { LoadState, MountState, PluginSearchContext, SearchRequest } from '@szybko/shared';
+import type { LoadState, MountState, PluginEnterPayload, PluginSearchContext, SearchRequest } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
@@ -169,7 +169,7 @@ export class RuntimeManager {
     // ── Activation / Deactivation ─────────────────────────────────
 
     /** 将插件 view 挂载到指定 Host */
-    attachToHost(runtimeId: string, host: RuntimeHost, featureCode?: string): void {
+    attachToHost(runtimeId: string, host: RuntimeHost, featureCode?: string, enterPayload?: Partial<PluginEnterPayload>): void {
         const entry = this.entries.get(runtimeId);
         if (!entry) {
             console.warn(`[RuntimeManager] attachToHost: runtime ${runtimeId} not found`);
@@ -180,9 +180,13 @@ export class RuntimeManager {
         if (entry.runtime.host?.type === 'floating') {
             const fHost = entry.runtime.host as FloatingRuntimeHost;
             fHost.focus();
-            entry.runtime.webContents.send(IPC.PLUGIN_ENTER, {
+            entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
                 pluginId: entry.runtime.info.pluginId,
                 featureCode,
+                code: featureCode ?? entry.runtime.info.pluginId,
+                type: 'text',
+                payload: null,
+                from: 'main',
             });
             return;
         }
@@ -218,10 +222,14 @@ export class RuntimeManager {
             }
         }
 
-        // 通知插件进入，携带 featureCode
-        entry.runtime.webContents.send(IPC.PLUGIN_ENTER, {
+        // 通知插件进入，携带 featureCode 或完整 enterPayload
+        entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
             pluginId: entry.runtime.info.pluginId,
             featureCode,
+            code: featureCode ?? entry.runtime.info.pluginId,
+            type: 'text',
+            payload: null,
+            from: 'main',
         });
     }
 
