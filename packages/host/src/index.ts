@@ -4,6 +4,7 @@ export { PluginManager } from './plugins/plugin-manager';
 export { PluginRegistry } from './plugins/plugin-registry';
 export { Store } from './plugins/store';
 export { RuntimeManager } from './runtime/runtime-manager';
+export type { PluginRuntime, ActivationContext } from './runtime/types';
 export { ConfigManager } from './services/config-manager';
 export { FloatingHost } from './window/hosts/floating-host';
 export { LauncherHost } from './window/hosts/launcher-host';
