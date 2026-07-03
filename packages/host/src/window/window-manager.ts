@@ -59,7 +59,7 @@ export class WindowManager {
 
     /** 初始化 Host 注册表（main/index.ts 启动时调用一次） */
     initHostRegistry(): RuntimeHostRegistry {
-        this.hostRegistry = new RuntimeHostRegistry();
+        this.hostRegistry = new RuntimeHostRegistry(this);
         return this.hostRegistry;
     }
 
@@ -74,11 +74,23 @@ export class WindowManager {
     createHost(type: 'launcher' | 'floating'): Host {
         if (!this.hostRegistry) {
             // 降级（无 registry 时直接用旧行为）
-            if (type === 'launcher') return new LauncherRuntimeHost(`launcher-${Date.now()}`);
+            if (type === 'launcher') return new LauncherRuntimeHost(`launcher-${Date.now()}`, this);
             return new FloatingRuntimeHost(`floating-${Date.now()}`);
         }
         if (type === 'launcher') return this.hostRegistry.getOrCreateLauncherHost();
         return this.hostRegistry.createFloatingHost();
+    }
+
+    // ── Child view management (called by RuntimeHost implementations) ──
+
+    addChildView(view: WebContentsView): void {
+        this.window?.contentView.addChildView(view);
+    }
+
+    removeChildView(view: WebContentsView): void {
+        if (this.window && !this.window.isDestroyed()) {
+            this.window.contentView.removeChildView(view);
+        }
     }
 
     // ── Plugin WebContentsView management ──────────────────────────

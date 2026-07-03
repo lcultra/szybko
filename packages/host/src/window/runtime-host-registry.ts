@@ -1,4 +1,5 @@
 import type { Host } from '@szybko/shared';
+import type { WindowManager } from './window-manager';
 import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
 import { FloatingRuntimeHost } from './hosts/floating-runtime-host';
 
@@ -6,9 +7,11 @@ export class RuntimeHostRegistry {
     private hosts: Map<string, Host> = new Map();
     private launcherHost: LauncherRuntimeHost | null = null;
 
+    constructor(private windowManager: WindowManager) {}
+
     getOrCreateLauncherHost(): LauncherRuntimeHost {
         if (!this.launcherHost) {
-            this.launcherHost = new LauncherRuntimeHost(`launcher-host`);
+            this.launcherHost = new LauncherRuntimeHost(`launcher-host`, this.windowManager);
             this.hosts.set(this.launcherHost.id, this.launcherHost);
         }
         return this.launcherHost;
