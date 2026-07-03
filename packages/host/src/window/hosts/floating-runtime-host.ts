@@ -17,14 +17,18 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     constructor(id: string) { this.id = id; }
 
     attach(runtime: PluginRuntime, view?: WebContentsView) {
+        // 自动创建窗口（如果尚未创建）
+        if (!this.window) {
+            this.createWindow(runtime.pluginId, runtime.id);
+        }
         if (view) {
             this.view = view;
-            this.window?.contentView.addChildView(view);
+            this.window!.contentView.addChildView(view);
             view.setBounds({ x: BORDER_WIDTH, y: SEARCHBAR_HEIGHT, width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2, height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH });
         }
         runtime.state = 'attached';
         runtime.host = this;
-        this.window?.show();
+        this.window!.show();
     }
 
     detach(runtime: PluginRuntime) {
