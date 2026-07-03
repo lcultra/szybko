@@ -3,6 +3,7 @@ import type {
     IpcRendererToMainEventContract,
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
+import type { CommandCatalog } from '../commands/command-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
@@ -19,6 +20,7 @@ type RendererEvent<C extends keyof IpcRendererToMainEventContract> = IpcRenderer
 export function registerIpcHandlers(
     windowManager: WindowManager,
     coordinator: RuntimeCoordinator,
+    commandCatalog: CommandCatalog,
 ) {
     // ── Search ─────────────────────────────────────────────────────
 
@@ -27,6 +29,7 @@ export function registerIpcHandlers(
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
             // Built-in search
             const results = runBuiltinSearch(req.query);
+            results.push(...commandCatalog.match(req.query));
             results.sort((a, b) => b.score - a.score);
             const win = windowManager.getWindow();
 
@@ -167,6 +170,38 @@ export function registerIpcHandlers(
         (_event, { runtimeId, pin }: IpcRequest<typeof IPC.PLUGIN_PIN>): IpcResponse<typeof IPC.PLUGIN_PIN> => {
             coordinator.pinRuntime(runtimeId, pin);
             return { ok: true };
+        },
+    );
+
+    // ── Dynamic feature IPC ───────────────────────────────────
+
+    ipcMain.handle(
+        IPC.FEATURE_SET,
+        (event, { feature }: IpcRequest<typeof IPC.FEATURE_SET>): IpcResponse<typeof IPC.FEATURE_SET> => {
+            const pluginId = coordinator.pluginIdForWebContents(event.sender.id);
+            if (!pluginId)
+                return { ok: false, error: 'Plugin runtime not found for sender' };
+            return commandCatalog.setFeature(pluginId, feature);
+        },
+    );
+
+    ipcMain.handle(
+        IPC.FEATURE_GET,
+        (event, { codes }: IpcRequest<typeof IPC.FEATURE_GET>): IpcResponse<typeof IPC.FEATURE_GET> => {
+            const pluginId = coordinator.pluginIdForWebContents(event.sender.id);
+            if (!pluginId)
+                return { ok: false, features: [], error: 'Plugin runtime not found for sender' };
+            return { ok: true, features: commandCatalog.getDynamicFeatures(pluginId, codes) };
+        },
+    );
+
+    ipcMain.handle(
+        IPC.FEATURE_REMOVE,
+        (event, { code }: IpcRequest<typeof IPC.FEATURE_REMOVE>): IpcResponse<typeof IPC.FEATURE_REMOVE> => {
+            const pluginId = coordinator.pluginIdForWebContents(event.sender.id);
+            if (!pluginId)
+                return { ok: false, error: 'Plugin runtime not found for sender' };
+            return commandCatalog.removeFeature(pluginId, code);
         },
     );
 }

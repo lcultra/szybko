@@ -87,6 +87,14 @@ export class RuntimeManager {
         return runtime;
     }
 
+    pluginIdForWebContents(webContentsId: number): string | null {
+        for (const [, entry] of this.entries) {
+            if (entry.runtime.webContents.id === webContentsId)
+                return entry.runtime.info.pluginId;
+        }
+        return null;
+    }
+
     sendPluginSearch(req: SearchRequest): void {
         for (const [, entry] of this.entries) {
             const { mountState, loadState } = entry.runtime.info;

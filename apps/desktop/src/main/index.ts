@@ -1,6 +1,6 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { PluginCatalog, PluginRegistry, registerIpcHandlers, RuntimeCoordinator, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
+import { CommandCatalog, createPlatformDatabase, PluginCatalog, PluginRegistry, registerIpcHandlers, RuntimeCoordinator, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
 import { app } from 'electron';
 
 const windowManager = new WindowManager();
@@ -10,14 +10,25 @@ const shortcutManager = new ShortcutManager();
 void app.whenReady().then(async () => {
     // Persistence
     const store = new Store(join(app.getPath('userData'), 'szybko.json'), { plugins: {} });
+    // Plugin enablement still uses the existing lowdb registry until PluginRegistry is migrated to SQLite.
     const registry = new PluginRegistry(store);
 
     // 插件目录：dev 时从 repo 根加载；prod 时用 resources path（随后实现）
     const pluginsDir = app.isPackaged
         ? join(process.resourcesPath, 'plugins', 'built-in')
         : join(__dirname, '..', '..', '..', '..', 'plugins', 'built-in');
+
+    // Command catalog — SQLite-backed feature indexing and dynamic feature store
+    const platformDb = createPlatformDatabase(join(app.getPath('userData'), 'szybko-platform.db'));
+    const commandCatalog = CommandCatalog.createForDatabase(platformDb);
+
     const pluginManager = new PluginCatalog(registry, pluginsDir);
     await pluginManager.init();
+
+    // Index manifest features for all enabled plugins into the command catalog
+    for (const plugin of pluginManager.getEnabled()) {
+        commandCatalog.indexPlugin(plugin.id, plugin.manifest, plugin.path);
+    }
 
     const preloadPath = join(__dirname, '../preload/host.js');
     const pluginPreloadPath = join(__dirname, '../preload/plugin.js');
@@ -55,7 +66,7 @@ void app.whenReady().then(async () => {
         }
     });
 
-    registerIpcHandlers(windowManager, coordinator);
+    registerIpcHandlers(windowManager, coordinator, commandCatalog);
     shortcutManager.registerToggle(windowManager);
 });
 

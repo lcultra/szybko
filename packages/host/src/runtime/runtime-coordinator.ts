@@ -142,4 +142,12 @@ export class RuntimeCoordinator {
     sendPluginSearch(req: SearchRequest): void {
         this.runtimeManager.sendPluginSearch(req);
     }
+
+    /**
+     * Look up a plugin ID by webContents ID. Used by IPC handlers to
+     * identify which plugin runtime is making a request.
+     */
+    pluginIdForWebContents(webContentsId: number): string | null {
+        return this.runtimeManager.pluginIdForWebContents(webContentsId);
+    }
 }
