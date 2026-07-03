@@ -13,3 +13,5 @@ export { ShortcutManager } from './window/shortcut-manager';
 export { ThemeManager } from './window/theme';
 export { RuntimeHostRegistry } from './window/runtime-host-registry';
 export { WindowManager } from './window/window-manager';
+export { CommandCatalog } from './commands/command-catalog';
+export { createPlatformDatabase } from './persistence/sqlite/platform-database';
