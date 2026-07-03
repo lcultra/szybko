@@ -27,6 +27,9 @@ export default antfu(
         rules: {
             // no-unsafe-as
             'ts/no-unsafe-assignment': 'off',
+            // 不强制 .js 扩展名
+            'import-x/extensions': 'off',
+            'ts/consistent-type-imports': 'off',
         },
     },
     {
