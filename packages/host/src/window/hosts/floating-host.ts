@@ -2,9 +2,8 @@ import type { Host, PluginRuntime } from '@szybko/shared';
 import type { WebContentsView } from 'electron';
 import { join } from 'node:path';
 import process from 'node:process';
+import { SEARCHBAR_HEIGHT } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
-
-const FLOATING_HEADER_HEIGHT = 48;
 
 export class FloatingHost implements Host {
     id: string;
@@ -19,7 +18,7 @@ export class FloatingHost implements Host {
         if (view) {
             this.view = view;
             this.window?.contentView.addChildView(view);
-            view.setBounds({ x: 0, y: FLOATING_HEADER_HEIGHT, width: 900, height: 600 - FLOATING_HEADER_HEIGHT });
+            view.setBounds({ x: 0, y: SEARCHBAR_HEIGHT, width: 900, height: 600 - SEARCHBAR_HEIGHT });
         }
         runtime.state = 'attached';
         runtime.host = this;
@@ -37,7 +36,7 @@ export class FloatingHost implements Host {
         this.window = null;
     }
 
-    createWindow(pluginName: string, runtimeId: string) {
+    createWindow(pluginName: string, runtimeId: string, pluginId?: string, explain?: string) {
         this.runtimeId = runtimeId;
         this.window = new BrowserWindow({
             width: 900,
@@ -51,13 +50,13 @@ export class FloatingHost implements Host {
         });
 
         // 加载 Renderer 的 floating 页面
+        const query: Record<string, string> = { name: pluginName, runtimeId, pluginId: pluginId ?? '', explain: explain ?? '' };
         if (process.env.ELECTRON_RENDERER_URL) {
-            void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating.html?name=${pluginName}&runtimeId=${runtimeId}`);
+            const qs = new URLSearchParams(query).toString();
+            void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating.html?${qs}`);
         }
         else {
-            void this.window.loadFile(join(__dirname, '../renderer/floating.html'), {
-                query: { name: pluginName, runtimeId },
-            });
+            void this.window.loadFile(join(__dirname, '../renderer/floating.html'), { query });
         }
     }
 

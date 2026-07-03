@@ -223,18 +223,22 @@ export class RuntimeManager {
         entry.runtime.state = 'detached';
         entry.runtime.host = null;
 
-        // 查询插件名
-        let pluginName = entry.runtime.pluginId;
-        const pluginInfo = this.pluginManager.get(entry.runtime.pluginId);
+        // 查询插件信息
+        const pluginId = entry.runtime.pluginId;
+        let pluginName = pluginId;
+        let explain = '';
+        const pluginInfo = this.pluginManager.get(pluginId);
         if (pluginInfo) {
             const feature = pluginInfo.manifest.features[0];
-            if (feature)
+            if (feature) {
                 pluginName = feature.explain || pluginInfo.id;
+                explain = feature.explain || '';
+            }
         }
 
         // 创建浮动窗口并迁移视图
         const host = new FloatingHost(`floating-${Date.now()}`);
-        host.createWindow(pluginName, entry.runtime.id);
+        host.createWindow(pluginName, entry.runtime.id, pluginId, explain);
         host.attach(entry.runtime, entry.view);
     }
 
