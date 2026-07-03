@@ -35,4 +35,12 @@ export class FloatingHost implements Host {
     createWindow() {
         this.window = new BrowserWindow({ width: 900, height: 600, frame: true });
     }
+
+    /** 显示并聚焦浮动窗口 */
+    focus() {
+        if (this.window && !this.window.isDestroyed()) {
+            this.window.show();
+            this.window.focus();
+        }
+    }
 }

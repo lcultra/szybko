@@ -125,6 +125,17 @@ export class RuntimeManager {
             return;
         }
 
+        // 单例模式：已在浮动窗口中 → 聚焦窗口，不操作主窗口
+        if (entry.runtime.host?.type === 'floating') {
+            const host = entry.runtime.host as FloatingHost;
+            host.focus();
+            entry.view.webContents.send(IPC.PLUGIN_ENTER, {
+                pluginId: entry.runtime.pluginId,
+                featureCode,
+            });
+            return;
+        }
+
         this.windowManager.attachPluginView(entry.view);
         entry.runtime.state = 'attached';
 
