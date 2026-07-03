@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { PluginHeader } from '../../components/PluginHeader';
 import { PluginScene } from '../../components/PluginScene';
 import { useAppStore } from '../../stores/app-store';
@@ -16,8 +16,21 @@ export function FloatingApp() {
         setActivePlugin(initialPluginId, initialRuntimeId, initialName, initialExplain);
     }, []);
 
+    // 原生关闭按钮（红绿灯）也销毁插件
+    const handleClose = useCallback(() => {
+        if (initialRuntimeId)
+            window.szybkoInternal?.destroyPlugin(initialRuntimeId);
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('beforeunload', handleClose);
+        return () => window.removeEventListener('beforeunload', handleClose);
+    }, [handleClose]);
+
     return (
         <div className="flex h-dvh flex-col overflow-hidden bg-surface">
+            {/* 红绿灯按钮占位 */}
+            <div className="absolute left-0 top-0 z-10 h-[68px] w-[70px]" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
             <PluginHeader variant="floating" />
             <div className="flex-1">
                 <PluginScene />
