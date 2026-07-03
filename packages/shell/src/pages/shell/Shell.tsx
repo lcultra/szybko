@@ -6,7 +6,7 @@ import { useSearch } from './hooks/useSearch';
 import { useWindowHeight } from './hooks/useWindowHeight';
 import { ResultList } from './ResultList';
 import { SearchBar } from './SearchBar';
-import { WindowFrame } from './WindowFrame';
+import { SurfaceFrame } from '../../components/SurfaceFrame';
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -59,20 +59,22 @@ export default function App() {
 
     return (
         <div ref={rootRef}>
-            <WindowFrame>
-                {state === 'plugin' ? <PluginView /> : <SearchBar value={query} onChange={setQuery} />}
-                {state !== 'plugin' && (
-                    <ResultList
-                        results={results}
-                        selectedIndex={selectedIndex}
-                        onSelect={setSelectedIndex}
-                        onExecute={(i) => {
-                            if (results[i])
-                                window.szybko?.execute(results[i].action);
-                        }}
-                    />
-                )}
-            </WindowFrame>
+            <SurfaceFrame className="w-[820px] rounded-[20px] shadow-xl">
+                <div className="p-px">
+                    {state === 'plugin' ? <PluginView /> : <SearchBar value={query} onChange={setQuery} />}
+                    {state !== 'plugin' && (
+                        <ResultList
+                            results={results}
+                            selectedIndex={selectedIndex}
+                            onSelect={setSelectedIndex}
+                            onExecute={(i) => {
+                                if (results[i])
+                                    window.szybko?.execute(results[i].action);
+                            }}
+                        />
+                    )}
+                </div>
+            </SurfaceFrame>
         </div>
     );
 }
