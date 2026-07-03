@@ -4,7 +4,7 @@
 
 Szybko 的插件指令系统需要同时支持静态指令和动态指令。静态指令来自插件包内只读的 `plugin.json`，动态指令来自插件运行时调用 `setFeature`、`removeFeature` 等 API 产生的用户数据。两者应该在搜索和执行时呈现为一个统一的指令目录，但不能在持久化来源上混在一起。
 
-本设计将插件发现、动态指令持久化、有效指令投影和搜索索引拆成明确边界。长期持久化采用一个平台数据库承载多张领域表，而不是在 `userData` 下不断新增独立 JSON 文件。
+本设计将插件发现、动态指令持久化、有效指令投影和搜索索引拆成明确边界。长期持久化采用一个 SQLite 平台数据库承载多张领域表，而不是在 `userData` 下不断新增独立 JSON 文件。
 
 本阶段不设计或实现 `tools` / AI Agent 可调用工具能力。`tools` 后续应成为独立的 ToolCatalog，不与用户搜索指令混在一起。
 
@@ -94,7 +94,7 @@ flowchart TB
 
 ## 持久化模型
 
-长期方案采用一个平台数据库，例如：
+长期方案采用一个 SQLite 平台数据库：
 
 ```text
 userData/
@@ -102,6 +102,47 @@ userData/
 ```
 
 数据库内部按领域拆表，而不是按领域拆文件。
+
+### 数据库选型
+
+- 存储引擎：SQLite。
+- 数据库路径：`app.getPath('userData')/szybko-platform.db`。
+- 访问位置：只在主进程或主进程拥有的 persistence/service 层访问，不向 renderer 或插件暴露数据库连接。
+- 访问边界：业务模块通过 repository 接口读写数据，不直接散落 SQL。
+- 事务要求：所有 projection 重建、插件升级索引、动态 feature 修改都必须在事务内完成。
+- 运行配置：启用 `PRAGMA foreign_keys = ON`；启用 WAL journal mode；设置合理 `busy_timeout`。
+- 迁移：使用版本化 SQL migration 或 Drizzle migration。迁移记录写入数据库内部 migration 表。
+
+初始实现可以在 SQLite driver 外封装 `PlatformDatabase` adapter。业务层依赖 repository，不依赖具体 driver。driver 的选择不得影响 `PluginCatalog`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口。
+
+### Repository 边界
+
+```text
+PlatformDatabase
+  - open()
+  - transaction(fn)
+  - migrate()
+
+PluginInstallationRepository
+  - listEnabled()
+  - upsertInstallation()
+  - setEnabled()
+
+ManifestFeatureRepository
+  - replaceSnapshotForPlugin()
+  - listSnapshotByPlugin()
+
+FeatureOverrideRepository
+  - setActive()
+  - setRemoved()
+  - listByPlugin()
+  - listActiveByPlugin()
+
+CommandProjectionRepository
+  - replaceProjectionForPlugin()
+  - matchTextCommand()
+  - listEffectiveFeatures()
+```
 
 ### plugin_installation
 
@@ -309,7 +350,7 @@ sequenceDiagram
 
 当前 `PluginManifest.features` 类型可以继续作为静态 feature 和动态 feature 的基础类型，但需要扩展动态 feature 的 `platform` 和 base64 icon 兼容能力。
 
-当前 lowdb `Store` 只是现有实现状态，不应作为长期指令系统的数据边界。长期数据库应迁移到单一平台 DB。迁移时可以先保留 `PluginRegistry`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口，再把底层从 JSON store 替换为 DB repository。
+当前 lowdb `Store` 只是现有实现状态，不应作为长期指令系统的数据边界。长期数据库应迁移到单一 SQLite 平台数据库。迁移时可以先保留 `PluginRegistry`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口，再把底层从 JSON store 替换为 DB repository。
 
 ## 测试重点
 
