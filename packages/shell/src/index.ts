@@ -1,12 +1,2 @@
-export { PluginHeader } from './components/PluginHeader';
-export { PluginScene } from './components/PluginScene';
 export { FloatingApp } from './pages/floating/FloatingApp';
-export { useKeyboard } from './pages/shell/hooks/useKeyboard';
-export { useSearch } from './pages/shell/hooks/useSearch';
-export { useWindowHeight } from './pages/shell/hooks/useWindowHeight';
-export { ResultItem } from './pages/shell/ResultItem';
-export { ResultList } from './pages/shell/ResultList';
-export { SearchBar } from './pages/shell/SearchBar';
 export { default as App } from './pages/shell/Shell';
-export { WindowFrame } from './pages/shell/WindowFrame';
-export { useAppStore } from './stores/app-store';
