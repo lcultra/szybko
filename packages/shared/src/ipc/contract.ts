@@ -1,3 +1,4 @@
+import type { EntryIntent } from '../input/types';
 import type { PluginFeature } from '../plugin/types';
 import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types';
 import type { IPC } from './channels';
@@ -71,8 +72,22 @@ export interface PluginEnterPayload {
     pluginId: string;
     featureCode: string;
     featureExplain?: string;
+    /** uTools-compatible: the feature code for the plugin's enter dispatch */
+    code: string;
+    /** Matcher trigger type (text/regex/over/files/img/window) */
+    type: 'text' | 'regex' | 'over' | 'file' | 'img' | 'window';
+    /** The matched input data that triggered this plugin entry */
+    payload: unknown;
+    /** User-selected entry option (for mainPush features offering multiple actions) */
+    option?: string;
+    /** Entry intent (main/panel/hotkey/redirect) */
+    from: EntryIntent;
+    /** original keyword for backward compat */
     keyword?: string;
+    /** original query for backward compat */
     query?: string;
+    /** MatchSession ID for the originating context, if available */
+    matchId?: string;
 }
 
 export interface PluginOutPayload {
