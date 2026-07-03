@@ -198,12 +198,12 @@ Change the two intra-host imports from `./` to `../`:
 
 ```typescript
 // BEFORE:
-import type { PluginManager } from './plugin-manager.js';
-import type { WindowManager } from './window-manager.js';
+import type { PluginManager } from './plugin-manager';
+import type { WindowManager } from './window-manager';
 
 // AFTER:
-import type { PluginManager } from '../plugins/plugin-manager.js';
-import type { WindowManager } from '../window/window-manager.js';
+import type { PluginManager } from '../plugins/plugin-manager';
+import type { WindowManager } from '../window/window-manager';
 ```
 
 - [ ] **Step 5: Update `src/index.ts` barrel for all moved files**
@@ -211,17 +211,17 @@ import type { WindowManager } from '../window/window-manager.js';
 Replace the entire file content:
 
 ```typescript
-export { ConfigManager } from './services/config-manager.js';
-export { FloatingHost } from './window/hosts/floating-host.js';
-export { LauncherHost } from './window/hosts/launcher-host.js';
-export { PluginLoader } from './plugins/plugin-loader.js';
-export { PluginManager } from './plugins/plugin-manager.js';
-export { PluginRegistry } from './plugins/plugin-registry.js';
-export { RuntimeManager } from './runtime/runtime-manager.js';
-export { ShortcutManager } from './window/shortcut-manager.js';
-export { Store } from './plugins/store.js';
-export { ThemeManager } from './window/theme.js';
-export { WindowManager } from './window/window-manager.js';
+export { ConfigManager } from './services/config-manager';
+export { FloatingHost } from './window/hosts/floating-host';
+export { LauncherHost } from './window/hosts/launcher-host';
+export { PluginLoader } from './plugins/plugin-loader';
+export { PluginManager } from './plugins/plugin-manager';
+export { PluginRegistry } from './plugins/plugin-registry';
+export { RuntimeManager } from './runtime/runtime-manager';
+export { ShortcutManager } from './window/shortcut-manager';
+export { Store } from './plugins/store';
+export { ThemeManager } from './window/theme';
+export { WindowManager } from './window/window-manager';
 ```
 
 Note: `registerIpcHandlers` and `notifyShowMainWindow` exports are removed here — they will be re-added in Task 2 from the new `ipc/register-handlers.js` path.
@@ -439,12 +439,12 @@ import type {
     IpcRendererToMainEventContract,
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
-import type { RuntimeManager } from '../runtime/runtime-manager.js';
-import type { WindowManager } from '../window/window-manager.js';
+import type { RuntimeManager } from '../runtime/runtime-manager';
+import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { ipcMain } from 'electron';
-import { runBuiltinSearch } from './builtin-search.js';
-import { executeAction } from './execute-action.js';
+import { runBuiltinSearch } from './builtin-search';
+import { executeAction } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
@@ -581,18 +581,18 @@ git rm packages/host/src/ipc-handlers.ts
 Edit `src/index.ts` — add the two IPC function exports:
 
 ```typescript
-export { ConfigManager } from './services/config-manager.js';
-export { FloatingHost } from './window/hosts/floating-host.js';
-export { LauncherHost } from './window/hosts/launcher-host.js';
-export { notifyShowMainWindow, registerIpcHandlers } from './ipc/register-handlers.js';
-export { PluginLoader } from './plugins/plugin-loader.js';
-export { PluginManager } from './plugins/plugin-manager.js';
-export { PluginRegistry } from './plugins/plugin-registry.js';
-export { RuntimeManager } from './runtime/runtime-manager.js';
-export { ShortcutManager } from './window/shortcut-manager.js';
-export { Store } from './plugins/store.js';
-export { ThemeManager } from './window/theme.js';
-export { WindowManager } from './window/window-manager.js';
+export { ConfigManager } from './services/config-manager';
+export { FloatingHost } from './window/hosts/floating-host';
+export { LauncherHost } from './window/hosts/launcher-host';
+export { notifyShowMainWindow, registerIpcHandlers } from './ipc/register-handlers';
+export { PluginLoader } from './plugins/plugin-loader';
+export { PluginManager } from './plugins/plugin-manager';
+export { PluginRegistry } from './plugins/plugin-registry';
+export { RuntimeManager } from './runtime/runtime-manager';
+export { ShortcutManager } from './window/shortcut-manager';
+export { Store } from './plugins/store';
+export { ThemeManager } from './window/theme';
+export { WindowManager } from './window/window-manager';
 ```
 
 The key change vs Task 1: `'./ipc/register-handlers.js'` replaces the previous `'./ipc-handlers.js'` for the `registerIpcHandlers` / `notifyShowMainWindow` exports.

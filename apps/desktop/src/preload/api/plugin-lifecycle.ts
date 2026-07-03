@@ -1,6 +1,6 @@
 import type { PluginSearchContext, SearchResult } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
-import { on, send } from './ipc.js';
+import { on, send } from './ipc';
 
 /**
  * 插件生命周期事件。
@@ -23,7 +23,7 @@ export function createPluginLifecycleApi() {
         onSearch: (cb: (ctx: PluginSearchContext) => SearchResult[]) => {
             const sendSearchResult = send(IPC.PLUGIN_SEARCH_RESULT);
 
-            return on(IPC.PLUGIN_SEARCH)(ctx => {
+            return on(IPC.PLUGIN_SEARCH)((ctx) => {
                 const results = cb(ctx);
                 sendSearchResult({
                     queryId: ctx.queryId,

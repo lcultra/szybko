@@ -1,4 +1,4 @@
-import type { WindowManager } from './window-manager.js';
+import type { WindowManager } from './window-manager';
 import process from 'node:process';
 import { globalShortcut } from 'electron';
 

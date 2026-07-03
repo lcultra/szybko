@@ -3,8 +3,8 @@ import type { WebContentsView } from 'electron';
 import { DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
 import { BrowserWindow, screen } from 'electron';
 
-import { FloatingHost } from './hosts/floating-host.js';
-import { LauncherHost } from './hosts/launcher-host.js';
+import { FloatingHost } from './hosts/floating-host';
+import { LauncherHost } from './hosts/launcher-host';
 
 export class WindowManager {
     private window: BrowserWindow | null = null;

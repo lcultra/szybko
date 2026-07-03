@@ -14,6 +14,7 @@ const providers: SearchProvider[] = [
 
 /** 运行所有内置插件搜索提供者，返回合并结果 */
 export function runBuiltinPluginSearch(query: string): SearchResult[] {
-    if (!query.trim()) return [];
+    if (!query.trim())
+        return [];
     return providers.flatMap(fn => fn(query));
 }

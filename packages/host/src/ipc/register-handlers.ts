@@ -3,12 +3,12 @@ import type {
     IpcRendererToMainEventContract,
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
-import type { RuntimeManager } from '../runtime/runtime-manager.js';
-import type { WindowManager } from '../window/window-manager.js';
+import type { RuntimeManager } from '../runtime/runtime-manager';
+import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { ipcMain, Menu } from 'electron';
-import { runBuiltinSearch } from './builtin-search.js';
-import { executeAction } from './execute-action.js';
+import { runBuiltinSearch } from './builtin-search';
+import { executeAction } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];

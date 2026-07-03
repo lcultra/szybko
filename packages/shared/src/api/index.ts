@@ -1,2 +1,2 @@
-export * from './internal.js';
-export * from './plugin.js';
+export * from './internal';
+export * from './plugin';

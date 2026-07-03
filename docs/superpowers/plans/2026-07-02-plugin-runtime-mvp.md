@@ -353,14 +353,14 @@ export function PluginContainer() {
 ```typescript
 // packages/launcher/src/App.tsx
 import { useEffect, useRef } from 'react';
-import { PluginContainer } from './components/PluginContainer.js';
-import { ResultList } from './components/ResultList.js';
-import { SearchBar } from './components/SearchBar.js';
-import { WindowFrame } from './components/WindowFrame.js';
-import { useKeyboard } from './hooks/useKeyboard.js';
-import { useSearch } from './hooks/useSearch.js';
-import { useWindowHeight } from './hooks/useWindowHeight.js';
-import { useAppStore } from './stores/app-store.js';
+import { PluginContainer } from './components/PluginContainer';
+import { ResultList } from './components/ResultList';
+import { SearchBar } from './components/SearchBar';
+import { WindowFrame } from './components/WindowFrame';
+import { useKeyboard } from './hooks/useKeyboard';
+import { useSearch } from './hooks/useSearch';
+import { useWindowHeight } from './hooks/useWindowHeight';
+import { useAppStore } from './stores/app-store';
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -441,8 +441,8 @@ export default function App() {
 
 ```typescript
 // packages/launcher/src/index.ts
-export { default as App } from './App.js';
-export { PluginContainer } from './components/PluginContainer.js';  // NEW
+export { default as App } from './App';
+export { PluginContainer } from './components/PluginContainer';  // NEW
 // ... 其他导出不变
 ```
 

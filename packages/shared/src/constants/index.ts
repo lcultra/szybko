@@ -1,3 +1,3 @@
-export * from './plugin.js';
-export * from './search.js';
-export * from './window.js';
+export * from './plugin';
+export * from './search';
+export * from './window';

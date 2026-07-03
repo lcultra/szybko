@@ -1,5 +1,5 @@
 import { IPC } from '@szybko/shared';
-import { on } from './ipc.js';
+import { on } from './ipc';
 
 /**
  * 主题变更通知。

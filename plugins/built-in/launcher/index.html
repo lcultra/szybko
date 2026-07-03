@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="zh-CN">
-    <head><meta charset="UTF-8" /><title>Launcher</title></head>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Launcher</title>
+    </head>
     <body>
         <script>
             window.szybko?.onPluginEnter?.((payload) => {
@@ -12,10 +15,16 @@
                     },
                     lock: () => {
                         // macOS 锁屏
-                        window.szybko?.execute({ type: 'shell.openPath', payload: { path: '/System/Library/CoreServices/ScreenSaverEngine.app' } });
+                        window.szybko?.execute({
+                            type: 'shell.openPath',
+                            payload: { path: '/System/Library/CoreServices/ScreenSaverEngine.app' },
+                        });
                     },
                     sleep: () => {
-                        window.szybko?.execute({ type: 'shell.openPath', payload: { path: '/System/Library/CoreServices/Menu Extras/Sleep.menu' } });
+                        window.szybko?.execute({
+                            type: 'shell.openPath',
+                            payload: { path: '/System/Library/CoreServices/Menu Extras/Sleep.menu' },
+                        });
                     },
                     restart: () => {
                         window.szybko?.execute({ type: 'shell.openUrl', payload: { url: 'restart:' } });

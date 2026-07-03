@@ -1,4 +1,4 @@
-import type { SearchBatch, SearchRequest } from '../search/types.js';
+import type { SearchBatch, SearchRequest } from '../search/types';
 
 export interface SzybkoInternalApi {
     search: (req: SearchRequest) => Promise<{ ok: boolean }>;

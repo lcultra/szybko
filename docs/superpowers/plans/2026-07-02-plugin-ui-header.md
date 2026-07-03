@@ -40,14 +40,14 @@ export function PluginScene() {
 - [ ] **Step 2: 更新 App.tsx import**
 
 ```typescript
-import { PluginScene } from './components/PluginScene.js';
+import { PluginScene } from './components/PluginScene';
 ```
 将 `PluginContainer` 替换为 `PluginScene`。
 
 - [ ] **Step 3: 更新 shell/index.ts 导出**
 
 ```typescript
-export { PluginScene } from './components/PluginScene.js';
+export { PluginScene } from './components/PluginScene';
 ```
 替换 `PluginContainer`。
 
@@ -188,7 +188,7 @@ git commit -m "feat: add activePluginName and activeFeatureExplain to store"
 - [ ] **Step 1: 创建 PluginHeader 组件**
 
 ```tsx
-import { useAppStore } from '../stores/app-store.js';
+import { useAppStore } from '../stores/app-store';
 
 export function PluginHeader() {
     const pluginName = useAppStore(s => s.activePluginName);
@@ -251,8 +251,8 @@ export function PluginHeader() {
 - [ ] **Step 2: 更新 App.tsx**
 
 ```tsx
-import { PluginHeader } from './components/PluginHeader.js';
-import { PluginScene } from './components/PluginScene.js';
+import { PluginHeader } from './components/PluginHeader';
+import { PluginScene } from './components/PluginScene';
 
 // 在 render 中：
 <WindowFrame>
@@ -280,8 +280,8 @@ useEffect(() => {
 - [ ] **Step 3: 更新 shell/index.ts 导出**
 
 ```typescript
-export { PluginHeader } from './components/PluginHeader.js';
-export { PluginScene } from './components/PluginScene.js';
+export { PluginHeader } from './components/PluginHeader';
+export { PluginScene } from './components/PluginScene';
 ```
 
 - [ ] **Step 4: 类型检查**

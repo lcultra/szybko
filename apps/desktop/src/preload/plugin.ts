@@ -1,7 +1,7 @@
 import type { SzybkoPluginApi } from '@szybko/shared';
 import { contextBridge } from 'electron';
-import { createExecuteApi } from './api/execute.js';
-import { createPluginLifecycleApi } from './api/plugin-lifecycle.js';
+import { createExecuteApi } from './api/execute';
+import { createPluginLifecycleApi } from './api/plugin-lifecycle';
 
 const pluginApi = {
     ...createExecuteApi(),

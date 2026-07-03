@@ -1,5 +1,5 @@
-import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types.js';
-import type { IPC } from './channels.js';
+import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types';
+import type { IPC } from './channels';
 
 export interface IpcInvokeContract {
     [IPC.SEARCH_QUERY]: {

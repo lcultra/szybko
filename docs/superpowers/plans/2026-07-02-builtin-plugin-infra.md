@@ -288,8 +288,8 @@ git commit -m "chore: remove obsolete plugins/built-in/ (replaced by plugins/<na
 // packages/host/src/plugins/plugin-manager.ts
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { PluginLoader } from './plugin-loader.js';
-import type { PluginRegistry } from './plugin-registry.js';
+import { PluginLoader } from './plugin-loader';
+import type { PluginRegistry } from './plugin-registry';
 
 export interface PluginInfo {
     id: string;

@@ -1,6 +1,6 @@
 import type { SzybkoInternalApi } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
-import { invoke, on } from './ipc.js';
+import { invoke, on } from './ipc';
 
 /**
  * 窗口控制 API。
@@ -11,7 +11,7 @@ export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hid
         hideWindow: () => invoke(IPC.WINDOW_HIDE)(undefined),
         hidePlugin: runtimeId => invoke(IPC.PLUGIN_HIDE)({ runtimeId }),
         destroyPlugin: runtimeId => invoke(IPC.PLUGIN_DESTROY)({ runtimeId }),
-        showPluginMenu: (runtimeId) => invoke(IPC.SHOW_PLUGIN_MENU)({ runtimeId }),
+        showPluginMenu: runtimeId => invoke(IPC.SHOW_PLUGIN_MENU)({ runtimeId }),
         onShowMainWindow: on(IPC.WINDOW_SHOW),
     };
 }

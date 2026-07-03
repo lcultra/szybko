@@ -1,5 +1,5 @@
 import { IPC } from '@szybko/shared';
-import { invoke, on } from './ipc.js';
+import { invoke, on } from './ipc';
 
 /**
  * 搜索 API。

@@ -1,5 +1,5 @@
-import { PluginHeader } from '../../components/PluginHeader.js';
-import { PluginScene } from '../../components/PluginScene.js';
+import { PluginHeader } from '../../components/PluginHeader';
+import { PluginScene } from '../../components/PluginScene';
 
 export function FloatingApp() {
     return (

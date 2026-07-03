@@ -1,5 +1,5 @@
 import type { SearchResult } from '@szybko/shared';
-import { ResultItem } from './ResultItem.js';
+import { ResultItem } from './ResultItem';
 
 interface ResultListProps {
     results: SearchResult[];

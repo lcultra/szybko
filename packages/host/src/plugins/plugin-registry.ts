@@ -1,4 +1,4 @@
-import type { Store } from './store.js';
+import type { Store } from './store';
 
 export type PluginSource = 'built-in' | 'user-installed';
 

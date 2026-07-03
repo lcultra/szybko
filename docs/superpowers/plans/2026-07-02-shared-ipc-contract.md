@@ -80,7 +80,7 @@ Create `packages/shared/src/search/types.ts` with the current contents of `packa
 - [ ] **Step 2: Add `search/index.ts`**
 
 ```ts
-export * from './types.js';
+export * from './types';
 ```
 
 - [ ] **Step 3: Move plugin types into `plugin/types.ts`**
@@ -90,7 +90,7 @@ Create `packages/shared/src/plugin/types.ts` with the current contents of `packa
 - [ ] **Step 4: Add `plugin/index.ts`**
 
 ```ts
-export * from './types.js';
+export * from './types';
 ```
 
 - [ ] **Step 5: Move runtime types into `runtime/types.ts`**
@@ -98,7 +98,7 @@ export * from './types.js';
 Create `packages/shared/src/runtime/types.ts` and update its import to:
 
 ```ts
-import type { PluginManifest } from '../plugin/types.js';
+import type { PluginManifest } from '../plugin/types';
 ```
 
 The rest of the file should match the current `runtime-types.ts`.
@@ -106,7 +106,7 @@ The rest of the file should match the current `runtime-types.ts`.
 - [ ] **Step 6: Add `runtime/index.ts`**
 
 ```ts
-export * from './types.js';
+export * from './types';
 ```
 
 - [ ] **Step 7: Split API facade types**
@@ -114,7 +114,7 @@ export * from './types.js';
 Create `packages/shared/src/api/plugin.ts`:
 
 ```ts
-import type { ActionDescriptor, PluginSearchContext, SearchResult } from '../search/types.js';
+import type { ActionDescriptor, PluginSearchContext, SearchResult } from '../search/types';
 
 export interface SzybkoPluginApi {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;
@@ -128,7 +128,7 @@ export interface SzybkoPluginApi {
 Create `packages/shared/src/api/internal.ts`:
 
 ```ts
-import type { SearchBatch, SearchRequest } from '../search/types.js';
+import type { SearchBatch, SearchRequest } from '../search/types';
 
 export interface SzybkoInternalApi {
     search: (req: SearchRequest) => Promise<{ ok: boolean }>;
@@ -144,8 +144,8 @@ export interface SzybkoInternalApi {
 - [ ] **Step 8: Add `api/index.ts`**
 
 ```ts
-export * from './internal.js';
-export * from './plugin.js';
+export * from './internal';
+export * from './plugin';
 ```
 
 - [ ] **Step 9: Move IPC channels**
@@ -155,7 +155,7 @@ Create `packages/shared/src/ipc/channels.ts` with the current contents of `packa
 - [ ] **Step 10: Add `ipc/index.ts`**
 
 ```ts
-export * from './channels.js';
+export * from './channels';
 ```
 
 - [ ] **Step 11: Split constants**
@@ -184,9 +184,9 @@ export const PLUGIN_SEARCH_TIMEOUT_MS = 5000;
 Create `packages/shared/src/constants/index.ts`:
 
 ```ts
-export * from './plugin.js';
-export * from './search.js';
-export * from './window.js';
+export * from './plugin';
+export * from './search';
+export * from './window';
 ```
 
 - [ ] **Step 12: Update root `index.ts`**
@@ -194,12 +194,12 @@ export * from './window.js';
 Replace `packages/shared/src/index.ts` with:
 
 ```ts
-export * from './api/index.js';
-export * from './constants/index.js';
-export * from './ipc/index.js';
-export * from './plugin/index.js';
-export * from './runtime/index.js';
-export * from './search/index.js';
+export * from './api/index';
+export * from './constants/index';
+export * from './ipc/index';
+export * from './plugin/index';
+export * from './runtime/index';
+export * from './search/index';
 ```
 
 - [ ] **Step 13: Delete old flat files**
@@ -247,8 +247,8 @@ git commit -m "refactor(shared): group shared contracts by domain"
 Create `packages/shared/src/ipc/contract.ts`:
 
 ```ts
-import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types.js';
-import { IPC } from './channels.js';
+import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types';
+import { IPC } from './channels';
 
 export interface IpcInvokeContract {
     [IPC.SEARCH_QUERY]: {
@@ -296,8 +296,8 @@ export interface IpcRendererToMainEventContract {
 Update `packages/shared/src/ipc/index.ts`:
 
 ```ts
-export * from './channels.js';
-export * from './contract.js';
+export * from './channels';
+export * from './contract';
 ```
 
 - [ ] **Step 3: Run shared typecheck**
@@ -411,7 +411,7 @@ onSearchBatch: on(IPC.SEARCH_BATCH),
 Update `apps/desktop/src/preload/api/plugin-lifecycle.ts` to import `send`:
 
 ```ts
-import { on, send } from './ipc.js';
+import { on, send } from './ipc';
 ```
 
 Inside `onSearch`, create a typed sender:

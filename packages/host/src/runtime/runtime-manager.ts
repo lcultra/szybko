@@ -1,10 +1,10 @@
 import type { PluginRuntime, PluginSearchContext, SearchRequest, SearchResult } from '@szybko/shared';
-import type { PluginManager } from '../plugins/plugin-manager.js';
-import type { WindowManager } from '../window/window-manager.js';
+import type { PluginManager } from '../plugins/plugin-manager';
+import type { WindowManager } from '../window/window-manager';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { app, WebContentsView } from 'electron';
-import { FloatingHost } from '../window/hosts/floating-host.js';
+import { FloatingHost } from '../window/hosts/floating-host';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
@@ -228,7 +228,8 @@ export class RuntimeManager {
         const pluginInfo = this.pluginManager.get(entry.runtime.pluginId);
         if (pluginInfo) {
             const feature = pluginInfo.manifest.features[0];
-            if (feature) pluginName = feature.explain || pluginInfo.id;
+            if (feature)
+                pluginName = feature.explain || pluginInfo.id;
         }
 
         // 创建浮动窗口并迁移视图

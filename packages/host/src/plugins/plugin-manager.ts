@@ -1,7 +1,7 @@
-import type { PluginRegistry } from './plugin-registry.js';
+import type { PluginRegistry } from './plugin-registry';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { PluginLoader } from './plugin-loader.js';
+import { PluginLoader } from './plugin-loader';
 
 export interface PluginInfo {
     id: string;

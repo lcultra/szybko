@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { PluginHeader } from '../../components/PluginHeader.js';
-import { PluginScene } from '../../components/PluginScene.js';
-import { ResultList } from './ResultList.js';
-import { SearchBar } from './SearchBar.js';
-import { WindowFrame } from './WindowFrame.js';
-import { useKeyboard } from './hooks/useKeyboard.js';
-import { useSearch } from './hooks/useSearch.js';
-import { useWindowHeight } from './hooks/useWindowHeight.js';
-import { useAppStore } from '../../stores/app-store.js';
+import { PluginHeader } from '../../components/PluginHeader';
+import { PluginScene } from '../../components/PluginScene';
+import { useAppStore } from '../../stores/app-store';
+import { useKeyboard } from './hooks/useKeyboard';
+import { useSearch } from './hooks/useSearch';
+import { useWindowHeight } from './hooks/useWindowHeight';
+import { ResultList } from './ResultList';
+import { SearchBar } from './SearchBar';
+import { WindowFrame } from './WindowFrame';
 import '../../app.css';
 
 export default function App() {

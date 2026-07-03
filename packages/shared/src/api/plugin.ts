@@ -1,4 +1,4 @@
-import type { ActionDescriptor, PluginSearchContext, SearchResult } from '../search/types.js';
+import type { ActionDescriptor, PluginSearchContext, SearchResult } from '../search/types';
 
 export interface SzybkoPluginApi {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;
