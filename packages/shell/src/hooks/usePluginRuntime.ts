@@ -9,7 +9,7 @@ import { useRuntimeStore } from '../stores/runtime-store';
  * 所有组件通过此 hook 感知插件状态变化，
  * 不再直接调用 window.szybko.onRuntimeStateChanged。
  */
-export function usePluginRuntime() {
+export function usePluginRuntime(onAttach?: () => void) {
     const setSlot = useRuntimeStore(s => s.setSlot);
     const clearSlot = useRuntimeStore(s => s.clearSlot);
     const setAppState = useAppStore(s => s.setState);
@@ -26,11 +26,12 @@ export function usePluginRuntime() {
                     mountState: payload.mountState ?? 'attached',
                 });
                 setAppState('plugin');
+                onAttach?.();
             } else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
                 clearSlot();
                 setAppState('idle');
             }
         });
         return () => cleanup?.();
-    }, [setSlot, clearSlot, setAppState]);
+    }, [setSlot, clearSlot, setAppState, onAttach]);
 }

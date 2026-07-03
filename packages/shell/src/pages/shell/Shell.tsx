@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { usePluginRuntime } from '../../hooks/usePluginRuntime';
@@ -20,7 +20,10 @@ export default function App() {
     const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
 
     useWindowHeight(rootRef);
-    usePluginRuntime();
+    usePluginRuntime(useCallback(() => {
+        setQuery('');
+        setSelectedIndex(0);
+    }, [setQuery, setSelectedIndex]));
 
     useKeyboard({
         selectedIndex,
@@ -30,8 +33,6 @@ export default function App() {
         onExecute: () => {
             if (results[selectedIndex]) {
                 window.szybko?.execute(results[selectedIndex].action);
-                setQuery('');
-                setSelectedIndex(0);
             }
         },
         onEscape: () => {
