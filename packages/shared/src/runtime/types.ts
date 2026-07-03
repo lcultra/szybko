@@ -1,6 +1,5 @@
-import type { PluginManifest } from '../plugin/types';
-
-// ── 旧类型（保留，Phase 2 再移除） ──
+// ── 旧类型（保留至 Phase 2） ──
+/** @deprecated Will be removed in Phase 2. */
 export interface Host {
     id: string;
     type: 'launcher' | 'floating';
@@ -8,6 +7,7 @@ export interface Host {
     detach: (runtime: PluginRuntime) => void;
 }
 
+/** @deprecated Will be removed in Phase 2. */
 export interface PluginRuntime {
     id: string;
     pluginId: string;
@@ -17,14 +17,8 @@ export interface PluginRuntime {
     cache: Map<string, any>;
 }
 
+/** @deprecated Will be removed in Phase 2. */
 export type RuntimeState = 'created' | 'activated' | 'attached' | 'detached' | 'suspended' | 'destroyed';
-
-export interface PluginManager {
-    scan: () => PluginManifest[];
-    install: (path: string) => void;
-    uninstall: (pluginId: string) => void;
-    update: (pluginId: string) => void;
-}
 
 // ── 新类型（可序列化，无 Electron 依赖） ──
 export type LoadState = 'loading' | 'loaded' | 'error';
