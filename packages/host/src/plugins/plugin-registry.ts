@@ -1,4 +1,4 @@
-import type { Store } from './store';
+import type { Store } from '../persistence/store';
 
 export type PluginSource = 'built-in' | 'user-installed';
 

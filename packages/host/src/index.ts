@@ -2,7 +2,7 @@ export { notifyShowMainWindow, registerIpcHandlers } from './ipc/register-handle
 export { PluginLoader } from './plugins/plugin-loader';
 export { PluginCatalog } from './plugins/plugin-catalog';
 export { PluginRegistry } from './plugins/plugin-registry';
-export { Store } from './plugins/store';
+export { Store } from './persistence/store';
 export { RuntimeManager } from './runtime/runtime-manager';
 export type { PluginRuntime, ActivationContext } from './runtime/types';
 export { ConfigManager } from './services/config-manager';
