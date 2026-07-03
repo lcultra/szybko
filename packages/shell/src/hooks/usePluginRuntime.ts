@@ -7,7 +7,7 @@ import { useRuntimeStore } from '../stores/runtime-store';
  * 订阅 onRuntimeStateChanged → 同步更新 RuntimeStore + AppStore。
  *
  * 所有组件通过此 hook 感知插件状态变化，
- * 不再直接调用 window.szybko.onRuntimeStateChanged。
+ * 不再直接调用 window.szybkoInternal.onRuntimeStateChanged。
  */
 export function usePluginRuntime() {
     const setSlot = useRuntimeStore(s => s.setSlot);
@@ -15,7 +15,7 @@ export function usePluginRuntime() {
     const setAppState = useAppStore(s => s.setState);
 
     useEffect(() => {
-        const cleanup = window.szybko?.onRuntimeStateChanged?.((payload: any) => {
+        const cleanup = window.szybkoInternal?.onRuntimeStateChanged?.((payload: any) => {
             if (payload?.state === 'attached') {
                 setSlot({
                     runtimeId: payload.runtimeId,

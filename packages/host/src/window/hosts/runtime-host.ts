@@ -5,7 +5,9 @@ import type { WebContentsView } from 'electron';
  */
 export interface HostMeta {
     runtimeId: string;
+    pluginId: string;
     pluginName: string;
+    featureExplain?: string;
 }
 
 /**

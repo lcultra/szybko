@@ -1,6 +1,7 @@
 import type { WebContentsView } from 'electron';
-import type { HostMeta, RuntimeHost } from './runtime-host';
 import type { Closable, Focusable, Pinnable } from './capabilities';
+import type { HostMeta, RuntimeHost } from './runtime-host';
+import type { RuntimeSlot } from '@szybko/shared';
 import { join } from 'node:path';
 import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
@@ -23,7 +24,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
 
         // 自动创建窗口（如果尚未创建）
         if (!this.window) {
-            this.createWindow(meta.pluginName, meta.runtimeId);
+            this.createWindow(meta);
         }
         if (view) {
             this.view = view;
@@ -45,7 +46,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         this.view = null;
     }
 
-    private createWindow(pluginName: string, runtimeId: string): void {
+    private createWindow(meta: HostMeta): void {
         this.window = new BrowserWindow({
             width: DEFAULT_WINDOW_WIDTH,
             height: 600,
@@ -62,13 +63,17 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
 
         this.window.getContentView().setBorderRadius(10);
 
-        // 加载 Renderer 的 floating 页面
-        const query: Record<string, string> = {
-            name: pluginName,
-            runtimeId,
-            pluginId: this.currentMeta?.runtimeId ?? '',
-            explain: '',
+        const slot: RuntimeSlot = {
+            runtimeId: meta.runtimeId,
+            pluginId: meta.pluginId,
+            pluginName: meta.pluginName,
+            featureExplain: meta.featureExplain ?? '',
+            loadState: 'loaded',
+            mountState: 'attached',
         };
+
+        const query = { slot: JSON.stringify(slot) };
+
         if (process.env.ELECTRON_RENDERER_URL) {
             const qs = new URLSearchParams(query).toString();
             void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating.html?${qs}`);

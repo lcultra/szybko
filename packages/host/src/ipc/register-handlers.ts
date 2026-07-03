@@ -11,7 +11,8 @@ import { ipcMain } from 'electron';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { SearchService } from '../input/search-service';
-import { executeAction } from './execute-action';
+import { createExecutor } from './execute-action';
+import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
@@ -25,6 +26,7 @@ export function registerIpcHandlers(
     platformDb?: PlatformDatabase,
 ) {
     const sessionManager = new MatchSessionManager();
+    const executor = createExecutor(new ElectronNativeCapabilityService());
 
     // ── Search ─────────────────────────────────────────────────────
 
@@ -120,7 +122,7 @@ export function registerIpcHandlers(
 
     ipcMain.handle(
         IPC.PLUGIN_EXEC,
-        (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): IpcResponse<typeof IPC.PLUGIN_EXEC> => {
+        async (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): Promise<IpcResponse<typeof IPC.PLUGIN_EXEC>> => {
             // plugin.open 需要激活 Runtime，不走 executeAction 纯函数
             if (action.type === 'plugin.open') {
                 // Resolve match context from session manager if matchId is present
@@ -147,7 +149,7 @@ export function registerIpcHandlers(
                 coordinator.activatePlugin(action.payload.pluginId, action.payload.featureCode);
                 return { ok: true };
             }
-            return executeAction(action);
+            return executor(action);
         },
     );
 

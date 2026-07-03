@@ -1,7 +1,7 @@
 import type { PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
-import type { Closable } from '../window/hosts/capabilities';
+import { isClosable, isPinnable } from '../window/hosts/capabilities';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
 import type { RuntimeManager } from './runtime-manager';
@@ -78,9 +78,9 @@ export class RuntimeCoordinator {
             return;
 
         const host = this.runtimeManager.getHostFor(runtimeId);
-        if (host && 'close' in host) {
+        if (host && isClosable(host)) {
             // FloatingRuntimeHost — close window then destroy
-            (host as RuntimeHost & Closable).close();
+            host.close();
         }
         else if (host) {
             // LauncherRuntimeHost — detach with destroy reason (sends plugin:out)
@@ -95,8 +95,8 @@ export class RuntimeCoordinator {
      */
     pinRuntime(runtimeId: string, pin: boolean): void {
         const host = this.runtimeManager.getHostFor(runtimeId);
-        if (host && host.type === 'floating' && 'setAlwaysOnTop' in host) {
-            (host as RuntimeHost & { setAlwaysOnTop: (pin: boolean) => void }).setAlwaysOnTop(pin);
+        if (host && host.type === 'floating' && isPinnable(host)) {
+            host.setAlwaysOnTop(pin);
         }
     }
 

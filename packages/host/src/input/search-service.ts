@@ -1,7 +1,7 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
 import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
-import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { normalizeTextKey } from '../commands/feature-normalizer';
+import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { dedupAndSort, runPipeline } from './matcher-pipeline';
 
 /**
