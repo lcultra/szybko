@@ -19,4 +19,5 @@ export const IPC = {
     PLUGIN_DESTROY: 'plugin:destroy',
     SHOW_PLUGIN_MENU: 'plugin:show-menu',
     PLUGIN_PIN: 'plugin:pin',
+    PLUGIN_OUT: 'plugin:out',
 } as const;

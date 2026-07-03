@@ -131,7 +131,7 @@ export class RuntimeManager {
 
         // detach 带原因时，通知插件
         if (target === 'detached' && reason) {
-            entry.view.webContents.send('plugin:out', {
+            entry.view.webContents.send(IPC.PLUGIN_OUT, {
                 runtimeId: entry.runtime.id,
                 pluginId: entry.runtime.pluginId,
                 reason,

@@ -44,13 +44,48 @@ export interface IpcInvokeContract {
     };
 }
 
+export interface RuntimeStatePayload {
+    runtimeId: string;
+    pluginId: string;
+    state: string;
+    mountState?: 'attached' | 'detached';
+    loadState?: 'loading' | 'loaded' | 'error';
+    pluginName?: string;
+    featureExplain?: string;
+}
+
+export interface PluginEnterPayload {
+    pluginId: string;
+    featureCode: string;
+    featureExplain?: string;
+    keyword?: string;
+    query?: string;
+}
+
+export interface PluginOutPayload {
+    pluginId: string;
+    reason: 'hide' | 'destroy';
+}
+
+export interface MoveToHostRequest {
+    runtimeId: string;
+    targetHostType: 'launcher' | 'floating';
+}
+
+export interface MoveToHostResponse {
+    ok: boolean;
+    hostId?: string;
+    error?: string;
+}
+
 export interface IpcMainToRendererEventContract {
     [IPC.SEARCH_BATCH]: SearchBatch;
     [IPC.WINDOW_SHOW]: void;
     [IPC.THEME_CHANGED]: { isDark: boolean };
-    [IPC.PLUGIN_RUNTIME_STATE]: unknown;
+    [IPC.PLUGIN_RUNTIME_STATE]: RuntimeStatePayload;
     [IPC.PLUGIN_SEARCH]: PluginSearchContext;
-    [IPC.PLUGIN_ENTER]: unknown;
+    [IPC.PLUGIN_ENTER]: PluginEnterPayload;
+    [IPC.PLUGIN_OUT]: PluginOutPayload;
 }
 
 export interface IpcRendererToMainEventContract {

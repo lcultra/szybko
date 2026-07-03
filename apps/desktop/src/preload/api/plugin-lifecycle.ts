@@ -37,5 +37,8 @@ export function createPluginLifecycleApi() {
 
         /** 用户选中插件 feature，插件进入自身 UI 模式 */
         onPluginEnter: on(IPC.PLUGIN_ENTER),
+
+        /** 宿主通知插件被隐藏或销毁 */
+        onPluginOut: on(IPC.PLUGIN_OUT),
     };
 }
