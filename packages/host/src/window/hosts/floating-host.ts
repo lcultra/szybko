@@ -42,13 +42,7 @@ export class FloatingHost implements Host {
             width: DEFAULT_WINDOW_WIDTH,
             height: 600,
             frame: false,
-            titleBarStyle: 'hidden',
-            titleBarOverlay: {
-                color: '#2a2a2a',
-                symbolColor: '#ffffff',
-                height: 68,
-            },
-            trafficLightPosition: { x: 12, y: 26 },
+            backgroundColor: '#2a2a2a',
             webPreferences: {
                 preload: join(__dirname, '../preload/host.js'),
                 contextIsolation: true,
