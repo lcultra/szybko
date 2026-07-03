@@ -12,7 +12,6 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
     const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
     const clearActivePlugin = useAppStore(s => s.setActivePlugin);
     const isFloating = variant === 'floating';
-
     const handleClose = useCallback(() => {
         if (!activeRuntimeId) {
             clearActivePlugin(null);
@@ -62,17 +61,15 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             />
 
-            {/* 右侧：菜单按钮（浮动窗口不需要） */}
-            {!isFloating && (
-                <button
-                    className="grid size-8 cursor-pointer place-items-center rounded-full border border-border text-text-muted outline-none transition-colors hover:bg-surface-card/80 hover:text-text"
-                    onClick={handleMenu}
-                    title="更多操作"
-                    type="button"
-                >
-                    <EllipsisVertical size={16} strokeWidth={2} />
-                </button>
-            )}
+            {/* 右侧：菜单按钮 */}
+            <button
+                className="grid size-8 cursor-pointer place-items-center rounded-full border border-border text-text-muted outline-none transition-colors hover:bg-surface-card/80 hover:text-text"
+                onClick={handleMenu}
+                title="更多操作"
+                type="button"
+            >
+                <EllipsisVertical size={16} strokeWidth={2} />
+            </button>
         </header>
     );
 }
