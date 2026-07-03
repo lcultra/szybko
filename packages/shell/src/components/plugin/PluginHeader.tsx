@@ -1,35 +1,37 @@
 import { EllipsisVertical, MapPinCheckInside, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useAppStore } from '../../stores/app-store';
+import { PluginRuntimeService } from '../../services/plugin-runtime';
+import { useRuntimeStore } from '../../stores/runtime-store';
 
 interface PluginHeaderProps {
     hostType?: 'launcher' | 'floating';
 }
 
 export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
-    const pluginName = useAppStore(s => s.activePluginName);
-    const featureExplain = useAppStore(s => s.activeFeatureExplain);
-    const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
-    const clearActivePlugin = useAppStore(s => s.setActivePlugin);
+    const pluginName = useRuntimeStore(s => s.slot.pluginName);
+    const featureExplain = useRuntimeStore(s => s.slot.featureExplain);
+    const activeRuntimeId = useRuntimeStore(s => s.slot.runtimeId);
+    const clearSlot = useRuntimeStore(s => s.clearSlot);
     const isFloating = hostType === 'floating';
+
     const handleClose = useCallback(() => {
         if (!activeRuntimeId) {
-            clearActivePlugin(null);
+            clearSlot();
             return;
         }
         if (isFloating) {
-            window.szybkoInternal?.destroyPlugin(activeRuntimeId);
+            PluginRuntimeService.destroy(activeRuntimeId);
             window.close();
         }
         else {
-            window.szybkoInternal?.hidePlugin(activeRuntimeId);
-            clearActivePlugin(null);
+            PluginRuntimeService.hide(activeRuntimeId);
+            clearSlot();
         }
-    }, [activeRuntimeId, clearActivePlugin, isFloating]);
+    }, [activeRuntimeId, clearSlot, isFloating]);
 
     const handleMenu = useCallback(() => {
         if (activeRuntimeId)
-            window.szybkoInternal?.showPluginMenu(activeRuntimeId, hostType);
+            PluginRuntimeService.showMenu(activeRuntimeId, hostType);
     }, [activeRuntimeId, hostType]);
 
     const [pinned, setPinned] = useState(false);
@@ -38,7 +40,7 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
             return;
         const next = !pinned;
         setPinned(next);
-        window.szybkoInternal?.pinPlugin(activeRuntimeId, next);
+        PluginRuntimeService.pin(activeRuntimeId, next);
     }, [activeRuntimeId, pinned]);
 
     return (

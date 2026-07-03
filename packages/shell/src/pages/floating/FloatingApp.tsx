@@ -1,7 +1,9 @@
 import { useCallback, useEffect } from 'react';
+import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { useAppStore } from '../../stores/app-store';
+import { useRuntimeStore } from '../../stores/runtime-store';
 
 const params = new URLSearchParams(window.location.search);
 const initialName = params.get('name') || '';
@@ -10,15 +12,24 @@ const initialExplain = params.get('explain') || '';
 const initialPluginId = params.get('pluginId') || '';
 
 export function FloatingApp() {
-    const setActivePlugin = useAppStore(s => s.setActivePlugin);
+    const setAppState = useAppStore(s => s.setState);
+    const setSlot = useRuntimeStore(s => s.setSlot);
 
     useEffect(() => {
-        setActivePlugin(initialPluginId, initialRuntimeId, initialName, initialExplain);
+        setSlot({
+            pluginId: initialPluginId,
+            runtimeId: initialRuntimeId,
+            pluginName: initialName,
+            featureExplain: initialExplain,
+            loadState: 'loaded',
+            mountState: 'attached',
+        });
+        setAppState('plugin');
     }, []);
 
     const handleClose = useCallback(() => {
         if (initialRuntimeId)
-            window.szybkoInternal?.destroyPlugin(initialRuntimeId);
+            PluginRuntimeService.destroy(initialRuntimeId);
     }, []);
 
     useEffect(() => {

@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { useAppStore } from '../../stores/app-store';
+import { useRuntimeStore } from '../../stores/runtime-store';
+import { usePluginRuntime } from '../../hooks/usePluginRuntime';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useSearch } from '../../hooks/useSearch';
 import { useWindowHeight } from './hooks/useWindowHeight';
@@ -11,24 +14,13 @@ import { SearchBar } from './SearchBar';
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
     const state = useAppStore(s => s.state);
-    const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
-    const setActivePlugin = useAppStore(s => s.setActivePlugin);
+    const setState = useAppStore(s => s.setState);
+    const runtimeId = useRuntimeStore(s => s.slot.runtimeId);
+    const clearSlot = useRuntimeStore(s => s.clearSlot);
     const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
 
     useWindowHeight(rootRef);
-
-    // 监听运行时状态变更 → 切换 plugin / idle 模式
-    useEffect(() => {
-        const cleanup = window.szybko?.onRuntimeStateChanged?.((payload: any) => {
-            if (payload?.state === 'attached') {
-                setActivePlugin(payload.pluginId, payload.runtimeId, payload.pluginName, payload.featureExplain);
-            }
-            else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
-                setActivePlugin(null);
-            }
-        });
-        return () => cleanup?.();
-    }, [setActivePlugin]);
+    usePluginRuntime();
 
     useKeyboard({
         selectedIndex,
@@ -42,10 +34,11 @@ export default function App() {
         },
         onEscape: () => {
             if (state === 'plugin') {
-                if (activeRuntimeId) {
-                    window.szybkoInternal?.hidePlugin(activeRuntimeId);
+                if (runtimeId) {
+                    PluginRuntimeService.hide(runtimeId);
                 }
-                setActivePlugin(null);
+                clearSlot();
+                setState('idle');
             }
             else if (query) {
                 setQuery('');
