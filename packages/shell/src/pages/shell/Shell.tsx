@@ -30,6 +30,8 @@ export default function App() {
         onExecute: () => {
             if (results[selectedIndex]) {
                 window.szybko?.execute(results[selectedIndex].action);
+                setQuery('');
+                setSelectedIndex(0);
             }
         },
         onEscape: () => {
@@ -39,6 +41,8 @@ export default function App() {
                 }
                 clearSlot();
                 setState('idle');
+                setQuery('');
+                setSelectedIndex(0);
             }
             else if (query) {
                 setQuery('');
