@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { usePluginRuntime } from '../../hooks/usePluginRuntime';
@@ -20,10 +20,7 @@ export default function App() {
     const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
 
     useWindowHeight(rootRef);
-    usePluginRuntime(useCallback(() => {
-        setQuery('');
-        setSelectedIndex(0);
-    }, [setQuery, setSelectedIndex]));
+    usePluginRuntime();
 
     useKeyboard({
         selectedIndex,
@@ -32,7 +29,10 @@ export default function App() {
         onSelectDown: () => setSelectedIndex(i => Math.min(results.length - 1, i + 1)),
         onExecute: () => {
             if (results[selectedIndex]) {
-                window.szybko?.execute(results[selectedIndex].action);
+                const action = results[selectedIndex].action;
+                setQuery('');
+                setSelectedIndex(0);
+                window.szybko?.execute(action);
             }
         },
         onEscape: () => {
@@ -68,8 +68,12 @@ export default function App() {
                             selectedIndex={selectedIndex}
                             onSelect={setSelectedIndex}
                             onExecute={(i) => {
-                                if (results[i])
-                                    window.szybko?.execute(results[i].action);
+                                if (results[i]) {
+                                    const action = results[i].action;
+                                    setQuery('');
+                                    setSelectedIndex(0);
+                                    window.szybko?.execute(action);
+                                }
                             }}
                         />
                     )}
