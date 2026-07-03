@@ -8,6 +8,7 @@ import { ManifestFeatureRepository } from '../persistence/sqlite/repositories/ma
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 import { commandAlias } from '../persistence/sqlite/schema';
 import { buildCommandProjection, buildSearchEntries } from './command-projection-builder';
+import type { CommandProjection, CommandTriggerSearchProjection } from './command-projection-builder';
 import { stableJson } from './feature-normalizer';
 
 const INDEX_VERSION = 2;
@@ -16,8 +17,8 @@ function hashManifest(manifest: PluginManifest): string {
     return createHash('sha256').update(stableJson(manifest.features)).digest('hex');
 }
 
-function dedupSearchEntries(entries: import('./command-projection-builder').CommandTriggerSearchProjection[]): import('./command-projection-builder').CommandTriggerSearchProjection[] {
-    const seen = new Map<string, import('./command-projection-builder').CommandTriggerSearchProjection>();
+function dedupSearchEntries(entries: CommandTriggerSearchProjection[]): CommandTriggerSearchProjection[] {
+    const seen = new Map<string, CommandTriggerSearchProjection>();
     for (const e of entries) {
         const key = `${e.pluginId}:${e.featureCode}:${e.cmdKey}:${e.searchText}`;
         const existing = seen.get(key);
@@ -73,31 +74,8 @@ export class CommandCatalog {
                 overrides: repos.featureOverrides.listForProjection(pluginId),
             });
 
-            // Read active aliases and expand into search entries
-            const activeAliases = tx.select()
-                .from(commandAlias)
-                .where(and(
-                    eq(commandAlias.pluginId, pluginId),
-                    eq(commandAlias.state, 'active'),
-                ))
-                .all();
-
-            for (const alias of activeAliases) {
-                // Only project alias if target trigger exists and type='text'
-                const targetTrigger = projection.commandTriggers.find(
-                    ct => ct.cmdKey === alias.targetCmdKey && ct.type === 'text',
-                );
-                if (!targetTrigger) continue;
-
-                const searchEntries = buildSearchEntries(
-                    pluginId, alias.featureCode, alias.targetCmdKey,
-                    alias.aliasNormalized, 'alias', alias.id,
-                );
-                projection.commandTriggerSearch.push(...searchEntries);
-            }
-
-            // Deduplicate search entries
-            projection.commandTriggerSearch = dedupSearchEntries(projection.commandTriggerSearch);
+            // Expand aliases into search entries
+            this.expandAliasesInProjection(tx, pluginId, projection);
 
             repos.commandProjections.replaceForPlugin(pluginId, projection);
         });
@@ -135,6 +113,34 @@ export class CommandCatalog {
         }
     }
 
+    private expandAliasesInProjection(
+        tx: PlatformDrizzleDatabase,
+        pluginId: string,
+        projection: CommandProjection,
+    ): void {
+        const activeAliases = tx.select()
+            .from(commandAlias)
+            .where(and(
+                eq(commandAlias.pluginId, pluginId),
+                eq(commandAlias.state, 'active'),
+            ))
+            .all();
+
+        for (const alias of activeAliases) {
+            const targetTrigger = projection.commandTriggers.find(
+                ct => ct.cmdKey === alias.targetCmdKey && ct.type === 'text',
+            );
+            if (!targetTrigger) continue;
+
+            const searchEntries = buildSearchEntries(
+                pluginId, alias.featureCode, alias.targetCmdKey,
+                alias.aliasNormalized, 'alias', alias.id,
+            );
+            projection.commandTriggerSearch.push(...searchEntries);
+        }
+        projection.commandTriggerSearch = dedupSearchEntries(projection.commandTriggerSearch);
+    }
+
     private rebuildPluginWithRepositories(
         pluginId: string,
         repos: ReturnType<typeof createRepositories>,
@@ -155,31 +161,8 @@ export class CommandCatalog {
             overrides: repos.featureOverrides.listForProjection(pluginId),
         });
 
-        // Read active aliases and expand into search entries
-        const activeAliases = tx.select()
-            .from(commandAlias)
-            .where(and(
-                eq(commandAlias.pluginId, pluginId),
-                eq(commandAlias.state, 'active'),
-            ))
-            .all();
-
-        for (const alias of activeAliases) {
-            // Only project alias if target trigger exists and type='text'
-            const targetTrigger = projection.commandTriggers.find(
-                ct => ct.cmdKey === alias.targetCmdKey && ct.type === 'text',
-            );
-            if (!targetTrigger) continue;
-
-            const searchEntries = buildSearchEntries(
-                pluginId, alias.featureCode, alias.targetCmdKey,
-                alias.aliasNormalized, 'alias', alias.id,
-            );
-            projection.commandTriggerSearch.push(...searchEntries);
-        }
-
-        // Deduplicate search entries
-        projection.commandTriggerSearch = dedupSearchEntries(projection.commandTriggerSearch);
+        // Expand aliases into search entries
+        this.expandAliasesInProjection(tx, pluginId, projection);
 
         repos.commandProjections.replaceForPlugin(pluginId, projection);
     }
