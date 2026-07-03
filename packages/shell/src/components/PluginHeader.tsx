@@ -1,4 +1,4 @@
-import { EllipsisVertical, MapPin, X } from 'lucide-react';
+import { EllipsisVertical, MapPinCheckInside, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 
@@ -77,7 +77,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
                     title={pinned ? '取消置顶' : '置顶窗口'}
                     type="button"
                 >
-                    <MapPin size={16} strokeWidth={2} />
+                    <MapPinCheckInside size={16} strokeWidth={2} />
                 </button>
             )}
             <button
