@@ -11,8 +11,8 @@ import { ipcMain } from 'electron';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { SearchService } from '../input/search-service';
-import { createExecutor } from './execute-action';
 import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
+import { createExecutor } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];

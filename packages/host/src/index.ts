@@ -1,12 +1,12 @@
-export { type NativeCapabilityService } from './native/native-capability-service';
-export { ElectronNativeCapabilityService } from './native/electron-native-capability-service';
-export { createExecutor } from './ipc/execute-action';
 export { CommandCatalog } from './commands/command-catalog';
 export { collectFromSearch } from './input/input-context-collector';
 export { MatchSessionManager } from './input/match-session-manager';
 export { runPipeline } from './input/matcher-pipeline';
 export { SearchService } from './input/search-service';
+export { createExecutor } from './ipc/execute-action';
 export { registerIpcHandlers } from './ipc/register-handlers';
+export { ElectronNativeCapabilityService } from './native/electron-native-capability-service';
+export { type NativeCapabilityService } from './native/native-capability-service';
 export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { InstallationSynchronizer } from './plugins/installation-synchronizer';
 export { PluginCatalog } from './plugins/plugin-catalog';

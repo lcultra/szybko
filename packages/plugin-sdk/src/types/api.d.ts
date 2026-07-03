@@ -1,4 +1,4 @@
-import type { PluginEnterPayload, PluginOutPayload, RuntimeStatePayload, PluginFeature, ActionDescriptor } from '@szybko/shared';
+import type { ActionDescriptor, PluginEnterPayload, PluginFeature, PluginOutPayload, RuntimeStatePayload } from '@szybko/shared';
 
 export interface SzybkoPluginSDK {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;

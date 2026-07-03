@@ -1,5 +1,5 @@
-import type { HostMeta, RuntimeHost } from '../window/hosts/runtime-host';
 import type { WebContentsView } from 'electron';
+import type { HostMeta, RuntimeHost } from '../window/hosts/runtime-host';
 
 /**
  * RuntimeHostAttacher — 管理 runtime → host 映射。

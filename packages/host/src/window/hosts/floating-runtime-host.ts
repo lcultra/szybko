@@ -1,7 +1,7 @@
+import type { RuntimeSlot } from '@szybko/shared';
 import type { WebContentsView } from 'electron';
 import type { Closable, Focusable, Pinnable } from './capabilities';
 import type { HostMeta, RuntimeHost } from './runtime-host';
-import type { RuntimeSlot } from '@szybko/shared';
 import { join } from 'node:path';
 import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
@@ -44,6 +44,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             this.window.contentView.removeChildView(this.view);
         }
         this.view = null;
+        this.window?.hide();
     }
 
     private createWindow(meta: HostMeta): void {

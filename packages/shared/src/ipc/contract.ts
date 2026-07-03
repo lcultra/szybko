@@ -86,6 +86,7 @@ export interface PluginEnterPayload {
 }
 
 export interface PluginOutPayload {
+    runtimeId: string;
     pluginId: string;
     reason: 'hide' | 'destroy';
 }

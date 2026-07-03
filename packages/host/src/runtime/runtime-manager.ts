@@ -3,11 +3,11 @@ import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
 import type { PluginRuntime } from './types';
-import { isFocusable } from '../window/hosts/capabilities';
 import { IPC } from '@szybko/shared';
-import { RuntimeViewFactory } from './runtime-view-factory';
+import { isFocusable } from '../window/hosts/capabilities';
 import { RuntimeHostAttacher } from './runtime-host-attacher';
 import { RuntimeStatePublisher } from './runtime-state-publisher';
+import { RuntimeViewFactory } from './runtime-view-factory';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;

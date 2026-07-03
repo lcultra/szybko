@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
+import { createHash } from 'node:crypto';
 
 interface Migration {
     name: string;
@@ -19,11 +19,12 @@ export class Migrator {
     migrate(migrations: Migration[]): void {
         const applied = new Set(
             (this.sqlite.prepare('SELECT name FROM _migrations').all() as any[])
-                .map(r => r.name as string)
+                .map(r => r.name as string),
         );
 
         for (const m of migrations) {
-            if (applied.has(m.name)) continue;
+            if (applied.has(m.name))
+                continue;
 
             const checksum = createHash('sha256').update(m.sql).digest('hex').slice(0, 16);
 
@@ -31,7 +32,7 @@ export class Migrator {
             try {
                 this.sqlite.exec(m.sql);
                 this.sqlite.prepare(
-                    'INSERT INTO _migrations (name, applied_at, checksum) VALUES (?, ?, ?)'
+                    'INSERT INTO _migrations (name, applied_at, checksum) VALUES (?, ?, ?)',
                 ).run(m.name, Date.now(), checksum);
                 this.sqlite.exec('COMMIT');
             }

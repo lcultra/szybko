@@ -18,7 +18,8 @@ export class ElectronNativeCapabilityService implements NativeCapabilityService 
     async launchApp(bundleId: string): Promise<void> {
         await new Promise<void>((resolve, reject) => {
             execFile('open', ['-b', bundleId], (err) => {
-                if (err) reject(err);
+                if (err)
+                    reject(err);
                 else resolve();
             });
         });

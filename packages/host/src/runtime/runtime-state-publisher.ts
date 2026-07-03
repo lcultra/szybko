@@ -14,7 +14,8 @@ export class RuntimeStatePublisher {
 
     publish(runtimeId: string, pluginId: string, mountState: MountState, loadState: LoadState): void {
         const win = this.windowManager.getWindow();
-        if (!win || win.isDestroyed()) return;
+        if (!win || win.isDestroyed())
+            return;
 
         const plugin = this.pluginManager.get(pluginId);
         const feature = plugin?.manifest.features[0];
@@ -22,8 +23,13 @@ export class RuntimeStatePublisher {
         const featureExplain = feature?.explain || '';
 
         win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
-            runtimeId, pluginId, pluginName, featureExplain,
-            state: mountState, mountState, loadState,
+            runtimeId,
+            pluginId,
+            pluginName,
+            featureExplain,
+            state: mountState,
+            mountState,
+            loadState,
         });
     }
 }

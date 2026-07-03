@@ -3,9 +3,9 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { drizzle } from 'drizzle-orm/node-sqlite';
-import * as schema from './schema';
-import { Migrator } from '../migrations/migrator';
 import { name as migrationName, sql as migrationSql } from '../migrations/migration-001';
+import { Migrator } from '../migrations/migrator';
+import * as schema from './schema';
 
 export type PlatformDrizzleDatabase = NodeSQLiteDatabase<typeof schema>;
 
@@ -21,7 +21,6 @@ function configure(sqlite: DatabaseSync): void {
     sqlite.exec('PRAGMA journal_mode = WAL');
     sqlite.exec('PRAGMA busy_timeout = 5000');
 }
-
 
 function wrapTx<T>(db: PlatformDrizzleDatabase, fn: (db: PlatformDrizzleDatabase) => T): T {
     return (db.transaction as unknown as (cb: (tx: PlatformDrizzleDatabase) => T) => T)(tx => fn(tx as PlatformDrizzleDatabase));

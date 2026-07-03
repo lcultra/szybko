@@ -4,7 +4,7 @@ import { globalShortcut } from 'electron';
 
 export class ShortcutManager {
     registerToggle(windowManager: WindowManager) {
-        const accelerator = process.platform === 'darwin' ? 'Command+Space' : 'Control+Space';
+        const accelerator = process.platform === 'darwin' ? 'Command+Space' : 'Alt+Space';
         globalShortcut.register(accelerator, () => {
             if (windowManager.isVisible())
                 windowManager.hide();

@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from 'react';
 import type { RuntimeSlot } from '@szybko/shared';
+import { useCallback, useEffect } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { PluginRuntimeService } from '../../services/plugin-runtime';

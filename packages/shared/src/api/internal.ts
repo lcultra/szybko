@@ -1,6 +1,5 @@
 import type { RuntimeStatePayload } from '../ipc/contract';
-import type { ActionDescriptor } from '../search/types';
-import type { SearchBatch, SearchRequest } from '../search/types';
+import type { ActionDescriptor, SearchBatch, SearchRequest } from '../search/types';
 
 export interface SzybkoInternalApi {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;

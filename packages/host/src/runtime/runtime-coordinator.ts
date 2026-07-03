@@ -1,11 +1,11 @@
 import type { PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
-import { isClosable, isPinnable } from '../window/hosts/capabilities';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
 import type { RuntimeManager } from './runtime-manager';
 import { Menu } from 'electron';
+import { isClosable, isPinnable } from '../window/hosts/capabilities';
 
 /**
  * RuntimeCoordinator — 所有业务流的统一入口。
@@ -79,7 +79,8 @@ export class RuntimeCoordinator {
 
         const host = this.runtimeManager.getHostFor(runtimeId);
         if (host && isClosable(host)) {
-            // FloatingRuntimeHost — close window then destroy
+            // FloatingRuntimeHost — 先发插件销毁通知，再关窗
+            this.runtimeManager.detachFromHost(runtimeId, 'destroy');
             host.close();
         }
         else if (host) {
