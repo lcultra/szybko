@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { PluginHeader } from '../../components/PluginHeader';
-import { PluginScene } from '../../components/PluginScene';
+import { PluginView } from '../../components/PluginView';
 import { useAppStore } from '../../stores/app-store';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useSearch } from './hooks/useSearch';
@@ -8,7 +7,6 @@ import { useWindowHeight } from './hooks/useWindowHeight';
 import { ResultList } from './ResultList';
 import { SearchBar } from './SearchBar';
 import { WindowFrame } from './WindowFrame';
-import '../../app.css';
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -62,22 +60,18 @@ export default function App() {
     return (
         <div ref={rootRef}>
             <WindowFrame>
-                {state === 'plugin' ? <PluginHeader /> : <SearchBar value={query} onChange={setQuery} />}
-                {state === 'plugin'
-                    ? (
-                            <PluginScene />
-                        )
-                    : (
-                            <ResultList
-                                results={results}
-                                selectedIndex={selectedIndex}
-                                onSelect={setSelectedIndex}
-                                onExecute={(i) => {
-                                    if (results[i])
-                                        window.szybko?.execute(results[i].action);
-                                }}
-                            />
-                        )}
+                {state === 'plugin' ? <PluginView /> : <SearchBar value={query} onChange={setQuery} />}
+                {state !== 'plugin' && (
+                    <ResultList
+                        results={results}
+                        selectedIndex={selectedIndex}
+                        onSelect={setSelectedIndex}
+                        onExecute={(i) => {
+                            if (results[i])
+                                window.szybko?.execute(results[i].action);
+                        }}
+                    />
+                )}
             </WindowFrame>
         </div>
     );

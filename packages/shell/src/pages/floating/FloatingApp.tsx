@@ -1,6 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { PluginHeader } from '../../components/PluginHeader';
-import { PluginScene } from '../../components/PluginScene';
+import { PluginView } from '../../components/PluginView';
 import { useAppStore } from '../../stores/app-store';
 
 const params = new URLSearchParams(window.location.search);
@@ -16,7 +15,6 @@ export function FloatingApp() {
         setActivePlugin(initialPluginId, initialRuntimeId, initialName, initialExplain);
     }, []);
 
-    // 原生关闭按钮（红绿灯）也销毁插件
     const handleClose = useCallback(() => {
         if (initialRuntimeId)
             window.szybkoInternal?.destroyPlugin(initialRuntimeId);
@@ -29,10 +27,7 @@ export function FloatingApp() {
 
     return (
         <div className="flex h-dvh flex-col overflow-hidden bg-surface">
-            <PluginHeader variant="floating" />
-            <div className="flex-1">
-                <PluginScene />
-            </div>
+            <PluginView variant="floating" />
         </div>
     );
 }
