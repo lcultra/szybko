@@ -32,7 +32,7 @@ export default function App() {
                 const action = results[selectedIndex].action;
                 setQuery('');
                 setSelectedIndex(0);
-                window.szybko?.execute(action);
+                window.szybkoInternal?.execute(action);
             }
         },
         onEscape: () => {
@@ -72,7 +72,7 @@ export default function App() {
                                     const action = results[i].action;
                                     setQuery('');
                                     setSelectedIndex(0);
-                                    window.szybko?.execute(action);
+                                    window.szybkoInternal?.execute(action);
                                 }
                             }}
                         />
