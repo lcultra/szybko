@@ -1,8 +1,8 @@
 import type { LoadState, MountState, PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
-import type { PluginRuntime } from './types';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
+import type { PluginRuntime } from './types';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { app, WebContentsView } from 'electron';

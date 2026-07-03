@@ -1,6 +1,6 @@
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
-import { PluginDiscovery } from './plugin-discovery';
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
+import { PluginDiscovery } from './plugin-discovery';
 
 export interface PluginInfo {
     id: string;

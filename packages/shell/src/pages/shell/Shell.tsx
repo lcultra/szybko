@@ -25,8 +25,8 @@ export default function App() {
     useKeyboard({
         selectedIndex,
         totalItems: results.length,
-        onSelectUp: () => setSelectedIndex(i => Math.max(0, i - 1)),
-        onSelectDown: () => setSelectedIndex(i => Math.min(results.length - 1, i + 1)),
+        onSelectUp: () => setSelectedIndex(Math.max(0, selectedIndex - 1)),
+        onSelectDown: () => setSelectedIndex(Math.min(results.length - 1, selectedIndex + 1)),
         onExecute: () => {
             if (results[selectedIndex]) {
                 const action = results[selectedIndex].action;

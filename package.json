@@ -11,7 +11,8 @@
         "dev:plugins": "pnpm --filter './plugins/**' dev",
         "typecheck": "pnpm -r run typecheck",
         "lint": "eslint .",
-        "lint:fix": "eslint . --fix"
+        "lint:fix": "eslint . --fix",
+        "check": "pnpm typecheck && pnpm lint"
     },
     "dependencies": {
         "react": "^19.2.7",

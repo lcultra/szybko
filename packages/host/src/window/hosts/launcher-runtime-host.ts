@@ -1,6 +1,6 @@
 import type { WebContentsView } from 'electron';
-import type { HostMeta, RuntimeHost } from './runtime-host';
 import type { WindowManager } from '../window-manager';
+import type { HostMeta, RuntimeHost } from './runtime-host';
 
 export class LauncherRuntimeHost implements RuntimeHost {
     readonly id: string;

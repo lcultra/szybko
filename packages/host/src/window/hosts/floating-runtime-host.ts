@@ -1,6 +1,6 @@
 import type { WebContentsView } from 'electron';
-import type { HostMeta, RuntimeHost } from './runtime-host';
 import type { Closable, Focusable, Pinnable } from './capabilities';
+import type { HostMeta, RuntimeHost } from './runtime-host';
 import { join } from 'node:path';
 import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
