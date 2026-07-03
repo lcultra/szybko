@@ -6,7 +6,7 @@ import type { BrowserWindow } from 'electron';
 import type { RuntimeManager } from '../runtime/runtime-manager.js';
 import type { WindowManager } from '../window/window-manager.js';
 import { IPC } from '@szybko/shared';
-import { ipcMain } from 'electron';
+import { ipcMain, Menu } from 'electron';
 import { runBuiltinSearch } from './builtin-search.js';
 import { executeAction } from './execute-action.js';
 
@@ -157,8 +157,6 @@ export function registerIpcHandlers(
     );
 
     // ── Plugin native menu ──────────────────────────────────────
-
-    const { Menu } = require('electron') as typeof import('electron');
 
     ipcMain.handle(
         IPC.SHOW_PLUGIN_MENU,
