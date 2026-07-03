@@ -1,9 +1,9 @@
-import type { PluginRuntime } from '@szybko/shared';
+import type { PluginRuntime } from '../../runtime/types';
 import type { WebContentsView } from 'electron';
 
 /**
  * Runtime 的显示挂载点接口。
- * @param view — 过渡参数，Phase 2 末改从 runtime.webContentsView 获取
+ * @param view — 可选，调用方传入 view 引用；host 也可通过 runtime.webContentsView 获取
  */
 export interface RuntimeHost {
     readonly id: string;

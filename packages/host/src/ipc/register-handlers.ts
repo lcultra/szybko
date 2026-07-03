@@ -126,7 +126,7 @@ export function registerIpcHandlers(
                 const runtime = coordinator.getOrCreateRuntime(pluginId);
                 if (!runtime) return { ok: false, error: 'Plugin not found' };
 
-                coordinator.moveToHost(runtime.id, targetHost);
+                coordinator.moveToHost(runtime.info.id, targetHost);
 
                 const hostId = runtime.host?.id;
                 return { ok: true, hostId };

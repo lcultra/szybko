@@ -1,4 +1,5 @@
-import type { PluginRuntime, SearchRequest } from '@szybko/shared';
+import type { SearchRequest } from '@szybko/shared';
+import type { PluginRuntime } from '../runtime/types';
 import type { RuntimeManager } from './runtime-manager';
 import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
@@ -30,12 +31,12 @@ export class RuntimeCoordinator {
         // Detach any runtime currently on the launcher host
         for (const r of this.runtimeManager.getAll()) {
             if (r.host?.type === 'launcher') {
-                this.runtimeManager.detachFromHost(r.id);
+                this.runtimeManager.detachFromHost(r.info.id);
             }
         }
 
         const host = this.hostRegistry.getOrCreateLauncherHost();
-        this.runtimeManager.attachToHost(runtime.id, host, featureCode);
+        this.runtimeManager.attachToHost(runtime.info.id, host, featureCode);
     }
 
     /**

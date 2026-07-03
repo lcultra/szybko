@@ -1,4 +1,4 @@
-import type { PluginRuntime } from '@szybko/shared';
+import type { PluginRuntime } from '../../runtime/types';
 import type { WebContentsView } from 'electron';
 import { join } from 'node:path';
 import process from 'node:process';
@@ -19,14 +19,13 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     attach(runtime: PluginRuntime, view?: WebContentsView) {
         // 自动创建窗口（如果尚未创建）
         if (!this.window) {
-            this.createWindow(runtime.pluginId, runtime.id);
+            this.createWindow(runtime.pluginName, runtime.info.id);
         }
         if (view) {
             this.view = view;
             this.window!.contentView.addChildView(view);
             view.setBounds({ x: BORDER_WIDTH, y: SEARCHBAR_HEIGHT, width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2, height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH });
         }
-        runtime.state = 'attached';
         runtime.host = this;
         this.window!.show();
     }
@@ -35,7 +34,6 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         if (this.view && this.window && !this.window.isDestroyed()) {
             this.window.contentView.removeChildView(this.view);
         }
-        runtime.state = 'detached';
         runtime.host = null;
         this.view = null;
     }

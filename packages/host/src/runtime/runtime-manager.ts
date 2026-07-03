@@ -1,4 +1,5 @@
-import type { LoadState, MountState, PluginRuntime, PluginSearchContext, SearchRequest } from '@szybko/shared';
+import type { LoadState, MountState, PluginSearchContext, SearchRequest } from '@szybko/shared';
+import type { PluginRuntime } from '../runtime/types';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
@@ -9,9 +10,6 @@ import { FloatingRuntimeHost } from '../window/hosts/floating-runtime-host';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
-    view: WebContentsView;
-    loadState: LoadState;
-    mountState: MountState;
 }
 
 export class RuntimeManager {
@@ -45,20 +43,27 @@ export class RuntimeManager {
         });
         // view.setBorderRadius(11);
 
+        const id = `${pluginId}-${this.nextInstanceId++}`;
         const runtime: PluginRuntime = {
-            id: `${pluginId}-${this.nextInstanceId++}`,
-            pluginId,
-            instanceId: String(this.nextInstanceId),
+            info: {
+                id,
+                pluginId,
+                instanceId: String(this.nextInstanceId),
+                loadState: 'loading',
+                mountState: 'detached',
+                hostInfo: null,
+            },
+            webContentsView: view,
+            webContents: view.webContents,
             host: null,
-            state: 'created',
             cache: new Map(),
+            pluginName: pluginId,
         };
 
-        this.entries.set(runtime.id, { runtime, view, loadState: 'loading', mountState: 'detached' });
+        this.entries.set(id, { runtime });
 
         view.webContents.on('did-finish-load', () => {
-            runtime.state = 'activated';
-            this.transitionLoadState(runtime.id, 'loaded');
+            this.transitionLoadState(id, 'loaded');
         });
 
         const devUrl = !app.isPackaged && plugin.manifest.development?.main;
@@ -74,14 +79,16 @@ export class RuntimeManager {
 
     sendPluginSearch(req: SearchRequest): void {
         for (const [, entry] of this.entries) {
-            if (entry.runtime.state === 'created' || entry.runtime.state === 'activated' || entry.runtime.state === 'attached') {
+            const { mountState, loadState } = entry.runtime.info;
+            // 只要不是在 detached 且不是 error 的，都发搜索
+            if (mountState !== 'detached' && loadState !== 'error') {
                 const ctx: PluginSearchContext = {
                     queryId: req.queryId,
                     keyword: req.query.split(/\s+/)[0] || '',
                     query: req.query,
                     fullQuery: req.query,
                 };
-                entry.view.webContents.send(IPC.PLUGIN_SEARCH, ctx);
+                entry.runtime.webContents.send(IPC.PLUGIN_SEARCH, ctx);
             }
         }
     }
@@ -95,18 +102,18 @@ export class RuntimeManager {
     private transitionLoadState(runtimeId: string, target: LoadState): void {
         const entry = this.entries.get(runtimeId);
         if (!entry) return;
-        entry.loadState = target;
+        entry.runtime.info.loadState = target;
     }
 
     private transitionMountState(runtimeId: string, target: MountState, reason?: 'hide' | 'destroy'): void {
         const entry = this.entries.get(runtimeId);
         if (!entry) return;
-        entry.mountState = target;
+        entry.runtime.info.mountState = target;
 
         // 查询插件显示信息
-        let pluginName = entry.runtime.pluginId;
+        let pluginName = entry.runtime.pluginName;
         let featureExplain = '';
-        const plugin = this.pluginManager.get(entry.runtime.pluginId);
+        const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
         if (plugin) {
             const feature = plugin.manifest.features[0];
             if (feature) {
@@ -119,21 +126,21 @@ export class RuntimeManager {
         const win = this.windowManager.getWindow();
         if (win && !win.isDestroyed()) {
             win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
-                runtimeId: entry.runtime.id,
-                pluginId: entry.runtime.pluginId,
+                runtimeId: entry.runtime.info.id,
+                pluginId: entry.runtime.info.pluginId,
                 pluginName,
                 featureExplain,
                 state: target,
                 mountState: target,
-                loadState: entry.loadState,
+                loadState: entry.runtime.info.loadState,
             });
         }
 
         // detach 带原因时，通知插件
         if (target === 'detached' && reason) {
-            entry.view.webContents.send(IPC.PLUGIN_OUT, {
-                runtimeId: entry.runtime.id,
-                pluginId: entry.runtime.pluginId,
+            entry.runtime.webContents.send(IPC.PLUGIN_OUT, {
+                runtimeId: entry.runtime.info.id,
+                pluginId: entry.runtime.info.pluginId,
                 reason,
             });
         }
@@ -149,45 +156,26 @@ export class RuntimeManager {
             return;
         }
 
-        // 单例模式：已在浮动窗口中 → 聚焦窗口，不操作主窗口
+        // 已在浮动窗口中 → 聚焦窗口，不操作主窗口
         if (entry.runtime.host?.type === 'floating') {
             const fHost = entry.runtime.host as FloatingRuntimeHost;
             fHost.focus();
-            entry.view.webContents.send(IPC.PLUGIN_ENTER, {
-                pluginId: entry.runtime.pluginId,
+            entry.runtime.webContents.send(IPC.PLUGIN_ENTER, {
+                pluginId: entry.runtime.info.pluginId,
                 featureCode,
             });
             return;
         }
 
-        host.attach(entry.runtime, entry.view);
+        entry.runtime.host = host;
+        host.attach(entry.runtime, entry.runtime.webContentsView);
         this.transitionMountState(runtimeId, 'attached');
 
         // 通知插件进入，携带 featureCode
-        entry.view.webContents.send(IPC.PLUGIN_ENTER, {
-            pluginId: entry.runtime.pluginId,
+        entry.runtime.webContents.send(IPC.PLUGIN_ENTER, {
+            pluginId: entry.runtime.info.pluginId,
             featureCode,
         });
-    }
-
-    /** @deprecated Use attachToHost(host) instead — kept for external callers */
-    attachToWindow(runtimeId: string, featureCode?: string): void {
-        const entry = this.entries.get(runtimeId);
-        if (!entry) {
-            console.warn(`[RuntimeManager] attachToWindow: runtime ${runtimeId} not found`);
-            return;
-        }
-
-        // 已在浮动窗口中 → 委托给 attachToHost
-        if (entry.runtime.host?.type === 'floating') {
-            this.attachToHost(runtimeId, entry.runtime.host as RuntimeHost, featureCode);
-            return;
-        }
-
-        const host = this.windowManager.getHostRegistry()?.getOrCreateLauncherHost();
-        if (host) {
-            this.attachToHost(runtimeId, host, featureCode);
-        }
     }
 
     /** 从 Host 分离插件 */
@@ -197,15 +185,11 @@ export class RuntimeManager {
 
         const host = entry.runtime.host;
         if (host) {
-            (host as RuntimeHost).detach(entry.runtime);
+            host.detach(entry.runtime);
         }
+        entry.runtime.host = null;
 
         this.transitionMountState(runtimeId, 'detached', reason);
-    }
-
-    /** @deprecated Use detachFromHost(reason?) instead — kept for external callers */
-    detachFromWindow(runtimeId: string): void {
-        this.detachFromHost(runtimeId);
     }
 
     /** 销毁插件：销毁 Runtime 和 WebContentsView */
@@ -217,13 +201,13 @@ export class RuntimeManager {
         // 如果已在浮动窗口，让 host 关闭窗口
         if (entry.runtime.host instanceof FloatingRuntimeHost) {
             entry.runtime.host.detach(entry.runtime);
-            entry.view.webContents.close();
+            entry.runtime.webContents.close();
             this.entries.delete(runtimeId);
             return;
         }
 
         this.detachFromHost(runtimeId, 'destroy');
-        entry.view.webContents.close();
+        entry.runtime.webContents.close();
         this.entries.delete(runtimeId);
     }
 
@@ -237,8 +221,8 @@ export class RuntimeManager {
         const win = this.windowManager.getWindow();
         if (win && !win.isDestroyed()) {
             win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
-                runtimeId: entry.runtime.id,
-                pluginId: entry.runtime.pluginId,
+                runtimeId: entry.runtime.info.id,
+                pluginId: entry.runtime.info.pluginId,
                 state: 'detached',
             });
         }
@@ -250,7 +234,7 @@ export class RuntimeManager {
         }
 
         // 查询插件信息
-        const pluginId = entry.runtime.pluginId;
+        const pluginId = entry.runtime.info.pluginId;
         let pluginName = pluginId;
         let explain = '';
         const pluginInfo = this.pluginManager.get(pluginId);
@@ -264,8 +248,8 @@ export class RuntimeManager {
 
         // 创建浮动窗口并迁移视图
         const host = new FloatingRuntimeHost(`floating-${Date.now()}`);
-        host.createWindow(pluginName, entry.runtime.id, pluginId, explain);
-        host.attach(entry.runtime, entry.view);
+        host.createWindow(pluginName, entry.runtime.info.id, pluginId, explain);
+        host.attach(entry.runtime, entry.runtime.webContentsView);
     }
 
     /** 切换浮动窗口置顶 */
@@ -281,7 +265,7 @@ export class RuntimeManager {
     /** 获取或创建 Runtime — 先查找已有实例，没有再创建 */
     getOrCreate(pluginId: string): PluginRuntime | null {
         const existing = Array.from(this.entries.values())
-            .find(e => e.runtime.pluginId === pluginId);
+            .find(e => e.runtime.info.pluginId === pluginId);
         if (existing)
             return existing.runtime;
         return this.create(pluginId);
@@ -297,12 +281,11 @@ export class RuntimeManager {
         return Array.from(this.entries.values()).map(e => e.runtime);
     }
 
-    /** 销毁 Runtime（内部逻辑与 destroyFromWindow 一致，但不操作窗口） */
+    /** 销毁 Runtime */
     destroy(runtimeId: string): void {
         const entry = this.entries.get(runtimeId);
         if (!entry) return;
-        entry.view.webContents.close();
+        entry.runtime.webContents.close();
         this.entries.delete(runtimeId);
-        // Phase 2 Coordinator 会在 destroy 前先 detachFromHost
     }
 }

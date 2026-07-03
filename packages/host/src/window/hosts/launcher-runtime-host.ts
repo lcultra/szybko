@@ -1,4 +1,4 @@
-import type { PluginRuntime } from '@szybko/shared';
+import type { PluginRuntime } from '../../runtime/types';
 import type { WebContentsView } from 'electron';
 import type { WindowManager } from '../window-manager';
 import type { RuntimeHost } from './runtime-host';
@@ -20,7 +20,6 @@ export class LauncherRuntimeHost implements RuntimeHost {
             this.currentView = view;
             this.windowManager.addChildView(view);
         }
-        runtime.state = 'attached';
         runtime.host = this;
     }
 
@@ -29,7 +28,6 @@ export class LauncherRuntimeHost implements RuntimeHost {
             this.windowManager.removeChildView(this.currentView);
             this.currentView = null;
         }
-        runtime.state = 'detached';
         runtime.host = null;
     }
 }
