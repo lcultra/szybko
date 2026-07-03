@@ -138,8 +138,10 @@ export class RuntimeManager {
             return;
         }
 
-        this.windowManager.attachPluginView(entry.view);
-        entry.runtime.state = 'attached';
+        const host = this.windowManager.getHostRegistry()?.getOrCreateLauncherHost();
+        if (host) {
+            host.attach(entry.runtime, entry.view);
+        }
 
         // 查询插件展示信息
         let pluginName = entry.runtime.pluginId;
@@ -178,9 +180,10 @@ export class RuntimeManager {
         if (!entry)
             return;
 
-        this.windowManager.detachPluginView();
-        entry.runtime.state = 'detached';
-        entry.runtime.host = null;
+        const launcherHost = this.windowManager.getHostRegistry()?.getOrCreateLauncherHost();
+        if (launcherHost) {
+            launcherHost.detach(entry.runtime);
+        }
 
         // 通知渲染进程
         const win = this.windowManager.getWindow();
@@ -229,9 +232,10 @@ export class RuntimeManager {
         }
 
         // 从主窗口移除
-        this.windowManager.detachPluginView();
-        entry.runtime.state = 'detached';
-        entry.runtime.host = null;
+        const launcherHost = this.windowManager.getHostRegistry()?.getOrCreateLauncherHost();
+        if (launcherHost) {
+            launcherHost.detach(entry.runtime);
+        }
 
         // 查询插件信息
         const pluginId = entry.runtime.pluginId;

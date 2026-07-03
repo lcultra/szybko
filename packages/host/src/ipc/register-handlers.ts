@@ -128,8 +128,11 @@ export function registerIpcHandlers(
         IPC.HOST_SWITCH,
         (_event, { pluginId: _pluginId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
             try {
-                const host = windowManager.createHost(targetHost);
-                windowManager.registerHost(host.id, host);
+                const registry = windowManager.getHostRegistry();
+                if (!registry) return { ok: false, error: 'HostRegistry not initialized' };
+                const host = targetHost === 'launcher'
+                    ? registry.getOrCreateLauncherHost()
+                    : registry.createFloatingHost();
                 return { ok: true, hostId: host.id };
             }
             catch (err) {

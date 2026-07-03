@@ -1,10 +1,10 @@
-import type { Host } from '@szybko/shared';
+import type { RuntimeHost } from './hosts/runtime-host';
 import type { WindowManager } from './window-manager';
 import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
 import { FloatingRuntimeHost } from './hosts/floating-runtime-host';
 
 export class RuntimeHostRegistry {
-    private hosts: Map<string, Host> = new Map();
+    private hosts: Map<string, RuntimeHost> = new Map();
     private launcherHost: LauncherRuntimeHost | null = null;
 
     constructor(private windowManager: WindowManager) {}
@@ -23,7 +23,7 @@ export class RuntimeHostRegistry {
         return host;
     }
 
-    registerHost(host: Host): void {
+    registerHost(host: RuntimeHost): void {
         this.hosts.set(host.id, host);
     }
 
@@ -31,11 +31,11 @@ export class RuntimeHostRegistry {
         this.hosts.delete(hostId);
     }
 
-    getHost(hostId: string): Host | undefined {
+    getHost(hostId: string): RuntimeHost | undefined {
         return this.hosts.get(hostId);
     }
 
-    getAllHosts(): Host[] {
+    getAllHosts(): RuntimeHost[] {
         return Array.from(this.hosts.values());
     }
 }
