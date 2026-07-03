@@ -8,7 +8,7 @@ const initialRuntimeId = params.get('runtimeId') || '';
 const initialExplain = params.get('explain') || '';
 const initialPluginId = params.get('pluginId') || '';
 
-export function FloatingApp() {
+export function DetachedApp() {
     const setActivePlugin = useAppStore(s => s.setActivePlugin);
 
     useEffect(() => {
@@ -27,7 +27,7 @@ export function FloatingApp() {
 
     return (
         <div className="flex h-dvh flex-col overflow-hidden bg-surface">
-            <PluginView variant="floating" />
+            <PluginView variant="detached" />
         </div>
     );
 }

@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useAppStore } from '../stores/app-store';
 
 interface PluginHeaderProps {
-    variant?: 'launcher' | 'floating';
+    variant?: 'launcher' | 'detached';
 }
 
 export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
@@ -11,13 +11,13 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
     const featureExplain = useAppStore(s => s.activeFeatureExplain);
     const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
     const clearActivePlugin = useAppStore(s => s.setActivePlugin);
-    const isFloating = variant === 'floating';
+    const isDetached = variant === 'detached';
     const handleClose = useCallback(() => {
         if (!activeRuntimeId) {
             clearActivePlugin(null);
             return;
         }
-        if (isFloating) {
+        if (isDetached) {
             window.szybkoInternal?.destroyPlugin(activeRuntimeId);
             window.close();
         }
@@ -25,7 +25,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
             window.szybkoInternal?.hidePlugin(activeRuntimeId);
             clearActivePlugin(null);
         }
-    }, [activeRuntimeId, clearActivePlugin, isFloating]);
+    }, [activeRuntimeId, clearActivePlugin, isDetached]);
 
     const handleMenu = useCallback(() => {
         if (activeRuntimeId)
@@ -33,7 +33,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
     }, [activeRuntimeId, variant]);
 
     return (
-        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isFloating ? 'pl-[78px] pr-3' : 'px-3'}`}>
+        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isDetached ? 'pl-[78px] pr-3' : 'px-3'}`}>
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
                 <div className="flex items-center gap-2 py-1.5 pl-3 pr-2 select-none">

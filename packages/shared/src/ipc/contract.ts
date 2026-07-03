@@ -35,7 +35,7 @@ export interface IpcInvokeContract {
         response: { ok: boolean };
     };
     [IPC.SHOW_PLUGIN_MENU]: {
-        request: { runtimeId: string; variant?: 'launcher' | 'floating' };
+        request: { runtimeId: string; variant?: 'launcher' | 'detached' };
         response: { ok: boolean };
     };
 }

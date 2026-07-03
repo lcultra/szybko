@@ -2,7 +2,7 @@ import { PluginHeader } from './PluginHeader';
 import { PluginScene } from './PluginScene';
 
 interface PluginViewProps {
-    variant?: 'launcher' | 'floating';
+    variant?: 'launcher' | 'detached';
 }
 
 export function PluginView({ variant = 'launcher' }: PluginViewProps) {
