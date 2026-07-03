@@ -29,8 +29,6 @@ export function FloatingApp() {
 
     return (
         <div className="flex h-dvh flex-col overflow-hidden bg-surface">
-            {/* 红绿灯按钮占位 */}
-            <div className="absolute left-0 top-0 z-10 h-[68px] w-[70px]" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
             <PluginHeader variant="floating" />
             <div className="flex-1">
                 <PluginScene />

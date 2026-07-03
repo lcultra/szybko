@@ -33,7 +33,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
     }, [activeRuntimeId, variant]);
 
     return (
-        <header className="flex h-[68px] shrink-0 items-center gap-2 border-b border-border px-3">
+        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isFloating ? 'pl-[78px] pr-3' : 'px-3'}`}>
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
                 <div className="flex items-center gap-2 py-1.5 pl-3 pr-2 select-none">
