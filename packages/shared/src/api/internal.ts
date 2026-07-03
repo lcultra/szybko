@@ -7,7 +7,7 @@ export interface SzybkoInternalApi {
     hideWindow: () => Promise<{ ok: boolean }>;
     hidePlugin: (runtimeId: string) => Promise<{ ok: boolean }>;
     destroyPlugin: (runtimeId: string) => Promise<{ ok: boolean }>;
-    showPluginMenu: (runtimeId: string, variant?: 'launcher' | 'detached') => Promise<{ ok: boolean }>;
+    showPluginMenu: (runtimeId: string, hostType?: 'launcher' | 'floating') => Promise<{ ok: boolean }>;
     pinPlugin: (runtimeId: string, pin: boolean) => Promise<{ ok: boolean }>;
     onSearchBatch: (cb: (batch: SearchBatch) => void) => () => void;
     onShowMainWindow: (cb: () => void) => () => void;

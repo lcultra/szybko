@@ -3,21 +3,21 @@ import { useCallback, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 
 interface PluginHeaderProps {
-    variant?: 'launcher' | 'detached';
+    hostType?: 'launcher' | 'floating';
 }
 
-export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
+export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     const pluginName = useAppStore(s => s.activePluginName);
     const featureExplain = useAppStore(s => s.activeFeatureExplain);
     const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
     const clearActivePlugin = useAppStore(s => s.setActivePlugin);
-    const isDetached = variant === 'detached';
+    const isFloating = hostType === 'floating';
     const handleClose = useCallback(() => {
         if (!activeRuntimeId) {
             clearActivePlugin(null);
             return;
         }
-        if (isDetached) {
+        if (isFloating) {
             window.szybkoInternal?.destroyPlugin(activeRuntimeId);
             window.close();
         }
@@ -25,12 +25,12 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
             window.szybkoInternal?.hidePlugin(activeRuntimeId);
             clearActivePlugin(null);
         }
-    }, [activeRuntimeId, clearActivePlugin, isDetached]);
+    }, [activeRuntimeId, clearActivePlugin, isFloating]);
 
     const handleMenu = useCallback(() => {
         if (activeRuntimeId)
-            window.szybkoInternal?.showPluginMenu(activeRuntimeId, variant);
-    }, [activeRuntimeId, variant]);
+            window.szybkoInternal?.showPluginMenu(activeRuntimeId, hostType);
+    }, [activeRuntimeId, hostType]);
 
     const [pinned, setPinned] = useState(false);
     const handlePin = useCallback(() => {
@@ -42,7 +42,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
     }, [activeRuntimeId, pinned]);
 
     return (
-        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isDetached ? 'pr-3 pl-[78px]' : 'px-3'}`}>
+        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isFloating ? 'pr-3 pl-[78px]' : 'px-3'}`}>
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
                 <div className="flex items-center gap-2 py-1.5 pr-2 pl-3 select-none">
@@ -71,7 +71,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
             />
 
             {/* 右侧 */}
-            {isDetached && (
+            {isFloating && (
                 <button
                     className={`grid size-8 cursor-pointer place-items-center rounded-full border transition-colors outline-none hover:bg-surface-card/80 ${pinned ? 'border-primary text-primary' : 'border-border text-text-muted hover:text-text'}`}
                     onClick={handlePin}

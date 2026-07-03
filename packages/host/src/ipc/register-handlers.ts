@@ -164,7 +164,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.SHOW_PLUGIN_MENU,
         (_event, { runtimeId, variant }: IpcRequest<typeof IPC.SHOW_PLUGIN_MENU>): IpcResponse<typeof IPC.SHOW_PLUGIN_MENU> => {
-            const isFloating = variant === 'detached';
+            const isFloating = variant === 'floating';
             const items: Electron.MenuItemConstructorOptions[] = isFloating
                 ? [
                     {

@@ -2,13 +2,13 @@ import { PluginHeader } from './PluginHeader';
 import { PluginScene } from './PluginScene';
 
 interface PluginViewProps {
-    variant?: 'launcher' | 'detached';
+    hostType?: 'launcher' | 'floating';
 }
 
-export function PluginView({ variant = 'launcher' }: PluginViewProps) {
+export function PluginView({ hostType = 'launcher' }: PluginViewProps) {
     return (
         <div className="flex flex-col">
-            <PluginHeader variant={variant} />
+            <PluginHeader hostType={hostType} />
             <div className="flex-1">
                 <PluginScene />
             </div>
