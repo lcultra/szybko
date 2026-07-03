@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { PluginHeader } from '../../plugin/PluginHeader.js';
-import { PluginScene } from '../../plugin/PluginScene.js';
+import { PluginHeader } from '../../components/PluginHeader.js';
+import { PluginScene } from '../../components/PluginScene.js';
 import { ResultList } from './ResultList.js';
 import { SearchBar } from './SearchBar.js';
 import { WindowFrame } from './WindowFrame.js';

@@ -1,7 +1,7 @@
 export { default as App } from './pages/shell/Shell.js';
 export { FloatingApp } from './pages/floating/FloatingApp.js';
-export { PluginHeader } from './plugin/PluginHeader.js';
-export { PluginScene } from './plugin/PluginScene.js';
+export { PluginHeader } from './components/PluginHeader.js';
+export { PluginScene } from './components/PluginScene.js';
 export { ResultItem } from './pages/shell/ResultItem.js';
 export { ResultList } from './pages/shell/ResultList.js';
 export { SearchBar } from './pages/shell/SearchBar.js';
