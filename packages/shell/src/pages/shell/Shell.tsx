@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { PluginView } from '../../components/PluginView';
+import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { useAppStore } from '../../stores/app-store';
 import { useKeyboard } from './hooks/useKeyboard';
-import { useSearch } from './hooks/useSearch';
+import { useSearch } from '../../hooks/useSearch';
 import { useWindowHeight } from './hooks/useWindowHeight';
 import { ResultList } from './ResultList';
 import { SearchBar } from './SearchBar';

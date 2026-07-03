@@ -1,6 +1,6 @@
 import { EllipsisVertical, MapPinCheckInside, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useAppStore } from '../stores/app-store';
+import { useAppStore } from '../../stores/app-store';
 
 interface PluginHeaderProps {
     hostType?: 'launcher' | 'floating';
