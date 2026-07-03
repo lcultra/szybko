@@ -42,6 +42,8 @@ export class FloatingHost implements Host {
             width: DEFAULT_WINDOW_WIDTH,
             height: 600,
             frame: false,
+            titleBarStyle: 'hidden',
+            trafficLightPosition: { x: 12, y: 18 },
             webPreferences: {
                 preload: join(__dirname, '../preload/host.js'),
                 contextIsolation: true,
