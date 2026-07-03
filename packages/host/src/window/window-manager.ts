@@ -1,5 +1,5 @@
 import type { WebContentsView } from 'electron';
-import { DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
 import { BrowserWindow, screen } from 'electron';
 
 import { RuntimeHostRegistry } from './runtime-host-registry';
@@ -42,6 +42,7 @@ export class WindowManager {
     resize(height: number) {
         const clamped = Math.min(Math.max(height, MIN_WINDOW_HEIGHT), MAX_WINDOW_HEIGHT);
         this.window?.setSize(DEFAULT_WINDOW_WIDTH, clamped);
+        this.relayout();
     }
 
     hide() { this.window?.hide(); }
@@ -66,11 +67,27 @@ export class WindowManager {
 
     addChildView(view: WebContentsView): void {
         this.window?.contentView.addChildView(view);
+        this.relayout();
     }
 
     removeChildView(view: WebContentsView): void {
         if (this.window && !this.window.isDestroyed()) {
             this.window.contentView.removeChildView(view);
+        }
+        this.relayout();
+    }
+
+    /** 重新计算所有子 view 的位置（窗口 resize 或 view 变更时调用） */
+    relayout(): void {
+        if (!this.window) return;
+        const [, winHeight] = this.window.getSize();
+        for (const view of this.window.contentView.children) {
+            view.setBounds({
+                x: BORDER_WIDTH,
+                y: SEARCHBAR_HEIGHT,
+                width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
+                height: Math.max(winHeight - SEARCHBAR_HEIGHT - BORDER_WIDTH, 0),
+            });
         }
     }
 }
