@@ -1,6 +1,6 @@
 export { notifyShowMainWindow, registerIpcHandlers } from './ipc/register-handlers';
 export { PluginLoader } from './plugins/plugin-loader';
-export { PluginManager } from './plugins/plugin-manager';
+export { PluginCatalog } from './plugins/plugin-catalog';
 export { PluginRegistry } from './plugins/plugin-registry';
 export { Store } from './plugins/store';
 export { RuntimeManager } from './runtime/runtime-manager';

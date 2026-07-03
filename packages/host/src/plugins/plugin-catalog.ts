@@ -9,7 +9,7 @@ export interface PluginInfo {
     path: string;
 }
 
-export class PluginManager {
+export class PluginCatalog {
     private loader = new PluginLoader();
     private plugins: Map<string, PluginInfo> = new Map();
 
@@ -26,7 +26,7 @@ export class PluginManager {
     scan() {
         this.plugins.clear();
         if (!existsSync(this.pluginsBaseDir)) {
-            console.warn(`[PluginManager] plugins dir not found: ${this.pluginsBaseDir}`);
+            console.warn(`[PluginCatalog] plugins dir not found: ${this.pluginsBaseDir}`);
             return;
         }
         for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {

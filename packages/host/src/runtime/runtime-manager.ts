@@ -1,5 +1,5 @@
 import type { PluginRuntime, PluginSearchContext, SearchRequest, SearchResult } from '@szybko/shared';
-import type { PluginManager } from '../plugins/plugin-manager';
+import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { WindowManager } from '../window/window-manager';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
@@ -16,7 +16,7 @@ export class RuntimeManager {
     private nextInstanceId = 1;
 
     constructor(
-        private pluginManager: PluginManager,
+        private pluginManager: PluginCatalog,
         private windowManager: WindowManager,
         private pluginPreloadPath: string,
     ) {}

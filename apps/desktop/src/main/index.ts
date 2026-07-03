@@ -1,6 +1,6 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { PluginManager, PluginRegistry, registerIpcHandlers, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
+import { PluginCatalog, PluginRegistry, registerIpcHandlers, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
 import { app } from 'electron';
 
 const windowManager = new WindowManager();
@@ -15,7 +15,7 @@ void app.whenReady().then(async () => {
     const pluginsDir = app.isPackaged
         ? join(process.resourcesPath, 'plugins', 'built-in')
         : join(__dirname, '..', '..', '..', '..', 'plugins', 'built-in');
-    const pluginManager = new PluginManager(registry, pluginsDir);
+    const pluginManager = new PluginCatalog(registry, pluginsDir);
     await pluginManager.init();
 
     const preloadPath = join(__dirname, '../preload/host.js');
