@@ -171,7 +171,34 @@ export class RuntimeManager {
 
         entry.runtime.host = host;
         host.attach(entry.runtime, entry.runtime.webContentsView);
-        this.transitionMountState(runtimeId, 'attached');
+        entry.runtime.info.mountState = 'attached';
+
+        // 只有挂载到主窗口时才通知主窗口 UI 切换状态
+        // 挂载到浮动窗口时，主窗口保持搜索态
+        if (host.type === 'launcher') {
+            const win = this.windowManager.getWindow();
+            if (win && !win.isDestroyed()) {
+                let pluginName = entry.runtime.pluginName;
+                let featureExplain = '';
+                const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
+                if (plugin) {
+                    const feature = plugin.manifest.features[0];
+                    if (feature) {
+                        pluginName = feature.explain || plugin.id;
+                        featureExplain = feature.explain || '';
+                    }
+                }
+                win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
+                    runtimeId: entry.runtime.info.id,
+                    pluginId: entry.runtime.info.pluginId,
+                    pluginName,
+                    featureExplain,
+                    state: 'attached',
+                    mountState: 'attached',
+                    loadState: entry.runtime.info.loadState,
+                });
+            }
+        }
 
         // 通知插件进入，携带 featureCode
         entry.runtime.webContents.send(IPC.PLUGIN_ENTER, {
