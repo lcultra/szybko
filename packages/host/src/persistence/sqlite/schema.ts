@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { foreignKey, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const pluginInstallation = sqliteTable('plugin_installation', {
@@ -128,5 +128,5 @@ export const usageHistory = sqliteTable('usage_history', {
     selectedAt: integer('selected_at').notNull(),
 }, table => ({
     pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
-    lookupIdx: index('idx_uh_lookup').on(table.pluginId, table.featureCode, table.cmdKey, table.selectedAt),
+    lookupIdx: index('idx_uh_lookup').on(table.pluginId, table.featureCode, table.cmdKey, desc(table.selectedAt)),
 }));

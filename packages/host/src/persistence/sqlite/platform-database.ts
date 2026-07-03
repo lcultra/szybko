@@ -181,8 +181,10 @@ function migrateSchema(sqlite: DatabaseSync): void {
     } else if (cols.length === 0) {
         // Fresh database (no command_trigger at all): rename v2 → canonical name
         sqlite.exec(`ALTER TABLE command_trigger_v2 RENAME TO command_trigger;`);
+    } else {
+        // Already on v2 schema: clean up orphan v2 staging table if present
+        sqlite.exec(`DROP TABLE IF EXISTS command_trigger_v2;`);
     }
-    // else: already on v2 schema, nothing to do
 }
 
 function wrapTx<T>(db: PlatformDrizzleDatabase, fn: (db: PlatformDrizzleDatabase) => T): T {
