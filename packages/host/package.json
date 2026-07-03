@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@szybko/core-rust": "workspace:*",
+        "@szybko/plugin-launcher": "workspace:*",
         "@szybko/shared": "workspace:*",
         "lowdb": "^7.0.1"
     },

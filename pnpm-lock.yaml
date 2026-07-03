@@ -131,6 +131,9 @@ importers:
       '@szybko/core-rust':
         specifier: workspace:*
         version: link:../core-rust
+      '@szybko/plugin-launcher':
+        specifier: workspace:*
+        version: link:../../plugins/built-in/launcher
       '@szybko/shared':
         specifier: workspace:*
         version: link:../shared
