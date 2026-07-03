@@ -1,6 +1,8 @@
 import type { PluginRuntime, SearchRequest } from '@szybko/shared';
 import type { RuntimeManager } from './runtime-manager';
 import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
+import type { RuntimeHost } from '../window/hosts/runtime-host';
+import type { Closable } from '../window/hosts/capabilities';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import { Menu } from 'electron';
 
@@ -68,13 +70,14 @@ export class RuntimeCoordinator {
      */
     destroyRuntime(runtimeId: string): void {
         const runtime = this.runtimeManager.get(runtimeId);
-        const host = runtime?.host;
+        if (!runtime) return;
 
+        const host = runtime.host;
         if (host && 'close' in host) {
-            // Closable host (floating window) — detach then close
-            (host as any).detach(runtime);
-            (host as any).close();
+            // FloatingRuntimeHost — close window then destroy
+            (host as RuntimeHost & Closable).close();
         } else if (host) {
+            // LauncherRuntimeHost — detach with destroy reason (sends plugin:out)
             this.runtimeManager.detachFromHost(runtimeId, 'destroy');
         }
 
