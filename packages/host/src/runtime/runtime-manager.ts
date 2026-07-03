@@ -4,6 +4,7 @@ import type { WindowManager } from '../window/window-manager.js';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { app, WebContentsView } from 'electron';
+import { FloatingHost } from '../window/hosts/floating-host.js';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
@@ -188,6 +189,23 @@ export class RuntimeManager {
         this.detachFromWindow(runtimeId);
         entry.view.webContents.close();
         this.entries.delete(runtimeId);
+    }
+
+    /** 分离到独立窗口 */
+    detachToFloatingWindow(runtimeId: string): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry)
+            return;
+
+        // 从主窗口移除
+        this.windowManager.detachPluginView();
+        entry.runtime.state = 'detached';
+        entry.runtime.host = null;
+
+        // 创建浮动窗口
+        const host = new FloatingHost(`floating-${Date.now()}`);
+        host.createWindow();
+        host.attach(entry.runtime, entry.view);
     }
 
     /** 获取或创建 Runtime — 先查找已有实例，没有再创建 */

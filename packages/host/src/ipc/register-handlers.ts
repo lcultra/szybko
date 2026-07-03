@@ -166,7 +166,7 @@ export function registerIpcHandlers(
                     label: '分离为独立窗口',
                     accelerator: 'CmdOrCtrl+D',
                     click: () => {
-                        // TODO: 分离窗口实现
+                        runtimeManager?.detachToFloatingWindow(runtimeId);
                     },
                 },
                 { type: 'separator' },
