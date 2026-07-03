@@ -1,7 +1,6 @@
 import type {
     IpcInvokeContract,
     SearchResult,
-    TriggerMatch,
 } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
@@ -9,11 +8,9 @@ import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { ipcMain } from 'electron';
-import { normalizeTextKey } from '../commands/feature-normalizer';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
-import { dedupAndSort, runPipeline } from '../input/matcher-pipeline';
-import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
+import { SearchService } from '../input/search-service';
 import { executeAction } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
@@ -28,59 +25,26 @@ export function registerIpcHandlers(
     platformDb?: PlatformDatabase,
 ) {
     const sessionManager = new MatchSessionManager();
+
     // ── Search ─────────────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.SEARCH_QUERY,
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
+            if (!platformDb)
+                return { ok: false };
+
+            const searchService = new SearchService(platformDb.drizzle());
+            const snapshot = collectFromSearch(req);
+            const allMatches = searchService.search(snapshot, req.query);
+
             const results: SearchResult[] = [];
+            if (allMatches.length > 0) {
+                const session = sessionManager.create(snapshot);
+                sessionManager.addMatches(session.sessionId, allMatches);
 
-            // Matcher pipeline (text via SQL searchByText, regex/over via JS matchers)
-            if (platformDb) {
-                const repo = new CommandProjectionRepository(platformDb.drizzle());
-                const snapshot = collectFromSearch(req);
-                const allMatches: TriggerMatch[] = [];
-
-                // 1. Text matching via SQL searchByText (with pinyin/alias support)
-                if (snapshot.channels.query) {
-                    const normalized = normalizeTextKey(req.query);
-                    if (normalized) {
-                        const textMatches = repo.searchByText(normalized);
-                        for (const m of textMatches) {
-                            const score = m.scoreBase + (m.matchLevel === 3 ? 10 : m.matchLevel === 2 ? 5 : 2);
-                            allMatches.push({
-                                matchId: `${m.source}:${m.pluginId}:${m.featureCode}:${m.cmdKey}`,
-                                pluginId: m.pluginId,
-                                featureCode: m.featureCode,
-                                cmdKey: m.cmdKey,
-                                triggerType: 'text',
-                                enterType: 'text',
-                                label: m.label,
-                                matchedSource: req.query,
-                                payload: req.query,
-                                from: snapshot.from,
-                                option: null,
-                                score,
-                            });
-                        }
-                    }
-                }
-
-                // 2. Non-text matching via pipeline (regex/over)
-                const nonTextTypes: Array<'regex' | 'over'> = ['regex', 'over'];
-                const triggers = repo.listTriggersByType(nonTextTypes);
-                const nonTextMatches = runPipeline(snapshot, triggers);
-                allMatches.push(...nonTextMatches);
-
-                // 3. Dedup + Sort
-                const deduped = dedupAndSort(allMatches);
-
-                // 4. Session + SearchResult conversion
-                if (deduped.length > 0) {
-                    const session = sessionManager.create(snapshot);
-                    sessionManager.addMatches(session.sessionId, deduped);
-
-                    const pipelineResults = deduped.map(m => ({
+                for (const m of allMatches) {
+                    results.push({
                         id: m.matchId,
                         title: m.label || m.featureCode,
                         subtitle: `打开 ${m.pluginId}`,
@@ -95,8 +59,7 @@ export function registerIpcHandlers(
                                 matchId: m.matchId,
                             },
                         },
-                    }));
-                    results.push(...pipelineResults);
+                    });
                 }
             }
 
@@ -128,14 +91,14 @@ export function registerIpcHandlers(
         },
     );
 
+    // ── Window control ─────────────────────────────────────────────
+
     ipcMain.handle(
         IPC.SEARCH_CANCEL,
         (): IpcResponse<typeof IPC.SEARCH_CANCEL> => {
             return { ok: true };
         },
     );
-
-    // ── Window control ─────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.WINDOW_RESIZE,

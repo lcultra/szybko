@@ -2,6 +2,7 @@ export { CommandCatalog } from './commands/command-catalog';
 export { collectFromSearch } from './input/input-context-collector';
 export { MatchSessionManager } from './input/match-session-manager';
 export { runPipeline } from './input/matcher-pipeline';
+export { SearchService } from './input/search-service';
 export { registerIpcHandlers } from './ipc/register-handlers';
 export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { PluginCatalog } from './plugins/plugin-catalog';
