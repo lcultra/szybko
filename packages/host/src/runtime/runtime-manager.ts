@@ -33,13 +33,14 @@ export class RuntimeManager {
             return null;
 
         const view = new WebContentsView({
+
             webPreferences: {
                 preload: this.pluginPreloadPath,
                 contextIsolation: true,
                 nodeIntegration: false,
             },
         });
-        view.setBorderRadius(8);
+        // view.setBorderRadius(11);
 
         const runtime: PluginRuntime = {
             id: `${pluginId}-${this.nextInstanceId++}`,

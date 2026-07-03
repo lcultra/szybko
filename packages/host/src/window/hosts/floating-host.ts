@@ -52,6 +52,8 @@ export class FloatingHost implements Host {
             },
         });
 
+        this.window.getContentView().setBorderRadius(10);
+
         // 加载 Renderer 的 floating 页面
         const query: Record<string, string> = { name: pluginName, runtimeId, pluginId: pluginId ?? '', explain: explain ?? '' };
         if (process.env.ELECTRON_RENDERER_URL) {

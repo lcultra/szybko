@@ -13,3 +13,12 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+body {
+    color: var(--color-text);
+    background-color: var(--color-surface);
+}
+
+body {
+    margin: 0;
+}

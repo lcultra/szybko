@@ -27,6 +27,7 @@ export class WindowManager {
                 nodeIntegration: false,
             },
         });
+        this.window.contentView.setBorderRadius(8);
 
         this.window.on('blur', () => this.window?.hide());
         return this.window;
