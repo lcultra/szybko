@@ -74,4 +74,11 @@ export class FloatingHost implements Host {
             this.window.focus();
         }
     }
+
+    /** 切换窗口置顶 */
+    setAlwaysOnTop(pin: boolean) {
+        if (this.window && !this.window.isDestroyed()) {
+            this.window.setAlwaysOnTop(pin);
+        }
+    }
 }

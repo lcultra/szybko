@@ -250,6 +250,16 @@ export class RuntimeManager {
         host.attach(entry.runtime, entry.view);
     }
 
+    /** 切换浮动窗口置顶 */
+    pinPluginWindow(runtimeId: string, pin: boolean): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry)
+            return;
+        if (entry.runtime.host instanceof FloatingHost) {
+            entry.runtime.host.setAlwaysOnTop(pin);
+        }
+    }
+
     /** 获取或创建 Runtime — 先查找已有实例，没有再创建 */
     getOrCreate(pluginId: string): PluginRuntime | null {
         const existing = Array.from(this.entries.values())

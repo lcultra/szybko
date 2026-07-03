@@ -186,6 +186,16 @@ export function registerIpcHandlers(
             return { ok: true };
         },
     );
+
+    // ── Plugin pin ────────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.PLUGIN_PIN,
+        (_event, { runtimeId, pin }: IpcRequest<typeof IPC.PLUGIN_PIN>): IpcResponse<typeof IPC.PLUGIN_PIN> => {
+            runtimeManager?.pinPluginWindow(runtimeId, pin);
+            return { ok: true };
+        },
+    );
 }
 
 // ── Push notifications ────────────────────────────────────────────

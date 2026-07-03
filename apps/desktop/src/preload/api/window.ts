@@ -5,13 +5,13 @@ import { invoke, on } from './ipc';
 /**
  * 窗口控制 API。
  */
-export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'hidePlugin' | 'destroyPlugin' | 'showPluginMenu' | 'onShowMainWindow'> {
+export function createWindowApi(): Pick<SzybkoInternalApi, 'resizeWindow' | 'hideWindow' | 'hidePlugin' | 'destroyPlugin' | 'showPluginMenu' | 'pinPlugin' | 'onShowMainWindow'> {
     return {
         resizeWindow: height => invoke(IPC.WINDOW_RESIZE)({ height }),
         hideWindow: () => invoke(IPC.WINDOW_HIDE)(undefined),
         hidePlugin: runtimeId => invoke(IPC.PLUGIN_HIDE)({ runtimeId }),
         destroyPlugin: runtimeId => invoke(IPC.PLUGIN_DESTROY)({ runtimeId }),
         showPluginMenu: (runtimeId, variant) => invoke(IPC.SHOW_PLUGIN_MENU)({ runtimeId, variant }),
-        onShowMainWindow: on(IPC.WINDOW_SHOW),
+        pinPlugin: (runtimeId, pin) => invoke(IPC.PLUGIN_PIN)({ runtimeId, pin }),        onShowMainWindow: on(IPC.WINDOW_SHOW),
     };
 }

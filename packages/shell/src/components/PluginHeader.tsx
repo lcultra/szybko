@@ -1,5 +1,5 @@
-import { EllipsisVertical, X } from 'lucide-react';
-import { useCallback } from 'react';
+import { EllipsisVertical, MapPin, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { useAppStore } from '../stores/app-store';
 
 interface PluginHeaderProps {
@@ -32,6 +32,14 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
             window.szybkoInternal?.showPluginMenu(activeRuntimeId, variant);
     }, [activeRuntimeId, variant]);
 
+    const [pinned, setPinned] = useState(false);
+    const handlePin = useCallback(() => {
+        if (!activeRuntimeId) return;
+        const next = !pinned;
+        setPinned(next);
+        window.szybkoInternal?.pinPlugin(activeRuntimeId, next);
+    }, [activeRuntimeId, pinned]);
+
     return (
         <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isDetached ? 'pl-[78px] pr-3' : 'px-3'}`}>
             {/* 左侧：插件信息徽章 */}
@@ -61,7 +69,17 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             />
 
-            {/* 右侧：菜单按钮 */}
+            {/* 右侧 */}
+            {isDetached && (
+                <button
+                    className={`grid size-8 cursor-pointer place-items-center rounded-full border transition-colors outline-none hover:bg-surface-card/80 ${pinned ? 'border-primary text-primary' : 'border-border text-text-muted hover:text-text'}`}
+                    onClick={handlePin}
+                    title={pinned ? '取消置顶' : '置顶窗口'}
+                    type="button"
+                >
+                    <MapPin size={16} strokeWidth={2} />
+                </button>
+            )}
             <button
                 className="grid size-8 cursor-pointer place-items-center rounded-full border border-border text-text-muted outline-none transition-colors hover:bg-surface-card/80 hover:text-text"
                 onClick={handleMenu}

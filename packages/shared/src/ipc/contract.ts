@@ -38,6 +38,10 @@ export interface IpcInvokeContract {
         request: { runtimeId: string; variant?: 'launcher' | 'detached' };
         response: { ok: boolean };
     };
+    [IPC.PLUGIN_PIN]: {
+        request: { runtimeId: string; pin: boolean };
+        response: { ok: boolean };
+    };
 }
 
 export interface IpcMainToRendererEventContract {
