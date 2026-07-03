@@ -36,7 +36,6 @@ export function registerIpcHandlers(
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
             // Built-in search
             const results = runBuiltinSearch(req.query);
-            results.sort((a, b) => b.score - a.score);
 
             // Matcher pipeline (text/regex/over against command triggers)
             if (platformDb) {
@@ -168,6 +167,7 @@ export function registerIpcHandlers(
                         );
                         return { ok: true };
                     }
+                    console.warn(`[IPC] matchId ${action.payload.matchId} not resolved (session expired or invalid)`);
                 }
                 // Fall back to simple activation without match context
                 coordinator.activatePlugin(action.payload.pluginId, action.payload.featureCode);
