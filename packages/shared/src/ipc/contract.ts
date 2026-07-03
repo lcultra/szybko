@@ -68,8 +68,8 @@ export interface PluginOutPayload {
 }
 
 export interface MoveToHostRequest {
-    runtimeId: string;
-    targetHostType: 'launcher' | 'floating';
+    pluginId: string;
+    targetHost: 'launcher' | 'floating';
 }
 
 export interface MoveToHostResponse {

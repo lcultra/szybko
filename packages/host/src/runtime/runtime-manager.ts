@@ -1,6 +1,6 @@
 import type { LoadState, MountState, PluginSearchContext, SearchRequest } from '@szybko/shared';
-import type { PluginRuntime } from '../runtime/types';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
+import type { PluginRuntime } from '../runtime/types';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
 import { join } from 'node:path';
@@ -101,13 +101,15 @@ export class RuntimeManager {
 
     private transitionLoadState(runtimeId: string, target: LoadState): void {
         const entry = this.entries.get(runtimeId);
-        if (!entry) return;
+        if (!entry)
+            return;
         entry.runtime.info.loadState = target;
     }
 
     private transitionMountState(runtimeId: string, target: MountState, reason?: 'hide' | 'destroy'): void {
         const entry = this.entries.get(runtimeId);
-        if (!entry) return;
+        if (!entry)
+            return;
         entry.runtime.info.mountState = target;
 
         // 查询插件显示信息
@@ -181,7 +183,8 @@ export class RuntimeManager {
     /** 从 Host 分离插件 */
     detachFromHost(runtimeId: string, reason?: 'hide' | 'destroy'): void {
         const entry = this.entries.get(runtimeId);
-        if (!entry) return;
+        if (!entry)
+            return;
 
         const host = entry.runtime.host;
         if (host) {
@@ -190,66 +193,6 @@ export class RuntimeManager {
         entry.runtime.host = null;
 
         this.transitionMountState(runtimeId, 'detached', reason);
-    }
-
-    /** 销毁插件：销毁 Runtime 和 WebContentsView */
-    destroyFromWindow(runtimeId: string): void {
-        const entry = this.entries.get(runtimeId);
-        if (!entry)
-            return;
-
-        // 如果已在浮动窗口，让 host 关闭窗口
-        if (entry.runtime.host instanceof FloatingRuntimeHost) {
-            entry.runtime.host.detach(entry.runtime);
-            entry.runtime.webContents.close();
-            this.entries.delete(runtimeId);
-            return;
-        }
-
-        this.detachFromHost(runtimeId, 'destroy');
-        entry.runtime.webContents.close();
-        this.entries.delete(runtimeId);
-    }
-
-    /** 分离到独立窗口 */
-    detachToFloatingWindow(runtimeId: string): void {
-        const entry = this.entries.get(runtimeId);
-        if (!entry)
-            return;
-
-        // 通知渲染进程（先于视图移动，让 UI 及时切换回搜索）
-        const win = this.windowManager.getWindow();
-        if (win && !win.isDestroyed()) {
-            win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
-                runtimeId: entry.runtime.info.id,
-                pluginId: entry.runtime.info.pluginId,
-                state: 'detached',
-            });
-        }
-
-        // 从主窗口移除
-        const launcherHost = this.windowManager.getHostRegistry()?.getOrCreateLauncherHost();
-        if (launcherHost) {
-            launcherHost.detach(entry.runtime);
-        }
-
-        // 查询插件信息
-        const pluginId = entry.runtime.info.pluginId;
-        let pluginName = pluginId;
-        let explain = '';
-        const pluginInfo = this.pluginManager.get(pluginId);
-        if (pluginInfo) {
-            const feature = pluginInfo.manifest.features[0];
-            if (feature) {
-                pluginName = feature.explain || pluginInfo.id;
-                explain = feature.explain || '';
-            }
-        }
-
-        // 创建浮动窗口并迁移视图
-        const host = new FloatingRuntimeHost(`floating-${Date.now()}`);
-        host.createWindow(pluginName, entry.runtime.info.id, pluginId, explain);
-        host.attach(entry.runtime, entry.runtime.webContentsView);
     }
 
     /** 切换浮动窗口置顶 */
@@ -284,7 +227,8 @@ export class RuntimeManager {
     /** 销毁 Runtime */
     destroy(runtimeId: string): void {
         const entry = this.entries.get(runtimeId);
-        if (!entry) return;
+        if (!entry)
+            return;
         entry.runtime.webContents.close();
         this.entries.delete(runtimeId);
     }
