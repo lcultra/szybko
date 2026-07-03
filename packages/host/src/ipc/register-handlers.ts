@@ -9,6 +9,8 @@ import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { ipcMain } from 'electron';
+import type { TriggerMatch } from '@szybko/shared';
+import { normalizeTextKey } from '../commands/feature-normalizer';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { runPipeline } from '../input/matcher-pipeline';
@@ -19,6 +21,19 @@ type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['reque
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
 
 // ── Register all IPC handlers ─────────────────────────────────────
+
+/** Deduplicate (same pluginId+featureCode+cmdKey+matchedSource, keep highest score) and sort descending by score */
+function dedupAndSort(matches: TriggerMatch[]): TriggerMatch[] {
+    const seen = new Map<string, TriggerMatch>();
+    for (const m of matches) {
+        const key = `${m.pluginId}:${m.featureCode}:${m.cmdKey}:${m.matchedSource}`;
+        const existing = seen.get(key);
+        if (!existing || m.score > existing.score) {
+            seen.set(key, m);
+        }
+    }
+    return [...seen.values()].sort((a, b) => b.score - a.score);
+}
 
 export function registerIpcHandlers(
     windowManager: WindowManager,
@@ -34,19 +49,52 @@ export function registerIpcHandlers(
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
             const results: SearchResult[] = [];
 
-            // Matcher pipeline (text/regex/over against command triggers)
+            // Matcher pipeline (text via SQL searchByText, regex/over via JS matchers)
             if (platformDb) {
                 const repo = new CommandProjectionRepository(platformDb.drizzle());
                 const snapshot = collectFromSearch(req);
-                const types: Array<'text' | 'regex' | 'over'> = ['text', 'regex', 'over'];
-                const triggers = repo.listTriggersByType(types);
-                const matches = runPipeline(snapshot, triggers);
+                const allMatches: TriggerMatch[] = [];
 
-                if (matches.length > 0) {
+                // 1. Text matching via SQL searchByText (with pinyin/alias support)
+                if (snapshot.channels.query) {
+                    const normalized = normalizeTextKey(req.query);
+                    if (normalized) {
+                        const textMatches = repo.searchByText(normalized);
+                        for (const m of textMatches) {
+                            const score = m.scoreBase + (m.matchLevel === 3 ? 10 : m.matchLevel === 2 ? 5 : 2);
+                            allMatches.push({
+                                matchId: `${m.source}:${m.pluginId}:${m.featureCode}:${m.cmdKey}`,
+                                pluginId: m.pluginId,
+                                featureCode: m.featureCode,
+                                cmdKey: m.cmdKey,
+                                triggerType: 'text',
+                                enterType: 'text',
+                                label: m.label,
+                                matchedSource: req.query,
+                                payload: req.query,
+                                from: snapshot.from,
+                                option: null,
+                                score,
+                            });
+                        }
+                    }
+                }
+
+                // 2. Non-text matching via pipeline (regex/over)
+                const nonTextTypes: Array<'regex' | 'over'> = ['regex', 'over'];
+                const triggers = repo.listTriggersByType(nonTextTypes);
+                const nonTextMatches = runPipeline(snapshot, triggers);
+                allMatches.push(...nonTextMatches);
+
+                // 3. Dedup + Sort
+                const deduped = dedupAndSort(allMatches);
+
+                // 4. Session + SearchResult conversion
+                if (deduped.length > 0) {
                     const session = sessionManager.create(snapshot);
-                    sessionManager.addMatches(session.sessionId, matches);
+                    sessionManager.addMatches(session.sessionId, deduped);
 
-                    const pipelineResults = matches.map(m => ({
+                    const pipelineResults = deduped.map(m => ({
                         id: m.matchId,
                         title: m.label || m.featureCode,
                         subtitle: `打开 ${m.pluginId}`,

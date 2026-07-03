@@ -3,10 +3,8 @@ import type { CommandSearchRow } from '../persistence/sqlite/repositories/comman
 import type { Matcher } from './matchers/matcher';
 import { OverMatcher } from './matchers/over-matcher';
 import { RegexMatcher } from './matchers/regex-matcher';
-import { TextMatcher } from './matchers/text-matcher';
 
 const matchers: Matcher[] = [
-    new TextMatcher(),
     new RegexMatcher(),
     new OverMatcher(),
 ];
@@ -15,7 +13,6 @@ const matchers: Matcher[] = [
 function selectCandidateTypes(snapshot: InputContextSnapshot): Set<string> {
     const types = new Set<string>();
     if (snapshot.channels.query) {
-        types.add('text');
         types.add('regex');
         types.add('over');
     }
