@@ -1,6 +1,6 @@
 import type { CommandProjection } from '../../../commands/command-projection-builder';
 import type { PlatformDrizzleDatabase } from '../platform-database';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { commandProjectionMeta, commandTrigger, effectiveFeature, pluginInstallation } from '../schema';
 
 export interface CommandSearchRow {
@@ -65,6 +65,38 @@ export class CommandProjectionRepository {
                 eq(pluginInstallation.enabled, 1),
                 eq(commandTrigger.type, 'text'),
                 eq(commandTrigger.normalizedKey, normalizedKey),
+            ))
+            .orderBy(
+                desc(commandTrigger.scoreBase),
+                asc(effectiveFeature.featureOrder),
+                asc(commandTrigger.triggerIndex),
+            )
+            .all();
+    }
+
+    listTriggersByType(types: CommandSearchRow['type'][]): CommandSearchRow[] {
+        return this.db.select({
+            pluginId: commandTrigger.pluginId,
+            featureCode: commandTrigger.featureCode,
+            cmdKey: commandTrigger.cmdKey,
+            triggerIndex: commandTrigger.triggerIndex,
+            source: commandTrigger.source,
+            type: commandTrigger.type,
+            label: commandTrigger.label,
+            normalizedKey: commandTrigger.normalizedKey,
+            targetCmdKey: commandTrigger.targetCmdKey,
+            scoreBase: commandTrigger.scoreBase,
+            featureJson: effectiveFeature.featureJson,
+        })
+            .from(commandTrigger)
+            .innerJoin(effectiveFeature, and(
+                eq(effectiveFeature.pluginId, commandTrigger.pluginId),
+                eq(effectiveFeature.code, commandTrigger.featureCode),
+            ))
+            .innerJoin(pluginInstallation, eq(pluginInstallation.pluginId, commandTrigger.pluginId))
+            .where(and(
+                eq(pluginInstallation.enabled, 1),
+                inArray(commandTrigger.type, types),
             ))
             .orderBy(
                 desc(commandTrigger.scoreBase),
