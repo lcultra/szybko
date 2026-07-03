@@ -1,11 +1,13 @@
-import type { Host, PluginRuntime } from '@szybko/shared';
+import type { PluginRuntime } from '@szybko/shared';
 import type { WebContentsView } from 'electron';
 import { join } from 'node:path';
 import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
+import type { RuntimeHost } from './runtime-host';
+import type { Focusable, Pinnable, Closable } from './capabilities';
 
-export class FloatingRuntimeHost implements Host {
+export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Closable {
     id: string;
     type = 'floating' as const;
     private window: BrowserWindow | null = null;
@@ -32,8 +34,6 @@ export class FloatingRuntimeHost implements Host {
         runtime.state = 'detached';
         runtime.host = null;
         this.view = null;
-        this.window?.close();
-        this.window = null;
     }
 
     createWindow(pluginName: string, runtimeId: string, pluginId?: string, explain?: string) {
@@ -78,5 +78,12 @@ export class FloatingRuntimeHost implements Host {
         if (this.window && !this.window.isDestroyed()) {
             this.window.setAlwaysOnTop(pin);
         }
+    }
+
+    /** 关闭并销毁浮动窗口 */
+    close(): void {
+        this.window?.close();
+        this.window = null;
+        this.view = null;
     }
 }
