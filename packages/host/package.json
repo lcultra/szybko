@@ -21,11 +21,11 @@
         "@szybko/core-rust": "workspace:*",
         "@szybko/plugin-launcher": "workspace:*",
         "@szybko/shared": "workspace:*",
-        "drizzle-orm": "^0.45.2",
+        "drizzle-orm": "1.0.0-rc.4-5d5b77c",
         "lowdb": "^7.0.1"
     },
     "devDependencies": {
-        "drizzle-kit": "^0.31.10",
+        "drizzle-kit": "1.0.0-rc.4-5d5b77c",
         "electron": "^43.0",
         "typescript": "^6.0",
         "vitest": "^4.1.9"
