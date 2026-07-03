@@ -18,7 +18,7 @@ export class FloatingHost implements Host {
         if (view) {
             this.view = view;
             this.window?.contentView.addChildView(view);
-            view.setBounds({ x: BORDER_WIDTH, y: SEARCHBAR_HEIGHT + BORDER_WIDTH, width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2, height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH * 2 });
+            view.setBounds({ x: BORDER_WIDTH, y: SEARCHBAR_HEIGHT, width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2, height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH });
         }
         runtime.state = 'attached';
         runtime.host = this;

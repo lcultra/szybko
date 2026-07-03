@@ -90,9 +90,9 @@ export class WindowManager {
         const [, height] = this.window.getSize();
         this.pluginView.setBounds({
             x: BORDER_WIDTH,
-            y: SEARCHBAR_HEIGHT + BORDER_WIDTH,
+            y: SEARCHBAR_HEIGHT,
             width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
-            height: Math.max(height - SEARCHBAR_HEIGHT - BORDER_WIDTH * 2, 0),
+            height: Math.max(height - SEARCHBAR_HEIGHT - BORDER_WIDTH, 0),
         });
     }
 }
