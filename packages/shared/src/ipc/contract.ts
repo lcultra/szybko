@@ -1,5 +1,5 @@
 import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types.js';
-import { IPC } from './channels.js';
+import type { IPC } from './channels.js';
 
 export interface IpcInvokeContract {
     [IPC.SEARCH_QUERY]: {
@@ -35,7 +35,7 @@ export interface IpcInvokeContract {
         response: { ok: boolean };
     };
     [IPC.SHOW_PLUGIN_MENU]: {
-        request: { runtimeId: string; pluginId: string };
+        request: { runtimeId: string };
         response: { ok: boolean };
     };
 }

@@ -6,21 +6,18 @@ export function PluginHeader() {
     const pluginName = useAppStore(s => s.activePluginName);
     const featureExplain = useAppStore(s => s.activeFeatureExplain);
     const activeRuntimeId = useAppStore(s => s.activeRuntimeId);
-    const activePluginId = useAppStore(s => s.activePluginId);
     const clearActivePlugin = useAppStore(s => s.setActivePlugin);
 
     const handleClose = useCallback(() => {
-        if (activeRuntimeId) {
+        if (activeRuntimeId)
             window.szybkoInternal?.hidePlugin(activeRuntimeId);
-        }
         clearActivePlugin(null);
     }, [activeRuntimeId, clearActivePlugin]);
 
     const handleMenu = useCallback(() => {
-        if (activeRuntimeId && activePluginId) {
-            window.szybkoInternal?.showPluginMenu(activeRuntimeId, activePluginId);
-        }
-    }, [activeRuntimeId, activePluginId]);
+        if (activeRuntimeId)
+            window.szybkoInternal?.showPluginMenu(activeRuntimeId);
+    }, [activeRuntimeId]);
 
     return (
         <header className="flex h-[68px] shrink-0 items-center gap-2 border-b border-border px-3">
