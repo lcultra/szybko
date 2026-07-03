@@ -5,10 +5,11 @@ import { BrowserWindow, screen } from 'electron';
 
 import { FloatingRuntimeHost } from './hosts/floating-runtime-host';
 import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
+import { RuntimeHostRegistry } from './runtime-host-registry';
 
 export class WindowManager {
     private window: BrowserWindow | null = null;
-    private hosts: Map<string, Host> = new Map();
+    private hostRegistry: RuntimeHostRegistry | null = null;
     private pluginView: WebContentsView | null = null;
 
     createMainWindow(preloadPath: string): BrowserWindow {
@@ -56,13 +57,28 @@ export class WindowManager {
 
     isVisible(): boolean { return this.window?.isVisible() ?? false; }
 
-    registerHost(id: string, host: Host) { this.hosts.set(id, host); }
-    getHost(id: string): Host | undefined { return this.hosts.get(id); }
+    /** 初始化 Host 注册表（main/index.ts 启动时调用一次） */
+    initHostRegistry(): RuntimeHostRegistry {
+        this.hostRegistry = new RuntimeHostRegistry();
+        return this.hostRegistry;
+    }
+
+    getHostRegistry(): RuntimeHostRegistry | null {
+        return this.hostRegistry;
+    }
+
+    // ── 兼容方法（委托给 Registry，Phase 2 移除） ──
+    registerHost(id: string, host: Host) { this.hostRegistry?.registerHost(host); }
+    getHost(id: string): Host | undefined { return this.hostRegistry?.getHost(id); }
 
     createHost(type: 'launcher' | 'floating'): Host {
-        if (type === 'launcher')
-            return new LauncherRuntimeHost(`launcher-${Date.now()}`);
-        return new FloatingRuntimeHost(`floating-${Date.now()}`);
+        if (!this.hostRegistry) {
+            // 降级（无 registry 时直接用旧行为）
+            if (type === 'launcher') return new LauncherRuntimeHost(`launcher-${Date.now()}`);
+            return new FloatingRuntimeHost(`floating-${Date.now()}`);
+        }
+        if (type === 'launcher') return this.hostRegistry.getOrCreateLauncherHost();
+        return this.hostRegistry.createFloatingHost();
     }
 
     // ── Plugin WebContentsView management ──────────────────────────

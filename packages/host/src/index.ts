@@ -10,4 +10,5 @@ export { FloatingRuntimeHost } from './window/hosts/floating-runtime-host';
 export { LauncherRuntimeHost } from './window/hosts/launcher-runtime-host';
 export { ShortcutManager } from './window/shortcut-manager';
 export { ThemeManager } from './window/theme';
+export { RuntimeHostRegistry } from './window/runtime-host-registry';
 export { WindowManager } from './window/window-manager';

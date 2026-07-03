@@ -4,6 +4,7 @@ import { PluginCatalog, PluginRegistry, registerIpcHandlers, RuntimeManager, Sho
 import { app } from 'electron';
 
 const windowManager = new WindowManager();
+const hostRegistry = windowManager.initHostRegistry();
 const shortcutManager = new ShortcutManager();
 
 void app.whenReady().then(async () => {
