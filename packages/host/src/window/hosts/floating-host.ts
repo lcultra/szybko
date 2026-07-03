@@ -2,7 +2,7 @@ import type { Host, PluginRuntime } from '@szybko/shared';
 import type { WebContentsView } from 'electron';
 import { join } from 'node:path';
 import process from 'node:process';
-import { SEARCHBAR_HEIGHT } from '@szybko/shared';
+import { DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
 
 export class FloatingHost implements Host {
@@ -18,7 +18,7 @@ export class FloatingHost implements Host {
         if (view) {
             this.view = view;
             this.window?.contentView.addChildView(view);
-            view.setBounds({ x: 0, y: SEARCHBAR_HEIGHT, width: 900, height: 600 - SEARCHBAR_HEIGHT });
+            view.setBounds({ x: 0, y: SEARCHBAR_HEIGHT, width: DEFAULT_WINDOW_WIDTH, height: 600 - SEARCHBAR_HEIGHT });
         }
         runtime.state = 'attached';
         runtime.host = this;
@@ -39,7 +39,7 @@ export class FloatingHost implements Host {
     createWindow(pluginName: string, runtimeId: string, pluginId?: string, explain?: string) {
         this.runtimeId = runtimeId;
         this.window = new BrowserWindow({
-            width: 900,
+            width: DEFAULT_WINDOW_WIDTH,
             height: 600,
             frame: false,
             webPreferences: {
