@@ -1,4 +1,5 @@
 export { default as App } from './App.js';
+export { FloatingApp } from './FloatingApp.js';
 export { PluginHeader } from './components/PluginHeader.js';
 export { PluginScene } from './components/PluginScene.js';
 export { ResultItem } from './components/ResultItem.js';

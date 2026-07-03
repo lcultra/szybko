@@ -4,7 +4,6 @@ directories:
   output: release
 files:
   - out/**/*
-  - resources/**/*
   - package.json
 mac:
   target: dmg

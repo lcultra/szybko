@@ -1,6 +1,7 @@
 import type { Host, PluginRuntime } from '@szybko/shared';
 import type { WebContentsView } from 'electron';
 import { join } from 'node:path';
+import process from 'node:process';
 import { BrowserWindow } from 'electron';
 
 const FLOATING_HEADER_HEIGHT = 48;
@@ -10,6 +11,7 @@ export class FloatingHost implements Host {
     type = 'floating' as const;
     private window: BrowserWindow | null = null;
     private view: WebContentsView | null = null;
+    private runtimeId: string | null = null;
 
     constructor(id: string) { this.id = id; }
 
@@ -35,22 +37,28 @@ export class FloatingHost implements Host {
         this.window = null;
     }
 
-    createWindow(pluginName?: string) {
+    createWindow(pluginName: string, runtimeId: string) {
+        this.runtimeId = runtimeId;
         this.window = new BrowserWindow({
             width: 900,
             height: 600,
             frame: false,
             webPreferences: {
+                preload: join(__dirname, '../preload/host.js'),
                 contextIsolation: true,
                 nodeIntegration: false,
             },
         });
 
-        // 加载浮动窗口外壳 HTML
-        const htmlPath = join(__dirname, '../../resources/floating-host.html');
-        void this.window.loadFile(htmlPath, {
-            query: { name: pluginName || '插件' },
-        });
+        // 加载 Renderer 的 floating 页面
+        if (process.env.ELECTRON_RENDERER_URL) {
+            void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating-index.html?name=${pluginName}&runtimeId=${runtimeId}`);
+        }
+        else {
+            void this.window.loadFile(join(__dirname, '../renderer/floating-index.html'), {
+                query: { name: pluginName, runtimeId },
+            });
+        }
     }
 
     /** 显示并聚焦浮动窗口 */

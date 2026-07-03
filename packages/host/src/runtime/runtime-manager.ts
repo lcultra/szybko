@@ -233,7 +233,7 @@ export class RuntimeManager {
 
         // 创建浮动窗口并迁移视图
         const host = new FloatingHost(`floating-${Date.now()}`);
-        host.createWindow(pluginName);
+        host.createWindow(pluginName, entry.runtime.id);
         host.attach(entry.runtime, entry.view);
     }
 

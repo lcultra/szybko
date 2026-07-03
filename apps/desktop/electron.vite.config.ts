@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'electron-vite';
@@ -33,6 +34,14 @@ export default defineConfig({
         },
     },
     renderer: {
+        build: {
+            rollupOptions: {
+                input: {
+                    main: resolve(__dirname, 'src/renderer/index.html'),
+                    floating: resolve(__dirname, 'src/renderer/floating-index.html'),
+                },
+            },
+        },
         plugins: [
             react(),
             tailwindcss(),
