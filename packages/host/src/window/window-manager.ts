@@ -3,7 +3,7 @@ import type { WebContentsView } from 'electron';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
 import { BrowserWindow, screen } from 'electron';
 
-import { FloatingHost } from './hosts/floating-host';
+import { FloatingRuntimeHost } from './hosts/floating-runtime-host';
 import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
 
 export class WindowManager {
@@ -62,7 +62,7 @@ export class WindowManager {
     createHost(type: 'launcher' | 'floating'): Host {
         if (type === 'launcher')
             return new LauncherRuntimeHost(`launcher-${Date.now()}`);
-        return new FloatingHost(`floating-${Date.now()}`);
+        return new FloatingRuntimeHost(`floating-${Date.now()}`);
     }
 
     // ── Plugin WebContentsView management ──────────────────────────

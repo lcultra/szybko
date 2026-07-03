@@ -6,7 +6,7 @@ export { Store } from './plugins/store';
 export { RuntimeManager } from './runtime/runtime-manager';
 export type { PluginRuntime, ActivationContext } from './runtime/types';
 export { ConfigManager } from './services/config-manager';
-export { FloatingHost } from './window/hosts/floating-host';
+export { FloatingRuntimeHost } from './window/hosts/floating-runtime-host';
 export { LauncherRuntimeHost } from './window/hosts/launcher-runtime-host';
 export { ShortcutManager } from './window/shortcut-manager';
 export { ThemeManager } from './window/theme';

@@ -5,7 +5,7 @@ import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
 
-export class FloatingHost implements Host {
+export class FloatingRuntimeHost implements Host {
     id: string;
     type = 'floating' as const;
     private window: BrowserWindow | null = null;

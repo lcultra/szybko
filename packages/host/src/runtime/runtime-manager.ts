@@ -4,7 +4,7 @@ import type { WindowManager } from '../window/window-manager';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { app, WebContentsView } from 'electron';
-import { FloatingHost } from '../window/hosts/floating-host';
+import { FloatingRuntimeHost } from '../window/hosts/floating-runtime-host';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
@@ -129,7 +129,7 @@ export class RuntimeManager {
 
         // 单例模式：已在浮动窗口中 → 聚焦窗口，不操作主窗口
         if (entry.runtime.host?.type === 'floating') {
-            const host = entry.runtime.host as FloatingHost;
+            const host = entry.runtime.host as FloatingRuntimeHost;
             host.focus();
             entry.view.webContents.send(IPC.PLUGIN_ENTER, {
                 pluginId: entry.runtime.pluginId,
@@ -200,7 +200,7 @@ export class RuntimeManager {
             return;
 
         // 如果已在浮动窗口，让 host 关闭窗口
-        if (entry.runtime.host instanceof FloatingHost) {
+        if (entry.runtime.host instanceof FloatingRuntimeHost) {
             entry.runtime.host.detach(entry.runtime);
             entry.view.webContents.close();
             this.entries.delete(runtimeId);
@@ -247,7 +247,7 @@ export class RuntimeManager {
         }
 
         // 创建浮动窗口并迁移视图
-        const host = new FloatingHost(`floating-${Date.now()}`);
+        const host = new FloatingRuntimeHost(`floating-${Date.now()}`);
         host.createWindow(pluginName, entry.runtime.id, pluginId, explain);
         host.attach(entry.runtime, entry.view);
     }
@@ -257,7 +257,7 @@ export class RuntimeManager {
         const entry = this.entries.get(runtimeId);
         if (!entry)
             return;
-        if (entry.runtime.host instanceof FloatingHost) {
+        if (entry.runtime.host instanceof FloatingRuntimeHost) {
             entry.runtime.host.setAlwaysOnTop(pin);
         }
     }
