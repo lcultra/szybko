@@ -26,6 +26,11 @@ void app.whenReady().then(async () => {
 
     const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginManager);
 
+    // Cmd/Ctrl+D 分离快捷键 — 插件视图有焦点时通过 webContents 事件触发
+    runtimeManager.detachRequested = (runtimeId) => {
+        coordinator.moveToHost(runtimeId, 'floating');
+    };
+
     // Window
     const win = windowManager.createMainWindow(preloadPath);
 
@@ -35,6 +40,20 @@ void app.whenReady().then(async () => {
     else {
         void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
+
+    // Cmd/Ctrl+D — 主窗口有焦点时分离
+    win.webContents.on('before-input-event', (_event, input) => {
+        if ((input.control || input.meta) && input.key.toLowerCase() === 'd') {
+            // 通过 coordinator 找到 launcher host 上的 runtime 并分离
+            const launcher = hostRegistry.getOrCreateLauncherHost();
+            for (const rt of runtimeManager.getAll()) {
+                if (rt.host?.id === launcher.id) {
+                    coordinator.moveToHost(rt.info.id, 'floating');
+                    break;
+                }
+            }
+        }
+    });
 
     registerIpcHandlers(windowManager, coordinator, pluginManager);
     shortcutManager.registerToggle(windowManager);

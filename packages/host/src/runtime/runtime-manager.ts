@@ -16,6 +16,9 @@ export class RuntimeManager {
     private entries: Map<string, RuntimeEntry> = new Map();
     private nextInstanceId = 1;
 
+    /** Cmd/Ctrl+D 分离请求回调（由 RuntimeCoordinator 在初始化时设置） */
+    detachRequested: ((runtimeId: string) => void) | null = null;
+
     constructor(
         private pluginManager: PluginCatalog,
         private windowManager: WindowManager,
@@ -64,6 +67,13 @@ export class RuntimeManager {
 
         view.webContents.on('did-finish-load', () => {
             this.transitionLoadState(id, 'loaded');
+        });
+
+        // Cmd/Ctrl + D → 分离到浮动窗口（插件视图有焦点时）
+        view.webContents.on('before-input-event', (_event, input) => {
+            if ((input.control || input.meta) && input.key.toLowerCase() === 'd' && !input.alt && !input.shift) {
+                this.detachRequested?.(id);
+            }
         });
 
         const devUrl = !app.isPackaged && plugin.manifest.development?.main;
