@@ -1,19 +1,18 @@
 import type {
     IpcInvokeContract,
     SearchResult,
+    TriggerMatch,
 } from '@szybko/shared';
-import type { BrowserWindow } from 'electron';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { ipcMain } from 'electron';
-import type { TriggerMatch } from '@szybko/shared';
 import { normalizeTextKey } from '../commands/feature-normalizer';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
-import { runPipeline, dedupAndSort } from '../input/matcher-pipeline';
+import { dedupAndSort, runPipeline } from '../input/matcher-pipeline';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { executeAction } from './execute-action';
 
@@ -280,4 +279,3 @@ export function registerIpcHandlers(
         },
     );
 }
-

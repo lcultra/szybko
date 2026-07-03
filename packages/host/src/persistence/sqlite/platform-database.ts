@@ -80,12 +80,7 @@ function createSchema(sqlite: DatabaseSync): void {
         );
         CREATE INDEX IF NOT EXISTS idx_effective_feature_plugin_source ON effective_feature(plugin_id, source);
 
-        -- v1 indexes (dropped first for migration safety)
-        DROP INDEX IF EXISTS idx_command_trigger_text_lookup;
-        DROP INDEX IF EXISTS idx_command_trigger_target_cmd;
-
-        -- v2 command_trigger (IF NOT EXISTS so migration path uses command_trigger_v2)
-        CREATE TABLE IF NOT EXISTS command_trigger_v2 (
+        CREATE TABLE IF NOT EXISTS command_trigger (
           plugin_id       TEXT NOT NULL,
           feature_code    TEXT NOT NULL,
           cmd_key         TEXT NOT NULL,
@@ -97,7 +92,7 @@ function createSchema(sqlite: DatabaseSync): void {
           rebuilt_at      INTEGER NOT NULL,
           PRIMARY KEY (plugin_id, feature_code, cmd_key)
         );
-        CREATE INDEX IF NOT EXISTS idx_ct_type ON command_trigger_v2(type);
+        CREATE INDEX IF NOT EXISTS idx_ct_type ON command_trigger(type);
 
         CREATE TABLE IF NOT EXISTS command_trigger_search (
           plugin_id       TEXT NOT NULL,
@@ -160,33 +155,6 @@ function createSchema(sqlite: DatabaseSync): void {
     `);
 }
 
-function migrateSchema(sqlite: DatabaseSync): void {
-    // Detect v1 command_trigger by checking for the 'source' column
-    const cols = sqlite.prepare("PRAGMA table_info('command_trigger')").all() as { name: string }[];
-    const hasSource = cols.some(c => c.name === 'source');
-
-    if (hasSource) {
-        // v1 → v2: migrate data, drop old, swap in v2
-        sqlite.exec(`
-            INSERT OR IGNORE INTO command_trigger_v2 (
-                plugin_id, feature_code, cmd_key, trigger_index,
-                type, label, matcher_json, score_base, rebuilt_at
-            )
-            SELECT plugin_id, feature_code, cmd_key, trigger_index,
-                   type, label, matcher_json, score_base, rebuilt_at
-            FROM command_trigger;
-        `);
-        sqlite.exec(`DROP TABLE IF EXISTS command_trigger;`);
-        sqlite.exec(`ALTER TABLE command_trigger_v2 RENAME TO command_trigger;`);
-    } else if (cols.length === 0) {
-        // Fresh database (no command_trigger at all): rename v2 → canonical name
-        sqlite.exec(`ALTER TABLE command_trigger_v2 RENAME TO command_trigger;`);
-    } else {
-        // Already on v2 schema: clean up orphan v2 staging table if present
-        sqlite.exec(`DROP TABLE IF EXISTS command_trigger_v2;`);
-    }
-}
-
 function wrapTx<T>(db: PlatformDrizzleDatabase, fn: (db: PlatformDrizzleDatabase) => T): T {
     return (db.transaction as unknown as (cb: (tx: PlatformDrizzleDatabase) => T) => T)(tx => fn(tx as PlatformDrizzleDatabase));
 }
@@ -196,7 +164,6 @@ export function createPlatformDatabase(filePath: string): PlatformDatabase {
     const sqlite = new DatabaseSync(filePath);
     configure(sqlite);
     createSchema(sqlite);
-    migrateSchema(sqlite);
     const db = drizzle({ client: sqlite, schema });
     return {
         open: () => undefined,

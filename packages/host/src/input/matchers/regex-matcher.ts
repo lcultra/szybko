@@ -16,8 +16,8 @@ export class RegexMatcher implements Matcher {
         const results: TriggerMatch[] = [];
 
         for (const trigger of triggers) {
-            const config: RegexMatcherConfig = JSON.parse(trigger.featureJson)?.matcher;
-            if (!config || config.type !== 'regex')
+            const config: RegexMatcherConfig = JSON.parse(trigger.matcherJson);
+            if (config.type !== 'regex')
                 continue;
 
             const regex = new RegExp(config.match.pattern, config.match.flags);

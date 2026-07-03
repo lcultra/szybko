@@ -74,7 +74,8 @@ export function buildSearchEntries(
     aliasId: number | null,
 ): CommandTriggerSearchProjection[] {
     const normalized = normalizeTextKey(text);
-    if (!normalized) return [];
+    if (!normalized)
+        return [];
 
     const entries: CommandTriggerSearchProjection[] = [];
 

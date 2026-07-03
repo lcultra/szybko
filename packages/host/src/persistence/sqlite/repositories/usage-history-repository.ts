@@ -7,7 +7,12 @@ export class UsageHistoryRepository {
 
     record(pluginId: string, featureCode: string, cmdKey: string, query?: string, matchLevel?: number): void {
         this.db.insert(usageHistory).values({
-            pluginId, featureCode, cmdKey, query, matchLevel, selectedAt: Date.now(),
+            pluginId,
+            featureCode,
+            cmdKey,
+            query,
+            matchLevel,
+            selectedAt: Date.now(),
         }).run();
     }
 

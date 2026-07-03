@@ -26,12 +26,10 @@ export class PinnedTriggerRepository {
     }
 
     add(pluginId: string, featureCode: string, cmdKey: string, sortOrder: number): void {
-        this.db.insert(pinnedTrigger).values({ pluginId, featureCode, cmdKey, sortOrder, pinnedAt: Date.now() })
-            .onConflictDoUpdate({
-                target: [pinnedTrigger.pluginId, pinnedTrigger.featureCode, pinnedTrigger.cmdKey],
-                set: { sortOrder, pinnedAt: Date.now() },
-            })
-            .run();
+        this.db.insert(pinnedTrigger).values({ pluginId, featureCode, cmdKey, sortOrder, pinnedAt: Date.now() }).onConflictDoUpdate({
+            target: [pinnedTrigger.pluginId, pinnedTrigger.featureCode, pinnedTrigger.cmdKey],
+            set: { sortOrder, pinnedAt: Date.now() },
+        }).run();
     }
 
     remove(pluginId: string, featureCode: string, cmdKey: string): void {

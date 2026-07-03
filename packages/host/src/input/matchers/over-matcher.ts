@@ -16,8 +16,8 @@ export class OverMatcher implements Matcher {
         const results: TriggerMatch[] = [];
 
         for (const trigger of triggers) {
-            const config: OverMatcherConfig = JSON.parse(trigger.featureJson)?.matcher;
-            if (!config || config.type !== 'over')
+            const config: OverMatcherConfig = JSON.parse(trigger.matcherJson);
+            if (config.type !== 'over')
                 continue;
 
             const excludeRegex = config.exclude

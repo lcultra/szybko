@@ -25,7 +25,7 @@ export interface CommandSearchRow {
     type: 'text' | 'regex' | 'over' | 'img' | 'files' | 'window';
     label: string | null;
     scoreBase: number;
-    featureJson: string;
+    matcherJson: string;
 }
 
 export class CommandProjectionRepository {
@@ -67,7 +67,7 @@ export class CommandProjectionRepository {
             type: commandTrigger.type,
             label: commandTrigger.label,
             scoreBase: commandTrigger.scoreBase,
-            featureJson: effectiveFeature.featureJson,
+            matcherJson: commandTrigger.matcherJson,
         })
             .from(commandTrigger)
             .innerJoin(effectiveFeature, and(

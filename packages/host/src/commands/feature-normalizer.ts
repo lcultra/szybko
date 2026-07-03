@@ -1,6 +1,6 @@
 import type { MatchCommand, PluginFeature } from '@szybko/shared';
-import { pinyin } from 'pinyin-pro';
 import { createHash } from 'node:crypto';
+import { pinyin } from 'pinyin-pro';
 
 export type CommandType = 'text' | 'regex' | 'over' | 'img' | 'files' | 'window';
 

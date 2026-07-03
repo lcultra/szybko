@@ -1,5 +1,6 @@
 import type { PluginFeature, PluginManifest } from '@szybko/shared';
 import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { CommandProjection, CommandTriggerSearchProjection } from './command-projection-builder';
 import { createHash } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
@@ -8,7 +9,6 @@ import { ManifestFeatureRepository } from '../persistence/sqlite/repositories/ma
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 import { commandAlias } from '../persistence/sqlite/schema';
 import { buildCommandProjection, buildSearchEntries } from './command-projection-builder';
-import type { CommandProjection, CommandTriggerSearchProjection } from './command-projection-builder';
 import { stableJson } from './feature-normalizer';
 
 const INDEX_VERSION = 2;
@@ -24,14 +24,27 @@ function dedupSearchEntries(entries: CommandTriggerSearchProjection[]): CommandT
     for (const e of entries) {
         const key = `${e.pluginId}:${e.featureCode}:${e.cmdKey}:${e.searchText}`;
         const existing = seen.get(key);
-        if (!existing) { seen.set(key, e); continue; }
-        if (sourcePrio(e.source) < sourcePrio(existing.source)) { seen.set(key, e); continue; }
-        if (sourcePrio(e.source) > sourcePrio(existing.source)) continue;
-        if (e.matchLevel > existing.matchLevel) { seen.set(key, e); continue; }
-        if (e.matchLevel < existing.matchLevel) continue;
+        if (!existing) {
+            seen.set(key, e);
+            continue;
+        }
+        if (sourcePrio(e.source) < sourcePrio(existing.source)) {
+            seen.set(key, e);
+            continue;
+        }
+        if (sourcePrio(e.source) > sourcePrio(existing.source))
+            continue;
+        if (e.matchLevel > existing.matchLevel) {
+            seen.set(key, e);
+            continue;
+        }
+        if (e.matchLevel < existing.matchLevel)
+            continue;
         const curId = e.aliasId ?? 0;
         const exId = existing.aliasId ?? 0;
-        if (curId < exId) { seen.set(key, e); }
+        if (curId < exId) {
+            seen.set(key, e);
+        }
     }
     return [...seen.values()];
 }
@@ -131,11 +144,16 @@ export class CommandCatalog {
             const targetTrigger = projection.commandTriggers.find(
                 ct => ct.cmdKey === alias.targetCmdKey && ct.type === 'text',
             );
-            if (!targetTrigger) continue;
+            if (!targetTrigger)
+                continue;
 
             const searchEntries = buildSearchEntries(
-                pluginId, alias.featureCode, alias.targetCmdKey,
-                alias.aliasNormalized, 'alias', alias.id,
+                pluginId,
+                alias.featureCode,
+                alias.targetCmdKey,
+                alias.aliasNormalized,
+                'alias',
+                alias.id,
             );
             projection.commandTriggerSearch.push(...searchEntries);
         }
