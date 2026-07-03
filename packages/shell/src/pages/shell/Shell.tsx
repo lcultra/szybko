@@ -1,12 +1,12 @@
 import { useRef } from 'react';
-import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
+import { usePluginRuntime } from '../../hooks/usePluginRuntime';
+import { useSearch } from '../../hooks/useSearch';
+import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useAppStore } from '../../stores/app-store';
 import { useRuntimeStore } from '../../stores/runtime-store';
-import { usePluginRuntime } from '../../hooks/usePluginRuntime';
 import { useKeyboard } from './hooks/useKeyboard';
-import { useSearch } from '../../hooks/useSearch';
 import { useWindowHeight } from './hooks/useWindowHeight';
 import { ResultList } from './ResultList';
 import { SearchBar } from './SearchBar';
@@ -52,7 +52,7 @@ export default function App() {
 
     return (
         <div ref={rootRef}>
-            <SurfaceFrame className="rounded-lg">
+            <SurfaceFrame>
                 <div className="p-px">
                     {state === 'plugin'
                         ? <PluginView />

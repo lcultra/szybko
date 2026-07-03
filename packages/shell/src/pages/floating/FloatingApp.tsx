@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
-import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
+import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useAppStore } from '../../stores/app-store';
 import { useRuntimeStore } from '../../stores/runtime-store';
 
@@ -38,7 +38,7 @@ export function FloatingApp() {
     }, [handleClose]);
 
     return (
-        <SurfaceFrame className="flex h-dvh flex-col rounded-lg">
+        <SurfaceFrame className="flex h-dvh flex-col">
             <PluginView hostType="floating" />
         </SurfaceFrame>
     );
