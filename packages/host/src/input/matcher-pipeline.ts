@@ -1,9 +1,9 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
 import type { CommandSearchRow } from '../persistence/sqlite/repositories/command-projection-repository';
-import { TextMatcher } from './matchers/text-matcher';
-import { RegexMatcher } from './matchers/regex-matcher';
-import { OverMatcher } from './matchers/over-matcher';
 import type { Matcher } from './matchers/matcher';
+import { OverMatcher } from './matchers/over-matcher';
+import { RegexMatcher } from './matchers/regex-matcher';
+import { TextMatcher } from './matchers/text-matcher';
 
 const matchers: Matcher[] = [
     new TextMatcher(),

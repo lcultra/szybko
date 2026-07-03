@@ -1,7 +1,7 @@
 export { CommandCatalog } from './commands/command-catalog';
 export { collectFromSearch } from './input/input-context-collector';
-export { runPipeline } from './input/matcher-pipeline';
 export { MatchSessionManager } from './input/match-session-manager';
+export { runPipeline } from './input/matcher-pipeline';
 export { notifyShowMainWindow, registerIpcHandlers } from './ipc/register-handlers';
 export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { Store } from './persistence/store';

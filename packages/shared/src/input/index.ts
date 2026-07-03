@@ -1,8 +1,8 @@
 export type {
-    TextSource,
     EntryIntent,
     InputContextSnapshot,
-    TriggerMatch,
     MatchSession,
     PluginEnterAction,
+    TextSource,
+    TriggerMatch,
 } from './types';

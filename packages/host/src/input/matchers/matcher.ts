@@ -3,5 +3,5 @@ import type { CommandSearchRow } from '../../persistence/sqlite/repositories/com
 
 export interface Matcher {
     type: string;
-    match(snapshot: InputContextSnapshot, triggers: CommandSearchRow[]): TriggerMatch[];
+    match: (snapshot: InputContextSnapshot, triggers: CommandSearchRow[]) => TriggerMatch[];
 }

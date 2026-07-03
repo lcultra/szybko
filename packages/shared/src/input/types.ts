@@ -1,10 +1,10 @@
 /** 文本候选来源 */
-export type TextSource =
-    | 'query'
-    | 'selectedText'
-    | 'clipboardText'
-    | 'draggedText'
-    | 'redirectPayload';
+export type TextSource
+    = | 'query'
+        | 'selectedText'
+        | 'clipboardText'
+        | 'draggedText'
+        | 'redirectPayload';
 
 /** 入口意图 */
 export type EntryIntent = 'main' | 'panel' | 'hotkey' | 'redirect';

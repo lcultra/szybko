@@ -1,7 +1,7 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
 import type { CommandSearchRow } from '../../persistence/sqlite/repositories/command-projection-repository';
-import { normalizeTextKey } from '../../commands/feature-normalizer';
 import type { Matcher } from './matcher';
+import { normalizeTextKey } from '../../commands/feature-normalizer';
 
 export class TextMatcher implements Matcher {
     readonly type = 'text';

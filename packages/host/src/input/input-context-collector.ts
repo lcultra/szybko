@@ -1,4 +1,5 @@
 import type { InputContextSnapshot, SearchRequest } from '@szybko/shared';
+import process from 'node:process';
 
 export function collectFromSearch(req: SearchRequest): InputContextSnapshot {
     const query = req.query;
