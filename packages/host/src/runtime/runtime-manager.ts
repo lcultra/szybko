@@ -197,6 +197,14 @@ export class RuntimeManager {
         if (!entry)
             return;
 
+        // 如果已在浮动窗口，让 host 关闭窗口
+        if (entry.runtime.host instanceof FloatingHost) {
+            entry.runtime.host.detach(entry.runtime);
+            entry.view.webContents.close();
+            this.entries.delete(runtimeId);
+            return;
+        }
+
         this.detachFromWindow(runtimeId);
         entry.view.webContents.close();
         this.entries.delete(runtimeId);
