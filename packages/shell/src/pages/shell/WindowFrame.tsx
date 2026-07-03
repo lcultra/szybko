@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SurfaceFrame } from '../../components/SurfaceFrame';
 
 interface WindowFrameProps {
     children: ReactNode;
@@ -6,12 +7,8 @@ interface WindowFrameProps {
 
 export function WindowFrame({ children }: WindowFrameProps) {
     return (
-        <div
-            className="w-[820px] overflow-hidden rounded-[20px] border
-                       border-border bg-surface/80 shadow-xl backdrop-blur-xl"
-            style={{ padding: '1px' }}
-        >
-            <div className="w-full">{children}</div>
-        </div>
+        <SurfaceFrame className="w-[820px] rounded-[20px] shadow-xl">
+            <div className="w-full p-px">{children}</div>
+        </SurfaceFrame>
     );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { PluginView } from '../../components/PluginView';
+import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { useAppStore } from '../../stores/app-store';
 
 const params = new URLSearchParams(window.location.search);
@@ -26,8 +27,8 @@ export function DetachedApp() {
     }, [handleClose]);
 
     return (
-        <div className="flex h-dvh flex-col overflow-hidden bg-surface">
+        <SurfaceFrame className="flex h-dvh flex-col">
             <PluginView variant="detached" />
-        </div>
+        </SurfaceFrame>
     );
 }
