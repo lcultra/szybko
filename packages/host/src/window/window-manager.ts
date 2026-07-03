@@ -4,7 +4,7 @@ import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGH
 import { BrowserWindow, screen } from 'electron';
 
 import { FloatingHost } from './hosts/floating-host';
-import { LauncherHost } from './hosts/launcher-host';
+import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
 
 export class WindowManager {
     private window: BrowserWindow | null = null;
@@ -61,7 +61,7 @@ export class WindowManager {
 
     createHost(type: 'launcher' | 'floating'): Host {
         if (type === 'launcher')
-            return new LauncherHost(`launcher-${Date.now()}`);
+            return new LauncherRuntimeHost(`launcher-${Date.now()}`);
         return new FloatingHost(`floating-${Date.now()}`);
     }
 

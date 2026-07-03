@@ -1,6 +1,6 @@
 import type { Host, PluginRuntime } from '@szybko/shared';
 
-export class LauncherHost implements Host {
+export class LauncherRuntimeHost implements Host {
     id: string;
     type = 'launcher' as const;
 
