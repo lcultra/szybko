@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm';
 import type { PlatformDrizzleDatabase } from '../platform-database';
+import { eq } from 'drizzle-orm';
 import { pluginInstallation } from '../schema';
 
 export interface UpsertBuiltInArgs {

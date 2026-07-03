@@ -122,7 +122,8 @@ export function registerIpcHandlers(
         (_event, { pluginId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
             try {
                 const runtime = coordinator.getOrCreateRuntime(pluginId);
-                if (!runtime) return { ok: false, error: 'Plugin not found' };
+                if (!runtime)
+                    return { ok: false, error: 'Plugin not found' };
 
                 coordinator.moveToHost(runtime.info.id, targetHost);
 

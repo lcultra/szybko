@@ -1,5 +1,5 @@
-import type { PluginRuntime } from '../../runtime/types';
 import type { WebContentsView } from 'electron';
+import type { PluginRuntime } from '../../runtime/types';
 
 /**
  * Runtime 的显示挂载点接口。
@@ -8,6 +8,6 @@ import type { WebContentsView } from 'electron';
 export interface RuntimeHost {
     readonly id: string;
     readonly type: 'launcher' | 'floating';
-    attach(runtime: PluginRuntime, view?: WebContentsView): void;
-    detach(runtime: PluginRuntime): void;
+    attach: (runtime: PluginRuntime, view?: WebContentsView) => void;
+    detach: (runtime: PluginRuntime) => void;
 }

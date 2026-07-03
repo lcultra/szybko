@@ -1,7 +1,7 @@
 import type { RuntimeHost } from './hosts/runtime-host';
 import type { WindowManager } from './window-manager';
-import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
 import { FloatingRuntimeHost } from './hosts/floating-runtime-host';
+import { LauncherRuntimeHost } from './hosts/launcher-runtime-host';
 
 export class RuntimeHostRegistry {
     private hosts: Map<string, RuntimeHost> = new Map();

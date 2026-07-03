@@ -1,11 +1,11 @@
-import type { PluginRuntime } from '../../runtime/types';
 import type { WebContentsView } from 'electron';
+import type { PluginRuntime } from '../../runtime/types';
+import type { Closable, Focusable, Pinnable } from './capabilities';
+import type { RuntimeHost } from './runtime-host';
 import { join } from 'node:path';
 import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
-import type { RuntimeHost } from './runtime-host';
-import type { Focusable, Pinnable, Closable } from './capabilities';
 
 export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Closable {
     id: string;

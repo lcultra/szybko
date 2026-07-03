@@ -1,7 +1,7 @@
-import { and, asc, desc, eq } from 'drizzle-orm';
-import type { PlatformDrizzleDatabase } from '../platform-database';
-import { commandProjectionMeta, commandTrigger, effectiveFeature, pluginInstallation } from '../schema';
 import type { CommandProjection } from '../../../commands/command-projection-builder';
+import type { PlatformDrizzleDatabase } from '../platform-database';
+import { and, asc, desc, eq } from 'drizzle-orm';
+import { commandProjectionMeta, commandTrigger, effectiveFeature, pluginInstallation } from '../schema';
 
 export interface CommandSearchRow {
     pluginId: string;

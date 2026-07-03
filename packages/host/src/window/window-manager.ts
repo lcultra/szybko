@@ -79,7 +79,8 @@ export class WindowManager {
 
     /** 重新计算所有子 view 的位置（窗口 resize 或 view 变更时调用） */
     relayout(): void {
-        if (!this.window) return;
+        if (!this.window)
+            return;
         const [, winHeight] = this.window.getSize();
         for (const view of this.window.contentView.children) {
             view.setBounds({

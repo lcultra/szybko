@@ -26,7 +26,8 @@ export function usePluginRuntime() {
                     mountState: payload.mountState ?? 'attached',
                 });
                 setAppState('plugin');
-            } else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
+            }
+            else if (payload?.state === 'detached' || payload?.state === 'destroyed') {
                 clearSlot();
                 setAppState('idle');
             }

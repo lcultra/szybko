@@ -1,9 +1,9 @@
-import { and, eq } from 'drizzle-orm';
 import type { PluginFeature } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../platform-database';
-import { manifestFeatureSnapshot } from '../schema';
-import { normalizeFeature } from '../../../commands/feature-normalizer';
 import type { ManifestFeatureInput } from '../../../commands/command-projection-builder';
+import type { PlatformDrizzleDatabase } from '../platform-database';
+import { eq } from 'drizzle-orm';
+import { normalizeFeature } from '../../../commands/feature-normalizer';
+import { manifestFeatureSnapshot } from '../schema';
 
 export class ManifestFeatureRepository {
     constructor(private db: PlatformDrizzleDatabase) {}
@@ -13,17 +13,18 @@ export class ManifestFeatureRepository {
             .where(eq(manifestFeatureSnapshot.pluginId, pluginId))
             .run();
 
-        if (features.length === 0) return;
+        if (features.length === 0)
+            return;
 
-            const values = features.map((feature, index) => {
-                const normalized = normalizeFeature(feature);
-                return {
-                    pluginId,
-                    code: normalized.code,
-                    featureOrder: index,
-                    featureJson: normalized.featureJson,
-                    featureHash: normalized.featureHash,
-                    manifestHash,
+        const values = features.map((feature, index) => {
+            const normalized = normalizeFeature(feature);
+            return {
+                pluginId,
+                code: normalized.code,
+                featureOrder: index,
+                featureJson: normalized.featureJson,
+                featureHash: normalized.featureHash,
+                manifestHash,
                 indexedAt: now,
             };
         });

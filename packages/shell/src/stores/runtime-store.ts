@@ -18,6 +18,6 @@ const INITIAL_SLOT: RuntimeSlot = {
 
 export const useRuntimeStore = create<RuntimeStore>(set => ({
     slot: INITIAL_SLOT,
-    setSlot: (partial) => set(s => ({ slot: { ...s.slot, ...partial } })),
+    setSlot: partial => set(s => ({ slot: { ...s.slot, ...partial } })),
     clearSlot: () => set({ slot: INITIAL_SLOT }),
 }));

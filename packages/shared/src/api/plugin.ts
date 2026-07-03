@@ -1,6 +1,6 @@
+import type { PluginOutPayload } from '../ipc/contract';
 import type { PluginFeature } from '../plugin/types';
 import type { ActionDescriptor, PluginSearchContext, SearchResult } from '../search/types';
-import type { PluginOutPayload } from '../ipc/contract';
 
 export interface SzybkoPluginApi {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;

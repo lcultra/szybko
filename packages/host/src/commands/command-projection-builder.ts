@@ -7,9 +7,9 @@ export interface ManifestFeatureInput {
     feature: PluginFeature;
 }
 
-export type FeatureOverrideInput =
-    | { code: string; state: 'active'; feature: PluginFeature }
-    | { code: string; state: 'removed' };
+export type FeatureOverrideInput
+    = | { code: string; state: 'active'; feature: PluginFeature }
+        | { code: string; state: 'removed' };
 
 export interface BuildProjectionInput {
     pluginId: string;

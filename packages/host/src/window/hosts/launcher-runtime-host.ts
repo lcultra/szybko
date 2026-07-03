@@ -1,5 +1,5 @@
-import type { PluginRuntime } from '../../runtime/types';
 import type { WebContentsView } from 'electron';
+import type { PluginRuntime } from '../../runtime/types';
 import type { WindowManager } from '../window-manager';
 import type { RuntimeHost } from './runtime-host';
 

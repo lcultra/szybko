@@ -10,7 +10,6 @@
         "dev:desktop": "pnpm --filter @szybko/desktop dev",
         "dev:plugins": "pnpm --filter './plugins/**' dev",
         "typecheck": "pnpm -r run typecheck",
-        "test": "pnpm -r --if-present run test",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix"
     },

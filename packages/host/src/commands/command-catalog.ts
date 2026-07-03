@@ -1,12 +1,12 @@
 import type { PluginFeature, PluginManifest, SearchResult } from '@szybko/shared';
-import { createHash } from 'node:crypto';
-import { buildCommandProjection } from './command-projection-builder';
-import { normalizeTextKey, stableJson } from './feature-normalizer';
 import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import { createHash } from 'node:crypto';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { FeatureOverrideRepository } from '../persistence/sqlite/repositories/feature-override-repository';
 import { ManifestFeatureRepository } from '../persistence/sqlite/repositories/manifest-feature-repository';
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
+import { buildCommandProjection } from './command-projection-builder';
+import { normalizeTextKey, stableJson } from './feature-normalizer';
 
 const INDEX_VERSION = 1;
 
@@ -85,7 +85,8 @@ export class CommandCatalog {
                 this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
             });
             return { ok: true };
-        } catch (e) {
+        }
+        catch (e) {
             return { ok: false, error: (e as Error).message };
         }
     }
@@ -102,7 +103,8 @@ export class CommandCatalog {
                 this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
             });
             return { ok: true };
-        } catch (e) {
+        }
+        catch (e) {
             return { ok: false, error: (e as Error).message };
         }
     }
