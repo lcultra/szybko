@@ -70,6 +70,7 @@ export class WindowManager {
     attachPluginView(view: WebContentsView): void {
         this.detachPluginView();
         this.window?.contentView.addChildView(view);
+        view.setBorderRadius(8);
         this.pluginView = view;
         this.updatePluginBounds();
     }
