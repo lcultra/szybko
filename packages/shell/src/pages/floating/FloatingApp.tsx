@@ -9,7 +9,7 @@ const initialRuntimeId = params.get('runtimeId') || '';
 const initialExplain = params.get('explain') || '';
 const initialPluginId = params.get('pluginId') || '';
 
-export function DetachedApp() {
+export function FloatingApp() {
     const setActivePlugin = useAppStore(s => s.setActivePlugin);
 
     useEffect(() => {
@@ -28,7 +28,7 @@ export function DetachedApp() {
 
     return (
         <SurfaceFrame className="flex h-dvh flex-col rounded-lg">
-            <PluginView variant="detached" />
+            <PluginView hostType="floating" />
         </SurfaceFrame>
     );
 }

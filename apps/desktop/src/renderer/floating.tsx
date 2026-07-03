@@ -1,5 +1,5 @@
 import { initTheme } from '@szybko/design-system';
-import { DetachedApp } from '@szybko/shell';
+import { FloatingApp } from '@szybko/shell';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './main.css';
@@ -10,7 +10,7 @@ const root = document.getElementById('root');
 if (root) {
     createRoot(root).render(
         <StrictMode>
-            <DetachedApp />
+            <FloatingApp />
         </StrictMode>,
     );
 }
