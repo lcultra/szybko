@@ -42,6 +42,7 @@ export class FloatingHost implements Host {
             width: DEFAULT_WINDOW_WIDTH,
             height: 600,
             frame: false,
+            titleBarStyle: 'hidden',
             titleBarOverlay: {
                 color: '#2a2a2a',
                 symbolColor: '#ffffff',
