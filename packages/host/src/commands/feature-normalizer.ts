@@ -1,4 +1,5 @@
 import type { MatchCommand, PluginFeature } from '@szybko/shared';
+import { pinyin } from 'pinyin-pro';
 import { createHash } from 'node:crypto';
 
 export type CommandType = 'text' | 'regex' | 'over' | 'img' | 'files' | 'window';
@@ -23,6 +24,22 @@ export interface NormalizedFeature {
 
 export function normalizeTextKey(value: string): string {
     return value.trim().normalize('NFKC').toLocaleLowerCase();
+}
+
+export interface PinyinResult {
+    /** 全拼，不含声调，空格分隔多音字首选项。例："suoping" */
+    full: string;
+    /** 首字母。例："sp" */
+    initials: string;
+}
+
+export function computePinyin(text: string): PinyinResult {
+    // pinyin-pro 的 pinyin() 默认返回带声调拼音，用 toneType: 'none' 去掉声调
+    // type: 'array' 返回数组，按字分割
+    const chars = pinyin(text, { toneType: 'none', type: 'array' });
+    const full = chars.map(c => c.trim()).filter(Boolean).join('').toLocaleLowerCase();
+    const initials = chars.map(c => (c.trim() ? c.trim()[0]! : '')).filter(Boolean).join('').toLocaleLowerCase();
+    return { full, initials };
 }
 
 export function normalizeFeatureCode(value: string): string {
