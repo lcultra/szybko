@@ -3,6 +3,7 @@ export { PluginLoader } from './plugins/plugin-loader';
 export { PluginCatalog } from './plugins/plugin-catalog';
 export { PluginRegistry } from './plugins/plugin-registry';
 export { Store } from './persistence/store';
+export { RuntimeCoordinator } from './runtime/runtime-coordinator';
 export { RuntimeManager } from './runtime/runtime-manager';
 export type { PluginRuntime, ActivationContext } from './runtime/types';
 export { ConfigManager } from './services/config-manager';

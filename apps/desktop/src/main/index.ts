@@ -1,6 +1,6 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { PluginCatalog, PluginRegistry, registerIpcHandlers, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
+import { PluginCatalog, PluginRegistry, registerIpcHandlers, RuntimeCoordinator, RuntimeManager, ShortcutManager, Store, WindowManager } from '@szybko/host';
 import { app } from 'electron';
 
 const windowManager = new WindowManager();
@@ -24,6 +24,8 @@ void app.whenReady().then(async () => {
     const runtimeManager = new RuntimeManager(pluginManager, windowManager, pluginPreloadPath);
     await runtimeManager.startAll();
 
+    const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginManager);
+
     // Window
     const win = windowManager.createMainWindow(preloadPath);
 
@@ -34,7 +36,7 @@ void app.whenReady().then(async () => {
         void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
 
-    registerIpcHandlers(windowManager, runtimeManager, pluginManager);
+    registerIpcHandlers(windowManager, coordinator, pluginManager);
     shortcutManager.registerToggle(windowManager);
 });
 

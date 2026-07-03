@@ -3,11 +3,11 @@ import type {
     IpcRendererToMainEventContract,
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
-import type { RuntimeManager } from '../runtime/runtime-manager';
+import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import { IPC } from '@szybko/shared';
-import { ipcMain, Menu } from 'electron';
+import { ipcMain } from 'electron';
 import { runBuiltinSearch } from './builtin-search';
 import { executeAction } from './execute-action';
 
@@ -19,7 +19,7 @@ type RendererEvent<C extends keyof IpcRendererToMainEventContract> = IpcRenderer
 
 export function registerIpcHandlers(
     windowManager: WindowManager,
-    runtimeManager?: RuntimeManager,
+    coordinator: RuntimeCoordinator,
     pluginCatalog?: PluginCatalog,
 ) {
     // ── Search ─────────────────────────────────────────────────────
@@ -46,9 +46,7 @@ export function registerIpcHandlers(
             }
 
             // Plugin search (async — results come back via plugin:search-result)
-            if (runtimeManager) {
-                runtimeManager.sendPluginSearch(req);
-            }
+            coordinator.sendPluginSearch(req);
 
             // Final batch (empty, signals end of built-in results)
             if (win && !win.isDestroyed()) {
@@ -112,12 +110,7 @@ export function registerIpcHandlers(
         (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): IpcResponse<typeof IPC.PLUGIN_EXEC> => {
             // plugin.open 需要激活 Runtime，不走 executeAction 纯函数
             if (action.type === 'plugin.open') {
-                if (!runtimeManager)
-                    return { ok: false, error: 'RuntimeManager not initialized' };
-                const runtime = runtimeManager.getOrCreate(action.payload.pluginId);
-                if (!runtime)
-                    return { ok: false, error: `Plugin "${action.payload.pluginId}" not found` };
-                runtimeManager.attachToWindow(runtime.id, action.payload.featureCode);
+                coordinator.activatePlugin(action.payload.pluginId, action.payload.featureCode);
                 return { ok: true };
             }
             return executeAction(action);
@@ -128,14 +121,15 @@ export function registerIpcHandlers(
 
     ipcMain.handle(
         IPC.HOST_SWITCH,
-        (_event, { pluginId: _pluginId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
+        (_event, { pluginId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
             try {
-                const registry = windowManager.getHostRegistry();
-                if (!registry) return { ok: false, error: 'HostRegistry not initialized' };
-                const host = targetHost === 'launcher'
-                    ? registry.getOrCreateLauncherHost()
-                    : registry.createFloatingHost();
-                return { ok: true, hostId: host.id };
+                const runtime = coordinator.getOrCreateRuntime(pluginId);
+                if (!runtime) return { ok: false, error: 'Plugin not found' };
+
+                coordinator.moveToHost(runtime.id, targetHost);
+
+                const hostId = runtime.host?.id;
+                return { ok: true, hostId };
             }
             catch (err) {
                 return { ok: false, error: String(err) };
@@ -148,7 +142,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.PLUGIN_HIDE,
         (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_HIDE>): IpcResponse<typeof IPC.PLUGIN_HIDE> => {
-            runtimeManager?.detachFromWindow(runtimeId);
+            coordinator.hideRuntime(runtimeId);
             return { ok: true };
         },
     );
@@ -156,7 +150,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.PLUGIN_DESTROY,
         (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_DESTROY>): IpcResponse<typeof IPC.PLUGIN_DESTROY> => {
-            runtimeManager?.destroyFromWindow(runtimeId);
+            coordinator.destroyRuntime(runtimeId);
             return { ok: true };
         },
     );
@@ -166,28 +160,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.SHOW_PLUGIN_MENU,
         (_event, { runtimeId, variant }: IpcRequest<typeof IPC.SHOW_PLUGIN_MENU>): IpcResponse<typeof IPC.SHOW_PLUGIN_MENU> => {
-            const isFloating = variant === 'floating';
-            const items: Electron.MenuItemConstructorOptions[] = isFloating
-                ? [
-                    {
-                        label: '结束运行',
-                        click: () => { runtimeManager?.destroyFromWindow(runtimeId); },
-                    },
-                ]
-                : [
-                    {
-                        label: '分离为独立窗口',
-                        accelerator: 'CmdOrCtrl+D',
-                        click: () => { runtimeManager?.detachToFloatingWindow(runtimeId); },
-                    },
-                    { type: 'separator' },
-                    {
-                        label: '结束运行',
-                        click: () => { runtimeManager?.destroyFromWindow(runtimeId); },
-                    },
-                ];
-            const menu = Menu.buildFromTemplate(items);
-            menu.popup();
+            coordinator.showPluginMenu(runtimeId, variant);
             return { ok: true };
         },
     );
@@ -197,7 +170,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.PLUGIN_PIN,
         (_event, { runtimeId, pin }: IpcRequest<typeof IPC.PLUGIN_PIN>): IpcResponse<typeof IPC.PLUGIN_PIN> => {
-            runtimeManager?.pinPluginWindow(runtimeId, pin);
+            coordinator.pinRuntime(runtimeId, pin);
             return { ok: true };
         },
     );

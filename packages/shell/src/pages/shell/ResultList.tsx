@@ -18,7 +18,7 @@ export function ResultList({
         return null;
 
     return (
-        <div className="border-t border-border px-2 pb-2">
+        <div className="px-2 pb-2">
             <div className="flex flex-col gap-1">
                 {results.map((item, i) => (
                     <ResultItem
