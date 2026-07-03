@@ -1,8 +1,6 @@
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
-import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { PluginDiscovery } from './plugin-discovery';
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
-import { PluginLoader } from './plugin-loader';
 
 export interface PluginInfo {
     id: string;
@@ -11,43 +9,31 @@ export interface PluginInfo {
 }
 
 export class PluginCatalog {
-    private loader = new PluginLoader();
-    private plugins: Map<string, PluginInfo> = new Map();
+    private plugins = new Map<string, PluginInfo>();
+    private discovery = new PluginDiscovery();
 
     constructor(
         private platformDb: PlatformDatabase,
         private pluginsBaseDir: string,
     ) {}
 
+    /** 初始化：扫描磁盘 → 同步 DB 安装状态 → 缓存 */
     async init(): Promise<void> {
-        this.scan();
-    }
-
-    scan() {
         this.plugins.clear();
-        if (!existsSync(this.pluginsBaseDir)) {
-            console.warn(`[PluginCatalog] plugins dir not found: ${this.pluginsBaseDir}`);
-            return;
-        }
-
         const repos = new PluginInstallationRepository(this.platformDb.drizzle());
+        const discovered = this.discovery.scan(this.pluginsBaseDir);
 
-        for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
-            const distPath = join(this.pluginsBaseDir, dir.name, 'dist');
-            const loaded = this.loader.loadOne(distPath);
-            if (loaded) {
-                loaded.id = dir.name;
-                this.plugins.set(dir.name, loaded);
-                if (!repos.has(dir.name)) {
-                    repos.register(dir.name, 'built-in', distPath, Date.now());
-                }
-                else if (!repos.isEnabled(dir.name)) {
-                    repos.setEnabled(dir.name, true);
-                }
+        for (const plugin of discovered) {
+            if (!repos.has(plugin.id)) {
+                repos.register(plugin.id, 'built-in', plugin.path, Date.now());
             }
+            else if (!repos.isEnabled(plugin.id)) {
+                repos.setEnabled(plugin.id, true);
+            }
+            this.plugins.set(plugin.id, plugin);
         }
 
-        // Sync: disable entries for plugins no longer on disk
+        // Disable entries for plugins no longer on disk
         for (const id of repos.listEnabled()) {
             if (!this.plugins.has(id)) {
                 repos.setEnabled(id, false);

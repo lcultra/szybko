@@ -2,6 +2,8 @@
  * 插件清单 — 对应 plugin.json 文件。
  */
 export interface PluginManifest {
+    /** 必填。稳定插件 ID，用于持久化关联用户数据。 */
+    id: string;
     /** 必填。插件运行入口，相对于 plugin.json 的 .html 路径。 */
     main: string;
     /** 必填。插件 Logo 图标，相对路径的图片文件。 */

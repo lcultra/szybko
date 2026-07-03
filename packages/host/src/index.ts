@@ -5,6 +5,7 @@ export { runPipeline } from './input/matcher-pipeline';
 export { registerIpcHandlers } from './ipc/register-handlers';
 export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { PluginCatalog } from './plugins/plugin-catalog';
+export { PluginDiscovery } from './plugins/plugin-discovery';
 export { PluginLoader } from './plugins/plugin-loader';
 export { RuntimeCoordinator } from './runtime/runtime-coordinator';
 export { RuntimeManager } from './runtime/runtime-manager';

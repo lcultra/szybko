@@ -1,4 +1,5 @@
 {
+    "id": "preferences",
     "main": "index.html",
     "preload": "preload.js",
     "pluginSetting": { "single": true, "height": 520 },
