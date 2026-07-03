@@ -54,8 +54,8 @@ export class WindowManager {
     isVisible(): boolean { return this.window?.isVisible() ?? false; }
 
     /** 初始化 Host 注册表（main/index.ts 启动时调用一次） */
-    initHostRegistry(): RuntimeHostRegistry {
-        this.hostRegistry = new RuntimeHostRegistry(this);
+    initHostRegistry(pluginPreloadPath: string): RuntimeHostRegistry {
+        this.hostRegistry = new RuntimeHostRegistry(this, pluginPreloadPath);
         return this.hostRegistry;
     }
 

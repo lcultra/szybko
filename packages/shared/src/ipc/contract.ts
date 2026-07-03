@@ -25,7 +25,7 @@ export interface IpcInvokeContract {
         response: { ok: boolean; result?: unknown; error?: string };
     };
     [IPC.HOST_SWITCH]: {
-        request: { pluginId: string; targetHost: 'launcher' | 'floating' };
+        request: { runtimeId: string; targetHost: 'launcher' | 'floating' };
         response: { ok: boolean; hostId?: string; error?: string };
     };
     [IPC.PLUGIN_HIDE]: {
@@ -91,7 +91,7 @@ export interface PluginOutPayload {
 }
 
 export interface MoveToHostRequest {
-    pluginId: string;
+    runtimeId: string;
     targetHost: 'launcher' | 'floating';
 }
 

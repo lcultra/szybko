@@ -8,8 +8,8 @@ import type { RuntimeManager } from './runtime-manager';
 import { Menu } from 'electron';
 
 /**
- * RuntimeCoordinator — the mandatory entry point for all business flows.
- * IPC handlers MUST call coordinator methods instead of RuntimeManager directly.
+ * RuntimeCoordinator — 所有业务流的统一入口。
+ * IPC handlers 必须调用 coordinator 方法，不直接操作 RuntimeManager。
  */
 export class RuntimeCoordinator {
     constructor(
@@ -31,7 +31,8 @@ export class RuntimeCoordinator {
 
         // Detach any runtime currently on the launcher host
         for (const r of this.runtimeManager.getAll()) {
-            if (r.host?.type === 'launcher') {
+            const host = this.runtimeManager.getHostFor(r.info.id);
+            if (host?.type === 'launcher') {
                 this.runtimeManager.detachFromHost(r.info.id);
             }
         }
@@ -42,14 +43,14 @@ export class RuntimeCoordinator {
 
     /**
      * Move a runtime from its current host to a target host type.
-     * Verifies the runtime exists and has a host before detaching.
      */
     moveToHost(runtimeId: string, targetType: 'launcher' | 'floating'): void {
         const runtime = this.runtimeManager.get(runtimeId);
         if (!runtime)
             return;
 
-        if (runtime.host) {
+        const currentHost = this.runtimeManager.getHostFor(runtimeId);
+        if (currentHost) {
             this.runtimeManager.detachFromHost(runtimeId);
         }
 
@@ -76,7 +77,7 @@ export class RuntimeCoordinator {
         if (!runtime)
             return;
 
-        const host = runtime.host;
+        const host = this.runtimeManager.getHostFor(runtimeId);
         if (host && 'close' in host) {
             // FloatingRuntimeHost — close window then destroy
             (host as RuntimeHost & Closable).close();
@@ -93,33 +94,25 @@ export class RuntimeCoordinator {
      * Pin or unpin a floating runtime window.
      */
     pinRuntime(runtimeId: string, pin: boolean): void {
-        this.runtimeManager.pinPluginWindow(runtimeId, pin);
+        const host = this.runtimeManager.getHostFor(runtimeId);
+        if (host && host.type === 'floating' && 'setAlwaysOnTop' in host) {
+            (host as RuntimeHost & { setAlwaysOnTop: (pin: boolean) => void }).setAlwaysOnTop(pin);
+        }
     }
 
     /**
      * Show a native context menu for a plugin runtime.
-     * Uses Electron Menu and dispatches coordinator methods on click.
      */
     showPluginMenu(runtimeId: string, variant?: 'launcher' | 'floating'): void {
         const isFloating = variant === 'floating';
         const items: Electron.MenuItemConstructorOptions[] = isFloating
             ? [
-                    {
-                        label: '结束运行',
-                        click: () => { this.destroyRuntime(runtimeId); },
-                    },
+                    { label: '结束运行', click: () => { this.destroyRuntime(runtimeId); } },
                 ]
             : [
-                    {
-                        label: '分离为独立窗口',
-                        accelerator: 'CmdOrCtrl+D',
-                        click: () => { this.moveToHost(runtimeId, 'floating'); },
-                    },
+                    { label: '分离为独立窗口', accelerator: 'CmdOrCtrl+D', click: () => { this.moveToHost(runtimeId, 'floating'); } },
                     { type: 'separator' },
-                    {
-                        label: '结束运行',
-                        click: () => { this.destroyRuntime(runtimeId); },
-                    },
+                    { label: '结束运行', click: () => { this.destroyRuntime(runtimeId); } },
                 ];
 
         const menu = Menu.buildFromTemplate(items);
@@ -129,18 +122,30 @@ export class RuntimeCoordinator {
     // ── Utilities for IPC handlers ───────────────────────────────────
 
     /**
-     * Get or create a runtime by plugin ID. Used by handlers that
-     * receive a pluginId rather than a runtimeId.
+     * Get or create a runtime by plugin ID.
      */
     getOrCreateRuntime(pluginId: string): PluginRuntime | null {
         return this.runtimeManager.getOrCreate(pluginId);
     }
 
     /**
-     * Look up a plugin ID by webContents ID. Used by IPC handlers to
-     * identify which plugin runtime is making a request.
+     * Get a runtime by runtime ID.
+     */
+    getRuntime(runtimeId: string): PluginRuntime | undefined {
+        return this.runtimeManager.get(runtimeId);
+    }
+
+    /**
+     * Look up a plugin ID by webContents ID.
      */
     pluginIdForWebContents(webContentsId: number): string | null {
         return this.runtimeManager.pluginIdForWebContents(webContentsId);
+    }
+
+    /**
+     * Get the host a runtime is attached to, if any.
+     */
+    getHostFor(runtimeId: string): RuntimeHost | null {
+        return this.runtimeManager.getHostFor(runtimeId);
     }
 }

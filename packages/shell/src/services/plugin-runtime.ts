@@ -30,7 +30,7 @@ export const PluginRuntimeService = {
         return getApi()?.showPluginMenu(runtimeId, hostType) ?? Promise.resolve({ ok: false });
     },
 
-    switchHost(pluginId: string, targetHost: HostType): Promise<{ ok: boolean; hostId?: string; error?: string }> {
-        return getPluginApi()?.switchHost(pluginId, targetHost) ?? Promise.resolve({ ok: false });
+    switchHost(runtimeId: string, targetHost: HostType): Promise<{ ok: boolean; hostId?: string; error?: string }> {
+        return getPluginApi()?.switchHost(runtimeId, targetHost) ?? Promise.resolve({ ok: false });
     },
 };

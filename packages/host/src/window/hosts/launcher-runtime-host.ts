@@ -1,7 +1,6 @@
 import type { WebContentsView } from 'electron';
-import type { PluginRuntime } from '../../runtime/types';
+import type { HostMeta, RuntimeHost } from './runtime-host';
 import type { WindowManager } from '../window-manager';
-import type { RuntimeHost } from './runtime-host';
 
 export class LauncherRuntimeHost implements RuntimeHost {
     readonly id: string;
@@ -15,19 +14,15 @@ export class LauncherRuntimeHost implements RuntimeHost {
         this.id = id;
     }
 
-    attach(runtime: PluginRuntime, view?: WebContentsView): void {
-        if (view) {
-            this.currentView = view;
-            this.windowManager.addChildView(view);
-        }
-        runtime.host = this;
+    attach(view: WebContentsView, _meta: HostMeta): void {
+        this.currentView = view;
+        this.windowManager.addChildView(view);
     }
 
-    detach(runtime: PluginRuntime): void {
+    detach(): void {
         if (this.currentView) {
             this.windowManager.removeChildView(this.currentView);
             this.currentView = null;
         }
-        runtime.host = null;
     }
 }

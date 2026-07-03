@@ -8,6 +8,6 @@ import { invoke } from './ipc';
 export function createExecuteApi(): Pick<SzybkoPluginApi, 'execute' | 'switchHost'> {
     return {
         execute: action => invoke(IPC.PLUGIN_EXEC)({ action }),
-        switchHost: (pluginId, targetHost) => invoke(IPC.HOST_SWITCH)({ pluginId, targetHost }),
+        switchHost: (runtimeId, targetHost) => invoke(IPC.HOST_SWITCH)({ runtimeId, targetHost }),
     };
 }

@@ -1,23 +1,26 @@
 import type { LoadState, MountState, PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
-import type { PluginRuntime } from '../runtime/types';
+import type { PluginRuntime } from './types';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { app, WebContentsView } from 'electron';
-import { FloatingRuntimeHost } from '../window/hosts/floating-runtime-host';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
 }
 
+/** Cmd/Ctrl+D 分离请求回调 */
+type DetachCallback = (runtimeId: string) => void;
+
 export class RuntimeManager {
     private entries: Map<string, RuntimeEntry> = new Map();
+    /** 内部跟踪每个 runtime 挂载到哪个 host */
+    private hostMap: Map<string, RuntimeHost> = new Map();
     private nextInstanceId = 1;
 
-    /** Cmd/Ctrl+D 分离请求回调（由 RuntimeCoordinator 在初始化时设置） */
-    detachRequested: ((runtimeId: string) => void) | null = null;
+    detachRequested: DetachCallback | null = null;
 
     constructor(
         private pluginManager: PluginCatalog,
@@ -25,7 +28,9 @@ export class RuntimeManager {
         private pluginPreloadPath: string,
     ) {}
 
-    async startAll(): Promise<void> {
+    // ── Lifecycle ────────────────────────────────────────────────────
+
+    startAll(): void {
         for (const plugin of this.pluginManager.getEnabled()) {
             this.create(plugin.id);
         }
@@ -37,19 +42,17 @@ export class RuntimeManager {
             return null;
 
         const view = new WebContentsView({
-
             webPreferences: {
                 preload: this.pluginPreloadPath,
                 contextIsolation: true,
                 nodeIntegration: false,
             },
         });
-        // view.setBorderRadius(11);
 
-        const id = `${pluginId}-${this.nextInstanceId++}`;
+        const runtimeId = `${pluginId}-${this.nextInstanceId++}`;
         const runtime: PluginRuntime = {
             info: {
-                id,
+                id: runtimeId,
                 pluginId,
                 instanceId: String(this.nextInstanceId),
                 loadState: 'loading',
@@ -58,21 +61,20 @@ export class RuntimeManager {
             },
             webContentsView: view,
             webContents: view.webContents,
-            host: null,
             cache: new Map(),
             pluginName: pluginId,
         };
 
-        this.entries.set(id, { runtime });
+        this.entries.set(runtimeId, { runtime });
 
         view.webContents.on('did-finish-load', () => {
-            this.transitionLoadState(id, 'loaded');
+            this.transitionLoadState(runtimeId, 'loaded');
         });
 
         // Cmd/Ctrl + D → 分离到浮动窗口（插件视图有焦点时）
         view.webContents.on('before-input-event', (_event, input) => {
             if ((input.control || input.meta) && input.key.toLowerCase() === 'd' && !input.alt && !input.shift) {
-                this.detachRequested?.(id);
+                this.detachRequested?.(runtimeId);
             }
         });
 
@@ -84,73 +86,26 @@ export class RuntimeManager {
             const indexPath = join(plugin.path, plugin.manifest.main);
             view.webContents.loadFile(indexPath);
         }
+
         return runtime;
     }
 
-    pluginIdForWebContents(webContentsId: number): string | null {
-        for (const [, entry] of this.entries) {
-            if (entry.runtime.webContents.id === webContentsId)
-                return entry.runtime.info.pluginId;
+    // ── Host tracking ────────────────────────────────────────────────
+
+    /** 获取指定 runtime 当前挂载的 host */
+    getHostFor(runtimeId: string): RuntimeHost | null {
+        return this.hostMap.get(runtimeId) ?? null;
+    }
+
+    /** 获取某个插件（首个匹配的 runtime）挂载的 host */
+    getHostByPluginId(pluginId: string): RuntimeHost | null {
+        for (const [id] of this.entries) {
+            const host = this.hostMap.get(id);
+            if (host && this.get(id)?.info.pluginId === pluginId)
+                return host;
         }
         return null;
     }
-
-    get runtimeCount(): number {
-        return this.entries.size;
-    }
-
-    // ── State transitions ──────────────────────────────────────────
-
-    private transitionLoadState(runtimeId: string, target: LoadState): void {
-        const entry = this.entries.get(runtimeId);
-        if (!entry)
-            return;
-        entry.runtime.info.loadState = target;
-    }
-
-    private transitionMountState(runtimeId: string, target: MountState, reason?: 'hide' | 'destroy'): void {
-        const entry = this.entries.get(runtimeId);
-        if (!entry)
-            return;
-        entry.runtime.info.mountState = target;
-
-        // 查询插件显示信息
-        let pluginName = entry.runtime.pluginName;
-        let featureExplain = '';
-        const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
-        if (plugin) {
-            const feature = plugin.manifest.features[0];
-            if (feature) {
-                pluginName = feature.explain || plugin.id;
-                featureExplain = feature.explain || '';
-            }
-        }
-
-        // 通知渲染进程状态变更（包含新旧两个字段）
-        const win = this.windowManager.getWindow();
-        if (win && !win.isDestroyed()) {
-            win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
-                runtimeId: entry.runtime.info.id,
-                pluginId: entry.runtime.info.pluginId,
-                pluginName,
-                featureExplain,
-                state: target,
-                mountState: target,
-                loadState: entry.runtime.info.loadState,
-            });
-        }
-
-        // detach 带原因时，通知插件
-        if (target === 'detached' && reason) {
-            entry.runtime.webContents.send(IPC.PLUGIN_OUT, {
-                runtimeId: entry.runtime.info.id,
-                pluginId: entry.runtime.info.pluginId,
-                reason,
-            });
-        }
-    }
-
-    // ── Activation / Deactivation ─────────────────────────────────
 
     /** 将插件 view 挂载到指定 Host */
     attachToHost(runtimeId: string, host: RuntimeHost, featureCode?: string, enterPayload?: Partial<PluginEnterPayload>): void {
@@ -160,9 +115,10 @@ export class RuntimeManager {
             return;
         }
 
-        // 已在浮动窗口中 → 聚焦窗口，不操作主窗口
-        if (entry.runtime.host?.type === 'floating') {
-            const fHost = entry.runtime.host as FloatingRuntimeHost;
+        // 已在浮动窗口中 → 聚焦窗口，不挂载到新 host
+        const existingHost = this.hostMap.get(runtimeId);
+        if (existingHost?.type === 'floating') {
+            const fHost = existingHost as import('../window/hosts/floating-runtime-host').FloatingRuntimeHost;
             fHost.focus();
             entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
                 pluginId: entry.runtime.info.pluginId,
@@ -174,38 +130,26 @@ export class RuntimeManager {
             return;
         }
 
-        entry.runtime.host = host;
-        host.attach(entry.runtime, entry.runtime.webContentsView);
-        entry.runtime.info.mountState = 'attached';
-
-        // 只有挂载到主窗口时才通知主窗口 UI 切换状态
-        // 挂载到浮动窗口时，主窗口保持搜索态
-        if (host.type === 'launcher') {
-            const win = this.windowManager.getWindow();
-            if (win && !win.isDestroyed()) {
-                let pluginName = entry.runtime.pluginName;
-                let featureExplain = '';
-                const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
-                if (plugin) {
-                    const feature = plugin.manifest.features[0];
-                    if (feature) {
-                        pluginName = feature.explain || plugin.id;
-                        featureExplain = feature.explain || '';
-                    }
-                }
-                win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
-                    runtimeId: entry.runtime.info.id,
-                    pluginId: entry.runtime.info.pluginId,
-                    pluginName,
-                    featureExplain,
-                    state: 'attached',
-                    mountState: 'attached',
-                    loadState: entry.runtime.info.loadState,
-                });
-            }
+        // 从旧 host 分离（如果有）
+        if (existingHost) {
+            existingHost.detach();
         }
 
-        // 通知插件进入，携带 featureCode 或完整 enterPayload
+        host.attach(entry.runtime.webContentsView, {
+            runtimeId: entry.runtime.info.id,
+            pluginName: this.getPluginDisplayName(entry.runtime.info.pluginId),
+        });
+
+        this.hostMap.set(runtimeId, host);
+        entry.runtime.info.mountState = 'attached';
+        entry.runtime.info.hostInfo = { id: host.id, type: host.type };
+
+        // 只有挂载到主窗口时才通知主窗口 UI 切换状态
+        if (host.type === 'launcher') {
+            this.publishState(runtimeId, 'attached', entry.runtime.info.loadState);
+        }
+
+        // 通知插件进入
         entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
             pluginId: entry.runtime.info.pluginId,
             code: featureCode ?? entry.runtime.info.pluginId,
@@ -221,35 +165,59 @@ export class RuntimeManager {
         if (!entry)
             return;
 
-        const host = entry.runtime.host;
+        const host = this.hostMap.get(runtimeId);
         if (host) {
-            host.detach(entry.runtime);
+            host.detach();
+            this.hostMap.delete(runtimeId);
         }
-        entry.runtime.host = null;
 
-        this.transitionMountState(runtimeId, 'detached', reason);
+        entry.runtime.info.mountState = 'detached';
+        entry.runtime.info.hostInfo = null;
+
+        this.publishState(runtimeId, 'detached', entry.runtime.info.loadState);
+
+        // detach 带原因时，通知插件
+        if (reason) {
+            entry.runtime.webContents.send(IPC.PLUGIN_OUT, {
+                runtimeId: entry.runtime.info.id,
+                pluginId: entry.runtime.info.pluginId,
+                reason,
+            });
+        }
     }
 
-    /** 切换浮动窗口置顶 */
-    pinPluginWindow(runtimeId: string, pin: boolean): void {
-        const entry = this.entries.get(runtimeId);
-        if (!entry)
-            return;
-        if (entry.runtime.host instanceof FloatingRuntimeHost) {
-            entry.runtime.host.setAlwaysOnTop(pin);
+    // ── Query ────────────────────────────────────────────────────────
+
+    pluginIdForWebContents(webContentsId: number): string | null {
+        for (const [, entry] of this.entries) {
+            if (entry.runtime.webContents.id === webContentsId)
+                return entry.runtime.info.pluginId;
         }
+        return null;
+    }
+
+    get runtimeCount(): number {
+        return this.entries.size;
     }
 
     /** 获取或创建 Runtime — 先查找已有实例，没有再创建 */
     getOrCreate(pluginId: string): PluginRuntime | null {
-        const existing = Array.from(this.entries.values())
-            .find(e => e.runtime.info.pluginId === pluginId);
+        const existing = this.getByPluginId(pluginId);
         if (existing)
-            return existing.runtime;
+            return existing;
         return this.create(pluginId);
     }
 
-    /** 获取单个 Runtime */
+    /** 按 pluginId 查找已有 runtime（首个匹配） */
+    getByPluginId(pluginId: string): PluginRuntime | undefined {
+        for (const [, entry] of this.entries) {
+            if (entry.runtime.info.pluginId === pluginId)
+                return entry.runtime;
+        }
+        return undefined;
+    }
+
+    /** 按 runtimeId 获取 */
     get(runtimeId: string): PluginRuntime | undefined {
         return this.entries.get(runtimeId)?.runtime;
     }
@@ -264,7 +232,55 @@ export class RuntimeManager {
         const entry = this.entries.get(runtimeId);
         if (!entry)
             return;
+        this.hostMap.delete(runtimeId);
         entry.runtime.webContents.close();
         this.entries.delete(runtimeId);
+    }
+
+    // ── Internals ────────────────────────────────────────────────────
+
+    private transitionLoadState(runtimeId: string, target: LoadState): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry)
+            return;
+        entry.runtime.info.loadState = target;
+    }
+
+    private getPluginDisplayName(pluginId: string): string {
+        const plugin = this.pluginManager.get(pluginId);
+        if (plugin) {
+            const feature = plugin.manifest.features[0];
+            if (feature?.explain)
+                return feature.explain;
+        }
+        return pluginId;
+    }
+
+    private publishState(runtimeId: string, mountState: MountState, loadState: LoadState): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry)
+            return;
+
+        const pluginName = this.getPluginDisplayName(entry.runtime.info.pluginId);
+        let featureExplain = '';
+        const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
+        if (plugin) {
+            const feature = plugin.manifest.features[0];
+            if (feature)
+                featureExplain = feature.explain || '';
+        }
+
+        const win = this.windowManager.getWindow();
+        if (win && !win.isDestroyed()) {
+            win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
+                runtimeId: entry.runtime.info.id,
+                pluginId: entry.runtime.info.pluginId,
+                pluginName,
+                featureExplain,
+                state: mountState,
+                mountState,
+                loadState,
+            });
+        }
     }
 }

@@ -192,15 +192,15 @@ export function registerIpcHandlers(
 
     ipcMain.handle(
         IPC.HOST_SWITCH,
-        (_event, { pluginId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
+        (_event, { runtimeId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
             try {
-                const runtime = coordinator.getOrCreateRuntime(pluginId);
+                const runtime = coordinator.getRuntime(runtimeId);
                 if (!runtime)
-                    return { ok: false, error: 'Plugin not found' };
+                    return { ok: false, error: 'Runtime not found' };
 
-                coordinator.moveToHost(runtime.info.id, targetHost);
+                coordinator.moveToHost(runtimeId, targetHost);
 
-                const hostId = runtime.host?.id;
+                const hostId = coordinator.getHostFor(runtimeId)?.id;
                 return { ok: true, hostId };
             }
             catch (err) {

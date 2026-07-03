@@ -4,10 +4,14 @@ import { CommandCatalog, createPlatformDatabase, PluginCatalog, registerIpcHandl
 import { app } from 'electron';
 
 const windowManager = new WindowManager();
-const hostRegistry = windowManager.initHostRegistry();
 const shortcutManager = new ShortcutManager();
 
 void app.whenReady().then(async () => {
+    const preloadPath = join(__dirname, '../preload/host.js');
+    const pluginPreloadPath = join(__dirname, '../preload/plugin.js');
+
+    const hostRegistry = windowManager.initHostRegistry(pluginPreloadPath);
+
     // Command catalog — SQLite-backed feature indexing and dynamic feature store
     const platformDb = createPlatformDatabase(join(app.getPath('userData'), 'szybko-platform.db'));
     const commandCatalog = CommandCatalog.createForDatabase(platformDb);
@@ -25,10 +29,8 @@ void app.whenReady().then(async () => {
         commandCatalog.indexPlugin(plugin.id, plugin.manifest, plugin.path);
     }
 
-    const preloadPath = join(__dirname, '../preload/host.js');
-    const pluginPreloadPath = join(__dirname, '../preload/plugin.js');
     const runtimeManager = new RuntimeManager(pluginManager, windowManager, pluginPreloadPath);
-    await runtimeManager.startAll();
+    runtimeManager.startAll();
 
     const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginManager);
 
@@ -50,10 +52,9 @@ void app.whenReady().then(async () => {
     // Cmd/Ctrl+D — 主窗口有焦点时分离
     win.webContents.on('before-input-event', (_event, input) => {
         if ((input.control || input.meta) && input.key.toLowerCase() === 'd') {
-            // 通过 coordinator 找到 launcher host 上的 runtime 并分离
-            const launcher = hostRegistry.getOrCreateLauncherHost();
             for (const rt of runtimeManager.getAll()) {
-                if (rt.host?.id === launcher.id) {
+                const host = runtimeManager.getHostFor(rt.info.id);
+                if (host?.id === 'launcher-host') {
                     coordinator.moveToHost(rt.info.id, 'floating');
                     break;
                 }

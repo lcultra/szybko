@@ -1,7 +1,6 @@
 import type { WebContentsView } from 'electron';
-import type { PluginRuntime } from '../../runtime/types';
+import type { HostMeta, RuntimeHost } from './runtime-host';
 import type { Closable, Focusable, Pinnable } from './capabilities';
-import type { RuntimeHost } from './runtime-host';
 import { join } from 'node:path';
 import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
@@ -12,34 +11,41 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     type = 'floating' as const;
     private window: BrowserWindow | null = null;
     private view: WebContentsView | null = null;
-    private runtimeId: string | null = null;
+    private currentMeta: HostMeta | null = null;
 
-    constructor(id: string) { this.id = id; }
+    constructor(
+        id: string,
+        private pluginPreloadPath: string,
+    ) { this.id = id; }
 
-    attach(runtime: PluginRuntime, view?: WebContentsView) {
+    attach(view: WebContentsView, meta: HostMeta): void {
+        this.currentMeta = meta;
+
         // 自动创建窗口（如果尚未创建）
         if (!this.window) {
-            this.createWindow(runtime.pluginName, runtime.info.id);
+            this.createWindow(meta.pluginName, meta.runtimeId);
         }
         if (view) {
             this.view = view;
             this.window!.contentView.addChildView(view);
-            view.setBounds({ x: BORDER_WIDTH, y: SEARCHBAR_HEIGHT, width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2, height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH });
+            view.setBounds({
+                x: BORDER_WIDTH,
+                y: SEARCHBAR_HEIGHT,
+                width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
+                height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH,
+            });
         }
-        runtime.host = this;
         this.window!.show();
     }
 
-    detach(runtime: PluginRuntime) {
+    detach(): void {
         if (this.view && this.window && !this.window.isDestroyed()) {
             this.window.contentView.removeChildView(this.view);
         }
-        runtime.host = null;
         this.view = null;
     }
 
-    createWindow(pluginName: string, runtimeId: string, pluginId?: string, explain?: string) {
-        this.runtimeId = runtimeId;
+    private createWindow(pluginName: string, runtimeId: string): void {
         this.window = new BrowserWindow({
             width: DEFAULT_WINDOW_WIDTH,
             height: 600,
@@ -48,7 +54,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             titleBarStyle: 'hidden',
             trafficLightPosition: { x: 12, y: 26 },
             webPreferences: {
-                preload: join(__dirname, '../preload/host.js'),
+                preload: this.pluginPreloadPath,
                 contextIsolation: true,
                 nodeIntegration: false,
             },
@@ -57,7 +63,12 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         this.window.getContentView().setBorderRadius(10);
 
         // 加载 Renderer 的 floating 页面
-        const query: Record<string, string> = { name: pluginName, runtimeId, pluginId: pluginId ?? '', explain: explain ?? '' };
+        const query: Record<string, string> = {
+            name: pluginName,
+            runtimeId,
+            pluginId: this.currentMeta?.runtimeId ?? '',
+            explain: '',
+        };
         if (process.env.ELECTRON_RENDERER_URL) {
             const qs = new URLSearchParams(query).toString();
             void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating.html?${qs}`);
@@ -68,7 +79,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     }
 
     /** 显示并聚焦浮动窗口 */
-    focus() {
+    focus(): void {
         if (this.window && !this.window.isDestroyed()) {
             this.window.show();
             this.window.focus();
@@ -76,7 +87,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     }
 
     /** 切换窗口置顶 */
-    setAlwaysOnTop(pin: boolean) {
+    setAlwaysOnTop(pin: boolean): void {
         if (this.window && !this.window.isDestroyed()) {
             this.window.setAlwaysOnTop(pin);
         }
@@ -87,5 +98,6 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         this.window?.close();
         this.window = null;
         this.view = null;
+        this.currentMeta = null;
     }
 }

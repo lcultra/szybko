@@ -7,7 +7,10 @@ export class RuntimeHostRegistry {
     private hosts: Map<string, RuntimeHost> = new Map();
     private launcherHost: LauncherRuntimeHost | null = null;
 
-    constructor(private windowManager: WindowManager) {}
+    constructor(
+        private windowManager: WindowManager,
+        private pluginPreloadPath: string,
+    ) {}
 
     getOrCreateLauncherHost(): LauncherRuntimeHost {
         if (!this.launcherHost) {
@@ -18,7 +21,7 @@ export class RuntimeHostRegistry {
     }
 
     createFloatingHost(): FloatingRuntimeHost {
-        const host = new FloatingRuntimeHost(`floating-${Date.now()}`);
+        const host = new FloatingRuntimeHost(`floating-${Date.now()}`, this.pluginPreloadPath);
         this.hosts.set(host.id, host);
         return host;
     }
