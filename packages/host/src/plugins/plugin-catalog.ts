@@ -1,6 +1,7 @@
-import type { PluginRegistry } from './plugin-registry';
+import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 import { PluginLoader } from './plugin-loader';
 
 export interface PluginInfo {
@@ -14,12 +15,11 @@ export class PluginCatalog {
     private plugins: Map<string, PluginInfo> = new Map();
 
     constructor(
-        private registry: PluginRegistry,
+        private platformDb: PlatformDatabase,
         private pluginsBaseDir: string,
     ) {}
 
     async init(): Promise<void> {
-        await this.registry.init();
         this.scan();
     }
 
@@ -29,30 +29,28 @@ export class PluginCatalog {
             console.warn(`[PluginCatalog] plugins dir not found: ${this.pluginsBaseDir}`);
             return;
         }
+
+        const repos = new PluginInstallationRepository(this.platformDb.drizzle());
+
         for (const dir of readdirSync(this.pluginsBaseDir, { withFileTypes: true }).filter(e => e.isDirectory())) {
             const distPath = join(this.pluginsBaseDir, dir.name, 'dist');
             const loaded = this.loader.loadOne(distPath);
             if (loaded) {
                 loaded.id = dir.name;
                 this.plugins.set(dir.name, loaded);
-                if (!this.registry.has(dir.name)) {
-                    this.registry.register(dir.name, {
-                        source: 'built-in',
-                        enabled: true,
-                        installedAt: new Date().toISOString(),
-                        path: distPath,
-                    });
+                if (!repos.has(dir.name)) {
+                    repos.register(dir.name, 'built-in', distPath, Date.now());
                 }
-                else if (!this.registry.isEnabled(dir.name)) {
-                    this.registry.setEnabled(dir.name, true);
+                else if (!repos.isEnabled(dir.name)) {
+                    repos.setEnabled(dir.name, true);
                 }
             }
         }
 
-        // Sync registry: disable entries for plugins no longer on disk
-        for (const id of this.registry.listEnabled()) {
+        // Sync: disable entries for plugins no longer on disk
+        for (const id of repos.listEnabled()) {
             if (!this.plugins.has(id)) {
-                this.registry.setEnabled(id, false);
+                repos.setEnabled(id, false);
             }
         }
     }
@@ -66,7 +64,8 @@ export class PluginCatalog {
     }
 
     getEnabled(): PluginInfo[] {
-        return this.registry.listEnabled()
+        const repos = new PluginInstallationRepository(this.platformDb.drizzle());
+        return repos.listEnabled()
             .map(id => this.plugins.get(id))
             .filter((p): p is PluginInfo => !!p);
     }

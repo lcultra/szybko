@@ -45,4 +45,54 @@ export class PluginInstallationRepository {
 
         return rows.length > 0 ? rows[0]! : null;
     }
+
+    has(pluginId: string): boolean {
+        const rows = this.db.select({ id: pluginInstallation.pluginId })
+            .from(pluginInstallation)
+            .where(eq(pluginInstallation.pluginId, pluginId))
+            .all();
+        return rows.length > 0;
+    }
+
+    isEnabled(pluginId: string): boolean {
+        const rows = this.db.select({ enabled: pluginInstallation.enabled })
+            .from(pluginInstallation)
+            .where(eq(pluginInstallation.pluginId, pluginId))
+            .all();
+        return rows.length > 0 && rows[0]!.enabled === 1;
+    }
+
+    setEnabled(pluginId: string, enabled: boolean): void {
+        this.db.update(pluginInstallation)
+            .set({ enabled: enabled ? 1 : 0, updatedAt: Date.now() })
+            .where(eq(pluginInstallation.pluginId, pluginId))
+            .run();
+    }
+
+    listEnabled(): string[] {
+        const rows = this.db.select({ pluginId: pluginInstallation.pluginId })
+            .from(pluginInstallation)
+            .where(eq(pluginInstallation.enabled, 1))
+            .all();
+        return rows.map(r => r.pluginId);
+    }
+
+    register(
+        pluginId: string,
+        source: 'built-in' | 'user-installed',
+        path: string,
+        now: number,
+    ): void {
+        this.db.insert(pluginInstallation)
+            .values({
+                pluginId,
+                source,
+                enabled: 1,
+                installPath: path,
+                manifestHash: '',
+                createdAt: now,
+                updatedAt: now,
+            })
+            .run();
+    }
 }
