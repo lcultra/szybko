@@ -197,12 +197,22 @@ export class RuntimeManager {
         if (!entry)
             return;
 
+        // 通知渲染进程（先于视图移动，让 UI 及时切换回搜索）
+        const win = this.windowManager.getWindow();
+        if (win && !win.isDestroyed()) {
+            win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
+                runtimeId: entry.runtime.id,
+                pluginId: entry.runtime.pluginId,
+                state: 'detached',
+            });
+        }
+
         // 从主窗口移除
         this.windowManager.detachPluginView();
         entry.runtime.state = 'detached';
         entry.runtime.host = null;
 
-        // 创建浮动窗口
+        // 创建浮动窗口并迁移视图
         const host = new FloatingHost(`floating-${Date.now()}`);
         host.createWindow();
         host.attach(entry.runtime, entry.view);
