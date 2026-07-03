@@ -21,26 +21,24 @@ export class CommandProjectionRepository {
     constructor(private db: PlatformDrizzleDatabase) {}
 
     replaceForPlugin(pluginId: string, projection: CommandProjection): void {
-        this.db.transaction((tx) => {
-            tx.delete(effectiveFeature).where(eq(effectiveFeature.pluginId, pluginId)).run();
-            tx.delete(commandTrigger).where(eq(commandTrigger.pluginId, pluginId)).run();
-            if (projection.effectiveFeatures.length > 0)
-                tx.insert(effectiveFeature).values(projection.effectiveFeatures).run();
-            if (projection.commandTriggers.length > 0)
-                tx.insert(commandTrigger).values(projection.commandTriggers).run();
-            tx.insert(commandProjectionMeta)
-                .values(projection.meta)
-                .onConflictDoUpdate({
-                    target: commandProjectionMeta.pluginId,
-                    set: {
-                        manifestHash: projection.meta.manifestHash,
-                        overrideFingerprint: projection.meta.overrideFingerprint,
-                        indexVersion: projection.meta.indexVersion,
-                        rebuiltAt: projection.meta.rebuiltAt,
-                    },
-                })
-                .run();
-        });
+        this.db.delete(effectiveFeature).where(eq(effectiveFeature.pluginId, pluginId)).run();
+        this.db.delete(commandTrigger).where(eq(commandTrigger.pluginId, pluginId)).run();
+        if (projection.effectiveFeatures.length > 0)
+            this.db.insert(effectiveFeature).values(projection.effectiveFeatures).run();
+        if (projection.commandTriggers.length > 0)
+            this.db.insert(commandTrigger).values(projection.commandTriggers).run();
+        this.db.insert(commandProjectionMeta)
+            .values(projection.meta)
+            .onConflictDoUpdate({
+                target: commandProjectionMeta.pluginId,
+                set: {
+                    manifestHash: projection.meta.manifestHash,
+                    overrideFingerprint: projection.meta.overrideFingerprint,
+                    indexVersion: projection.meta.indexVersion,
+                    rebuiltAt: projection.meta.rebuiltAt,
+                },
+            })
+            .run();
     }
 
     matchTextCommand(normalizedKey: string): CommandSearchRow[] {

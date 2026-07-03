@@ -1,7 +1,7 @@
 import type { PluginFeature, PluginManifest, SearchResult } from '@szybko/shared';
 import { createHash } from 'node:crypto';
 import { buildCommandProjection } from './command-projection-builder';
-import { normalizeTextKey } from './feature-normalizer';
+import { normalizeTextKey, stableJson } from './feature-normalizer';
 import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { FeatureOverrideRepository } from '../persistence/sqlite/repositories/feature-override-repository';
@@ -11,7 +11,7 @@ import { PluginInstallationRepository } from '../persistence/sqlite/repositories
 const INDEX_VERSION = 1;
 
 function hashManifest(manifest: PluginManifest): string {
-    return createHash('sha256').update(JSON.stringify(manifest.features)).digest('hex');
+    return createHash('sha256').update(stableJson(manifest.features)).digest('hex');
 }
 
 function createRepositories(db: PlatformDrizzleDatabase) {
@@ -78,12 +78,16 @@ export class CommandCatalog {
     }
 
     setFeature(pluginId: string, feature: PluginFeature): { ok: boolean; error?: string } {
-        this.platformDb.transaction((tx) => {
-            const repos = createRepositories(tx);
-            repos.featureOverrides.setActive(pluginId, feature, Date.now());
-            this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
-        });
-        return { ok: true };
+        try {
+            this.platformDb.transaction((tx) => {
+                const repos = createRepositories(tx);
+                repos.featureOverrides.setActive(pluginId, feature, Date.now());
+                this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
+            });
+            return { ok: true };
+        } catch (e) {
+            return { ok: false, error: (e as Error).message };
+        }
     }
 
     getDynamicFeatures(pluginId: string, codes?: string[]): PluginFeature[] {
@@ -91,12 +95,16 @@ export class CommandCatalog {
     }
 
     removeFeature(pluginId: string, code: string): { ok: boolean; error?: string } {
-        this.platformDb.transaction((tx) => {
-            const repos = createRepositories(tx);
-            repos.featureOverrides.setRemoved(pluginId, code, Date.now());
-            this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
-        });
-        return { ok: true };
+        try {
+            this.platformDb.transaction((tx) => {
+                const repos = createRepositories(tx);
+                repos.featureOverrides.setRemoved(pluginId, code, Date.now());
+                this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
+            });
+            return { ok: true };
+        } catch (e) {
+            return { ok: false, error: (e as Error).message };
+        }
     }
 
     private rebuildPluginWithRepositories(

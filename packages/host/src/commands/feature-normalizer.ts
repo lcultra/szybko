@@ -25,6 +25,10 @@ export function normalizeTextKey(value: string): string {
     return value.trim().normalize('NFKC').toLocaleLowerCase();
 }
 
+export function normalizeFeatureCode(value: string): string {
+    return value.trim();
+}
+
 export function stableJson(value: unknown): string {
     if (Array.isArray(value))
         return `[${value.map(stableJson).join(',')}]`;
@@ -167,7 +171,7 @@ export function normalizeFeature(feature: PluginFeature): NormalizedFeature {
     });
     const normalizedFeature: PluginFeature = {
         ...feature,
-        code: feature.code.trim(),
+        code: normalizeFeatureCode(feature.code),
         cmds: feature.cmds,
     };
     const featureJson = stableJson(normalizedFeature);

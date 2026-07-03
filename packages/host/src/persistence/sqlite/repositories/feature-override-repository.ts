@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { PluginFeature } from '@szybko/shared';
 import type { PlatformDrizzleDatabase } from '../platform-database';
 import { featureOverride } from '../schema';
-import { normalizeFeature, stableJson } from '../../../commands/feature-normalizer';
+import { normalizeFeature, normalizeFeatureCode, stableJson } from '../../../commands/feature-normalizer';
 import type { FeatureOverrideInput } from '../../../commands/command-projection-builder';
 
 export class FeatureOverrideRepository {
@@ -13,7 +13,7 @@ export class FeatureOverrideRepository {
         this.db.insert(featureOverride)
             .values({
                 pluginId,
-                code: feature.code,
+                code: normalized.code,
                 state: 'active',
                 featureJson: normalized.featureJson,
                 featureHash: normalized.featureHash,
@@ -33,10 +33,11 @@ export class FeatureOverrideRepository {
     }
 
     setRemoved(pluginId: string, code: string, now: number): void {
+        const normalizedCode = normalizeFeatureCode(code);
         this.db.insert(featureOverride)
             .values({
                 pluginId,
-                code,
+                code: normalizedCode,
                 state: 'removed',
                 featureJson: null,
                 featureHash: null,
@@ -77,7 +78,7 @@ export class FeatureOverrideRepository {
             eq(featureOverride.state, 'active'),
         ];
         if (codes && codes.length > 0) {
-            conditions.push(inArray(featureOverride.code, codes));
+            conditions.push(inArray(featureOverride.code, codes.map(normalizeFeatureCode)));
         }
 
         const rows = this.db.select()

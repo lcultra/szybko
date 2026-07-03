@@ -35,4 +35,19 @@ describe('commandCatalog', () => {
         expect(catalog.match('设置')).toHaveLength(0);
         expect(catalog.match('config')).toHaveLength(1);
     });
+
+    it('normalizes dynamic feature code before applying an override', () => {
+        const platformDb = createInMemoryPlatformDatabase();
+        const catalog = CommandCatalog.createForDatabase(platformDb);
+
+        catalog.indexPlugin('preferences', {
+            main: 'index.html',
+            logo: 'logo.png',
+            features: [{ code: 'prefs', explain: '首选项', cmds: ['设置'] }],
+        }, '/plugins/preferences/dist');
+        catalog.setFeature('preferences', { code: ' prefs ', explain: '配置', cmds: ['config'] });
+
+        expect(catalog.match('设置')).toHaveLength(0);
+        expect(catalog.match('config')).toHaveLength(1);
+    });
 });

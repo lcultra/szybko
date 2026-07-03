@@ -96,7 +96,8 @@
       "Bash(tsconfig.web.json)",
       "Bash(tsconfig.base.json)",
       "Bash(types: [\"node\"])",
-      "Bash(packages/shell/src/vite-env.d.ts)"
+      "Bash(packages/shell/src/vite-env.d.ts)",
+      "Bash(grep -v 'node_modules\\\\|\\\\.git\\\\|\\\\.d\\\\.ts$')"
     ],
     "additionalDirectories": [
       "/Users/pengcheng17/Documents/workspace/ai/szybko/packages/shared",
