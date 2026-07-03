@@ -1,4 +1,4 @@
-import { PluginScene } from './components/PluginScene.js';
+import { PluginScene } from '../../plugin/PluginScene.js';
 
 const params = new URLSearchParams(window.location.search);
 const pluginName = params.get('name') || '插件';

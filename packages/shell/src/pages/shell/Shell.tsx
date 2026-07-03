@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { PluginHeader } from './components/PluginHeader.js';
-import { PluginScene } from './components/PluginScene.js';
-import { ResultList } from './components/ResultList.js';
-import { SearchBar } from './components/SearchBar.js';
-import { WindowFrame } from './components/WindowFrame.js';
+import { PluginHeader } from '../../plugin/PluginHeader.js';
+import { PluginScene } from '../../plugin/PluginScene.js';
+import { ResultList } from './ResultList.js';
+import { SearchBar } from './SearchBar.js';
+import { WindowFrame } from './WindowFrame.js';
 import { useKeyboard } from './hooks/useKeyboard.js';
 import { useSearch } from './hooks/useSearch.js';
 import { useWindowHeight } from './hooks/useWindowHeight.js';
-import { useAppStore } from './stores/app-store.js';
-import './app.css';
+import { useAppStore } from '../../stores/app-store.js';
+import '../../app.css';
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);

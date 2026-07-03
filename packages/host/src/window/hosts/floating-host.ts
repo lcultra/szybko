@@ -52,10 +52,10 @@ export class FloatingHost implements Host {
 
         // 加载 Renderer 的 floating 页面
         if (process.env.ELECTRON_RENDERER_URL) {
-            void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating-index.html?name=${pluginName}&runtimeId=${runtimeId}`);
+            void this.window.loadURL(`${process.env.ELECTRON_RENDERER_URL.replace(/\/$/, '')}/floating.html?name=${pluginName}&runtimeId=${runtimeId}`);
         }
         else {
-            void this.window.loadFile(join(__dirname, '../renderer/floating-index.html'), {
+            void this.window.loadFile(join(__dirname, '../renderer/floating.html'), {
                 query: { name: pluginName, runtimeId },
             });
         }

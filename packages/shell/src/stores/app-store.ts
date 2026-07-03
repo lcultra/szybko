@@ -32,7 +32,7 @@ export const useAppStore = create<AppStore>(set => ({
     setResults: results => set({ results }),
     setSelectedIndex: selectedIndex => set({ selectedIndex }),
     setState: state => set({ state }),
-    setActivePlugin: (id, runtimeId = null, name = '', explain = '') => set({
+    setActivePlugin: (id, runtimeId, name = '', explain = '') => set({
         activePluginId: id,
         activeRuntimeId: runtimeId,
         activePluginName: name,
