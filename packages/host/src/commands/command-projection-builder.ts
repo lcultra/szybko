@@ -65,7 +65,7 @@ export interface CommandProjection {
     };
 }
 
-function buildSearchEntries(
+export function buildSearchEntries(
     pluginId: string,
     featureCode: string,
     cmdKey: string,
