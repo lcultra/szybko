@@ -139,16 +139,3 @@ export function createPlatformDatabase(filePath: string): PlatformDatabase {
         transaction: fn => wrapTx(db, fn),
     };
 }
-
-export function createInMemoryPlatformDatabase(): PlatformDatabase {
-    const sqlite = new DatabaseSync(':memory:');
-    configure(sqlite);
-    createSchema(sqlite);
-    const db = drizzle({ client: sqlite, schema });
-    return {
-        open: () => undefined,
-        close: () => sqlite.close(),
-        drizzle: () => db,
-        transaction: fn => wrapTx(db, fn),
-    };
-}

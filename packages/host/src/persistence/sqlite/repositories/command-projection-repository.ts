@@ -41,39 +41,6 @@ export class CommandProjectionRepository {
             .run();
     }
 
-    matchTextCommand(normalizedKey: string): CommandSearchRow[] {
-        return this.db.select({
-            pluginId: commandTrigger.pluginId,
-            featureCode: commandTrigger.featureCode,
-            cmdKey: commandTrigger.cmdKey,
-            triggerIndex: commandTrigger.triggerIndex,
-            source: commandTrigger.source,
-            type: commandTrigger.type,
-            label: commandTrigger.label,
-            normalizedKey: commandTrigger.normalizedKey,
-            targetCmdKey: commandTrigger.targetCmdKey,
-            scoreBase: commandTrigger.scoreBase,
-            featureJson: effectiveFeature.featureJson,
-        })
-            .from(commandTrigger)
-            .innerJoin(effectiveFeature, and(
-                eq(effectiveFeature.pluginId, commandTrigger.pluginId),
-                eq(effectiveFeature.code, commandTrigger.featureCode),
-            ))
-            .innerJoin(pluginInstallation, eq(pluginInstallation.pluginId, commandTrigger.pluginId))
-            .where(and(
-                eq(pluginInstallation.enabled, 1),
-                eq(commandTrigger.type, 'text'),
-                eq(commandTrigger.normalizedKey, normalizedKey),
-            ))
-            .orderBy(
-                desc(commandTrigger.scoreBase),
-                asc(effectiveFeature.featureOrder),
-                asc(commandTrigger.triggerIndex),
-            )
-            .all();
-    }
-
     listTriggersByType(types: CommandSearchRow['type'][]): CommandSearchRow[] {
         return this.db.select({
             pluginId: commandTrigger.pluginId,

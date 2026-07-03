@@ -1,6 +1,7 @@
 import type {
     IpcInvokeContract,
     IpcRendererToMainEventContract,
+    SearchResult,
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
 import type { CommandCatalog } from '../commands/command-catalog';
@@ -13,7 +14,6 @@ import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { runPipeline } from '../input/matcher-pipeline';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
-import { runBuiltinSearch } from './builtin-search';
 import { executeAction } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
@@ -34,8 +34,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.SEARCH_QUERY,
         (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
-            // Built-in search
-            const results = runBuiltinSearch(req.query);
+            const results: SearchResult[] = [];
 
             // Matcher pipeline (text/regex/over against command triggers)
             if (platformDb) {
@@ -269,10 +268,3 @@ export function registerIpcHandlers(
     );
 }
 
-// ── Push notifications ────────────────────────────────────────────
-
-export function notifyShowMainWindow(win: BrowserWindow) {
-    if (!win.isDestroyed()) {
-        win.webContents.send(IPC.WINDOW_SHOW);
-    }
-}

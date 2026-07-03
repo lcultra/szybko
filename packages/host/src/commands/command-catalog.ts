@@ -1,4 +1,4 @@
-import type { PluginFeature, PluginManifest, SearchResult } from '@szybko/shared';
+import type { PluginFeature, PluginManifest } from '@szybko/shared';
 import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
 import { createHash } from 'node:crypto';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
@@ -6,7 +6,7 @@ import { FeatureOverrideRepository } from '../persistence/sqlite/repositories/fe
 import { ManifestFeatureRepository } from '../persistence/sqlite/repositories/manifest-feature-repository';
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 import { buildCommandProjection } from './command-projection-builder';
-import { normalizeTextKey, stableJson } from './feature-normalizer';
+import { stableJson } from './feature-normalizer';
 
 const INDEX_VERSION = 1;
 
@@ -55,26 +55,6 @@ export class CommandCatalog {
 
             repos.commandProjections.replaceForPlugin(pluginId, projection);
         });
-    }
-
-    match(query: string): SearchResult[] {
-        const normalized = normalizeTextKey(query);
-        if (!normalized)
-            return [];
-
-        const rows = createRepositories(this.platformDb.drizzle()).commandProjections.matchTextCommand(normalized);
-
-        return rows
-            .filter(row => row.type === 'text')
-            .map(row => ({
-                id: `plugin-activate-${row.pluginId}-${row.featureCode}-${row.cmdKey}`,
-                title: row.label || row.featureCode,
-                subtitle: `打开 ${row.pluginId}`,
-                icon: '🧩',
-                group: '插件',
-                score: row.scoreBase,
-                action: { type: 'plugin.open', payload: { pluginId: row.pluginId, featureCode: row.featureCode } },
-            }));
     }
 
     setFeature(pluginId: string, feature: PluginFeature): { ok: boolean; error?: string } {
