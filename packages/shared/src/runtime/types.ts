@@ -15,3 +15,12 @@ export interface RuntimeHostInfo {
     id: string;
     type: 'launcher' | 'floating';
 }
+
+export interface RuntimeSlot {
+    runtimeId: string | null;
+    pluginId: string | null;
+    pluginName: string;
+    featureExplain: string;
+    loadState: LoadState;
+    mountState: MountState;
+}

@@ -135,9 +135,12 @@ export class RuntimeManager {
             existingHost.detach();
         }
 
+        const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
         host.attach(entry.runtime.webContentsView, {
             runtimeId: entry.runtime.info.id,
+            pluginId: entry.runtime.info.pluginId,
             pluginName: this.getPluginDisplayName(entry.runtime.info.pluginId),
+            featureExplain: plugin?.manifest.features[0]?.explain,
         });
 
         this.hostMap.set(runtimeId, host);
