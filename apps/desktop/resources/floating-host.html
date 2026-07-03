@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>插件</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #2a2a2a; }
+            #header {
+                display: flex; align-items: center; height: 48px; padding: 0 12px;
+                background: #2a2a2a; border-bottom: 1px solid #525252; user-select: none;
+            }
+            #drag-region { flex: 1; -webkit-app-region: drag; }
+            #title { font-size: 13px; font-weight: 600; color: #f5f5f5; margin-left: 8px; }
+            #close {
+                width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+                border: none; background: transparent; border-radius: 6px; cursor: pointer;
+                color: #a3a3a3; font-size: 16px; line-height: 1; transition: all 0.15s;
+            }
+            #close:hover { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+            #scene { width: 100%; }
+        </style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="close" onclick="window.close?.()">✕</div>
+            <div id="drag-region" />
+            <div id="title">...</div>
+        </div>
+        <div id="scene" />
+        <script>
+            const params = new URLSearchParams(window.location.search);
+            const name = params.get('name') || '插件';
+            document.title = name;
+            document.getElementById('title').textContent = name;
+        </script>
+    </body>
+</html>

@@ -223,9 +223,17 @@ export class RuntimeManager {
         entry.runtime.state = 'detached';
         entry.runtime.host = null;
 
+        // 查询插件名
+        let pluginName = entry.runtime.pluginId;
+        const pluginInfo = this.pluginManager.get(entry.runtime.pluginId);
+        if (pluginInfo) {
+            const feature = pluginInfo.manifest.features[0];
+            if (feature) pluginName = feature.explain || pluginInfo.id;
+        }
+
         // 创建浮动窗口并迁移视图
         const host = new FloatingHost(`floating-${Date.now()}`);
-        host.createWindow();
+        host.createWindow(pluginName);
         host.attach(entry.runtime, entry.view);
     }
 
