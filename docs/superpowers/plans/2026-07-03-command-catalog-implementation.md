@@ -985,11 +985,16 @@ git commit -m "feat(host): normalize plugin commands with stable cmd keys"
 - Create: `packages/host/src/commands/command-projection-builder.test.ts`
 
 **Interfaces:**
-- Produces: `PluginInstallationRepository.upsertBuiltIn(pluginId, installPath, manifestHash): void`
-- Produces: `FeatureOverrideRepository.setActive(pluginId, feature): void`
-- Produces: `FeatureOverrideRepository.setRemoved(pluginId, code): void`
-- Produces: `ManifestFeatureRepository.replaceForPlugin(pluginId, manifestHash, features): void`
+- Produces: `PluginInstallationRepository.upsertBuiltIn(args: { pluginId: string; installPath: string; manifestHash: string; now: number }): void`
+- Produces: `PluginInstallationRepository.get(pluginId: string): { pluginId: string; manifestHash: string } | null`
+- Produces: `FeatureOverrideRepository.setActive(pluginId: string, feature: PluginFeature, now: number): void`
+- Produces: `FeatureOverrideRepository.setRemoved(pluginId: string, code: string, now: number): void`
+- Produces: `FeatureOverrideRepository.listForProjection(pluginId: string): FeatureOverrideInput[]`
+- Produces: `FeatureOverrideRepository.listActiveFeatures(pluginId: string, codes?: string[]): PluginFeature[]`
+- Produces: `ManifestFeatureRepository.replaceForPlugin(pluginId: string, manifestHash: string, features: PluginFeature[], now: number): void`
+- Produces: `ManifestFeatureRepository.listForProjection(pluginId: string): ManifestFeatureInput[]`
 - Produces: `CommandProjectionRepository.replaceForPlugin(pluginId, projection): void`
+- Produces: `CommandProjectionRepository.matchTextCommand(normalizedKey: string): CommandSearchRow[]`
 - Produces: `buildCommandProjection(input): CommandProjection`
 
 - [ ] **Step 1: Write failing projection tests**
@@ -1214,15 +1219,29 @@ export function buildCommandProjection(input: BuildProjectionInput): CommandProj
 
 - [ ] **Step 3: Implement repository classes**
 
-Create repository files with methods matching the interfaces above. Use Drizzle `insert().values().onConflictDoUpdate()`, `delete()`, `select()`, and `eq/and` from `drizzle-orm`. `CommandProjectionRepository.replaceForPlugin()` must delete old `effectiveFeature` rows for the plugin and insert new effective/features/triggers/meta in one caller-owned transaction.
+Create repository files with the exact methods listed in this task's Interfaces block. Use Drizzle `insert().values().onConflictDoUpdate()`, `delete()`, `select()`, and `eq/and` from `drizzle-orm`. `CommandProjectionRepository.replaceForPlugin()` must delete old `effectiveFeature` rows for the plugin and insert new effective/features/triggers/meta in one caller-owned transaction.
 
 Use this concrete method signature for `command-projection-repository.ts`:
 
 ```typescript
-import { and, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import type { PlatformDrizzleDatabase } from '../platform-database';
-import { commandProjectionMeta, commandTrigger, effectiveFeature } from '../schema';
+import { commandProjectionMeta, commandTrigger, effectiveFeature, pluginInstallation } from '../schema';
 import type { CommandProjection } from '../../../commands/command-projection-builder';
+
+export interface CommandSearchRow {
+    pluginId: string;
+    featureCode: string;
+    cmdKey: string;
+    triggerIndex: number;
+    source: 'feature_cmd' | 'alias';
+    type: 'text' | 'regex' | 'over' | 'img' | 'files' | 'window';
+    label: string | null;
+    normalizedKey: string | null;
+    targetCmdKey: string | null;
+    scoreBase: number;
+    featureJson: string;
+}
 
 export class CommandProjectionRepository {
     constructor(private db: PlatformDrizzleDatabase) {}
@@ -1247,13 +1266,36 @@ export class CommandProjectionRepository {
             .run();
     }
 
-    matchTextCommand(normalizedKey: string) {
-        return this.db.select()
+    matchTextCommand(normalizedKey: string): CommandSearchRow[] {
+        return this.db.select({
+            pluginId: commandTrigger.pluginId,
+            featureCode: commandTrigger.featureCode,
+            cmdKey: commandTrigger.cmdKey,
+            triggerIndex: commandTrigger.triggerIndex,
+            source: commandTrigger.source,
+            type: commandTrigger.type,
+            label: commandTrigger.label,
+            normalizedKey: commandTrigger.normalizedKey,
+            targetCmdKey: commandTrigger.targetCmdKey,
+            scoreBase: commandTrigger.scoreBase,
+            featureJson: effectiveFeature.featureJson,
+        })
             .from(commandTrigger)
+            .innerJoin(effectiveFeature, and(
+                eq(effectiveFeature.pluginId, commandTrigger.pluginId),
+                eq(effectiveFeature.code, commandTrigger.featureCode),
+            ))
+            .innerJoin(pluginInstallation, eq(pluginInstallation.pluginId, commandTrigger.pluginId))
             .where(and(
+                eq(pluginInstallation.enabled, 1),
                 eq(commandTrigger.type, 'text'),
                 eq(commandTrigger.normalizedKey, normalizedKey),
             ))
+            .orderBy(
+                desc(commandTrigger.scoreBase),
+                asc(effectiveFeature.featureOrder),
+                asc(commandTrigger.triggerIndex),
+            )
             .all();
     }
 }
@@ -1374,16 +1416,27 @@ Create `packages/host/src/commands/command-catalog.ts` with:
 ```typescript
 import type { PluginFeature, PluginManifest, SearchResult } from '@szybko/shared';
 import { createHash } from 'node:crypto';
-import { eq } from 'drizzle-orm';
 import { buildCommandProjection } from './command-projection-builder';
 import { normalizeTextKey } from './feature-normalizer';
-import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
-import { commandTrigger, effectiveFeature, featureOverride, manifestFeatureSnapshot, pluginInstallation } from '../persistence/sqlite/schema';
+import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
+import { FeatureOverrideRepository } from '../persistence/sqlite/repositories/feature-override-repository';
+import { ManifestFeatureRepository } from '../persistence/sqlite/repositories/manifest-feature-repository';
+import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 
 const INDEX_VERSION = 1;
 
 function hashManifest(manifest: PluginManifest): string {
     return createHash('sha256').update(JSON.stringify(manifest.features)).digest('hex');
+}
+
+function createRepositories(db: PlatformDrizzleDatabase) {
+    return {
+        pluginInstallations: new PluginInstallationRepository(db),
+        manifestFeatures: new ManifestFeatureRepository(db),
+        featureOverrides: new FeatureOverrideRepository(db),
+        commandProjections: new CommandProjectionRepository(db),
+    };
 }
 
 export class CommandCatalog {
@@ -1394,43 +1447,18 @@ export class CommandCatalog {
     }
 
     indexPlugin(pluginId: string, manifest: PluginManifest, pluginPath: string): void {
-        const db = this.platformDb.drizzle();
         const now = Date.now();
         const manifestHash = hashManifest(manifest);
 
         this.platformDb.transaction((tx) => {
-            tx.insert(pluginInstallation).values({
+            const repos = createRepositories(tx);
+            repos.pluginInstallations.upsertBuiltIn({
                 pluginId,
-                source: 'built-in',
-                enabled: 1,
                 installPath: pluginPath,
-                version: null,
                 manifestHash,
-                manifestIndexedAt: now,
-                createdAt: now,
-                updatedAt: now,
-            }).onConflictDoUpdate({
-                target: pluginInstallation.pluginId,
-                set: { enabled: 1, installPath: pluginPath, manifestHash, manifestIndexedAt: now, updatedAt: now },
-            }).run();
-
-            tx.delete(manifestFeatureSnapshot).where(eq(manifestFeatureSnapshot.pluginId, pluginId)).run();
-            if (manifest.features.length > 0) {
-                tx.insert(manifestFeatureSnapshot).values(manifest.features.map((feature, featureOrder) => ({
-                    pluginId,
-                    code: feature.code,
-                    featureOrder,
-                    featureJson: JSON.stringify(feature),
-                    featureHash: createHash('sha256').update(JSON.stringify(feature)).digest('hex'),
-                    manifestHash,
-                    indexedAt: now,
-                }))).run();
-            }
-
-            const overrides = tx.select().from(featureOverride).where(eq(featureOverride.pluginId, pluginId)).all()
-                .map(row => row.state === 'removed'
-                    ? { code: row.code, state: 'removed' as const }
-                    : { code: row.code, state: 'active' as const, feature: JSON.parse(row.featureJson!) as PluginFeature });
+                now,
+            });
+            repos.manifestFeatures.replaceForPlugin(pluginId, manifestHash, manifest.features, now);
 
             const projection = buildCommandProjection({
                 pluginId,
@@ -1438,17 +1466,11 @@ export class CommandCatalog {
                 indexVersion: INDEX_VERSION,
                 now,
                 manifestFeatures: manifest.features.map((feature, featureOrder) => ({ code: feature.code, featureOrder, feature })),
-                overrides,
+                overrides: repos.featureOverrides.listForProjection(pluginId),
             });
 
-            tx.delete(effectiveFeature).where(eq(effectiveFeature.pluginId, pluginId)).run();
-            if (projection.effectiveFeatures.length > 0)
-                tx.insert(effectiveFeature).values(projection.effectiveFeatures).run();
-            if (projection.commandTriggers.length > 0)
-                tx.insert(commandTrigger).values(projection.commandTriggers).run();
+            repos.commandProjections.replaceForPlugin(pluginId, projection);
         });
-
-        void db;
     }
 
     match(query: string): SearchResult[] {
@@ -1456,10 +1478,7 @@ export class CommandCatalog {
         if (!normalized)
             return [];
 
-        const rows = this.platformDb.drizzle().select()
-            .from(commandTrigger)
-            .where(eq(commandTrigger.normalizedKey, normalized))
-            .all();
+        const rows = createRepositories(this.platformDb.drizzle()).commandProjections.matchTextCommand(normalized);
 
         return rows
             .filter(row => row.type === 'text')
@@ -1475,51 +1494,54 @@ export class CommandCatalog {
     }
 
     setFeature(pluginId: string, feature: PluginFeature): { ok: boolean; error?: string } {
-        const now = Date.now();
-        this.platformDb.drizzle().insert(featureOverride).values({
-            pluginId,
-            code: feature.code,
-            state: 'active',
-            featureJson: JSON.stringify(feature),
-            featureHash: createHash('sha256').update(JSON.stringify(feature)).digest('hex'),
-            createdAt: now,
-            updatedAt: now,
-        }).onConflictDoUpdate({
-            target: [featureOverride.pluginId, featureOverride.code],
-            set: { state: 'active', featureJson: JSON.stringify(feature), featureHash: createHash('sha256').update(JSON.stringify(feature)).digest('hex'), updatedAt: now },
-        }).run();
+        this.platformDb.transaction((tx) => {
+            const repos = createRepositories(tx);
+            repos.featureOverrides.setActive(pluginId, feature, Date.now());
+            this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
+        });
         return { ok: true };
     }
 
     getDynamicFeatures(pluginId: string, codes?: string[]): PluginFeature[] {
-        const rows = this.platformDb.drizzle().select().from(featureOverride).where(eq(featureOverride.pluginId, pluginId)).all();
-        return rows
-            .filter(row => row.state === 'active' && (!codes || codes.includes(row.code)))
-            .map(row => JSON.parse(row.featureJson!) as PluginFeature);
+        return createRepositories(this.platformDb.drizzle()).featureOverrides.listActiveFeatures(pluginId, codes);
     }
 
     removeFeature(pluginId: string, code: string): { ok: boolean; error?: string } {
-        const now = Date.now();
-        this.platformDb.drizzle().insert(featureOverride).values({
-            pluginId,
-            code,
-            state: 'removed',
-            featureJson: null,
-            featureHash: null,
-            createdAt: now,
-            updatedAt: now,
-        }).onConflictDoUpdate({
-            target: [featureOverride.pluginId, featureOverride.code],
-            set: { state: 'removed', featureJson: null, featureHash: null, updatedAt: now },
-        }).run();
+        this.platformDb.transaction((tx) => {
+            const repos = createRepositories(tx);
+            repos.featureOverrides.setRemoved(pluginId, code, Date.now());
+            this.rebuildPluginWithRepositories(pluginId, repos, Date.now());
+        });
         return { ok: true };
+    }
+
+    private rebuildPluginWithRepositories(
+        pluginId: string,
+        repos: ReturnType<typeof createRepositories>,
+        now: number,
+    ): void {
+        const installation = repos.pluginInstallations.get(pluginId);
+        if (!installation)
+            throw new Error(`Plugin ${pluginId} is not installed`);
+
+        const manifestFeatures = repos.manifestFeatures.listForProjection(pluginId);
+        const projection = buildCommandProjection({
+            pluginId,
+            manifestHash: installation.manifestHash,
+            indexVersion: INDEX_VERSION,
+            now,
+            manifestFeatures,
+            overrides: repos.featureOverrides.listForProjection(pluginId),
+        });
+
+        repos.commandProjections.replaceForPlugin(pluginId, projection);
     }
 }
 ```
 
 This initial facade owns orchestration only. Query and persistence details added in this task must stay in the repository classes created in Task 5.
 
-- [ ] **Step 3: Run tests and fix projection rebuild gap**
+- [ ] **Step 3: Run command catalog tests**
 
 Run:
 
@@ -1527,13 +1549,7 @@ Run:
 pnpm --filter @szybko/host test -- command-catalog.test.ts
 ```
 
-Expected: The second test will fail until `setFeature()` rebuilds projection after writing override. Update `setFeature()` and `removeFeature()` to call a private `rebuildPlugin(pluginId)` that reads manifest snapshots and overrides, builds projection, deletes old `effectiveFeature`, inserts new `effectiveFeature` and `commandTrigger`.
-
-Use this private method signature:
-
-```typescript
-private rebuildPlugin(pluginId: string): void
-```
+Expected: PASS. The second test verifies `setFeature()` writes through `FeatureOverrideRepository` and rebuilds projections through `CommandProjectionRepository`.
 
 - [ ] **Step 4: Remove search responsibility from PluginCatalog**
 
