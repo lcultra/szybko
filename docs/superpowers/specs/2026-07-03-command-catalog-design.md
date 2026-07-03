@@ -106,14 +106,16 @@ userData/
 ### 数据库选型
 
 - 存储引擎：SQLite。
+- TypeScript 数据访问层：Drizzle ORM。
+- SQLite driver：通过 Drizzle 的 SQLite driver 接入，并封装在 `PlatformDatabase` adapter 后面。初始实现优先使用 `node:sqlite`；如果 Electron 打包或运行时兼容性不满足，再在 adapter 内切换到 `better-sqlite3`。
 - 数据库路径：`app.getPath('userData')/szybko-platform.db`。
 - 访问位置：只在主进程或主进程拥有的 persistence/service 层访问，不向 renderer 或插件暴露数据库连接。
 - 访问边界：业务模块通过 repository 接口读写数据，不直接散落 SQL。
 - 事务要求：所有 projection 重建、插件升级索引、动态 feature 修改都必须在事务内完成。
 - 运行配置：启用 `PRAGMA foreign_keys = ON`；启用 WAL journal mode；设置合理 `busy_timeout`。
-- 迁移：使用版本化 SQL migration 或 Drizzle migration。迁移记录写入数据库内部 migration 表。
+- 迁移：使用 Drizzle schema 和 Drizzle migrations 管理。migration 文件必须进入版本控制。
 
-初始实现可以在 SQLite driver 外封装 `PlatformDatabase` adapter。业务层依赖 repository，不依赖具体 driver。driver 的选择不得影响 `PluginCatalog`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口。
+Drizzle 是 schema、migration 和类型安全查询层。业务层仍然依赖 repository，不直接依赖具体 driver。driver 的选择不得影响 `PluginCatalog`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口。
 
 ### Repository 边界
 
@@ -122,6 +124,7 @@ PlatformDatabase
   - open()
   - transaction(fn)
   - migrate()
+  - drizzle()
 
 PluginInstallationRepository
   - listEnabled()
@@ -145,6 +148,8 @@ CommandProjectionRepository
   - listEffectiveFeatures()
 ```
 
+`PlatformDatabase.drizzle()` 返回的 Drizzle database handle 只允许 repository 层使用。业务服务、IPC handler、runtime manager 和 renderer preload 都不能直接依赖 Drizzle API。
+
 ### Schema 原则
 
 - 事实表和投影表必须分开。`plugin_installation`、`manifest_feature_snapshot`、`feature_override` 是事实来源或事实快照；`effective_feature`、`command_trigger`、`command_projection_meta` 是可重建投影。
@@ -152,20 +157,11 @@ CommandProjectionRepository
 - 所有时间字段使用 Unix milliseconds integer，避免混用 ISO string 和 number。
 - Boolean 使用 `INTEGER`，并用 `CHECK (value IN (0, 1))` 约束。
 - 所有业务写入必须通过 repository，不能在 IPC handler 或 UI service 中直接拼 SQL。
-- 下面 DDL 是逻辑 schema。若使用 Drizzle，可生成等价 migration；若使用裸 SQL，应保留同等主键、外键、CHECK 和索引约束。
+- 下面 DDL 是逻辑 schema。实现时用 Drizzle schema 表达等价结构，并用 Drizzle migrations 生成或维护等价 migration。Drizzle 无法表达或不适合表达的 SQLite 细节，例如 partial index、特定 `CHECK`、PRAGMA，应通过 custom SQL migration 补齐。
 
-### schema_migration
+### Migration metadata
 
-如果使用 Drizzle migration，可以使用 Drizzle 自带迁移表。若使用自管 SQL migration，使用以下表记录数据库版本：
-
-```sql
-CREATE TABLE schema_migration (
-  version INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  checksum TEXT NOT NULL,
-  applied_at INTEGER NOT NULL
-);
-```
+使用 Drizzle 自带 migration metadata 表记录已应用 migration。不额外维护自定义 `schema_migration` 表，避免两套 migration 状态互相漂移。
 
 ### plugin_installation
 
@@ -511,7 +507,7 @@ ORDER BY
 
 当前 `PluginManifest.features` 类型可以继续作为静态 feature 和动态 feature 的基础类型，但需要扩展动态 feature 的 `platform` 和 base64 icon 兼容能力。
 
-当前 lowdb `Store` 只是现有实现状态，不应作为长期指令系统的数据边界。长期数据库应迁移到单一 SQLite 平台数据库。迁移时可以先保留 `PluginRegistry`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口，再把底层从 JSON store 替换为 DB repository。
+当前 lowdb `Store` 只是现有实现状态，不应作为长期指令系统的数据边界。长期数据库应迁移到单一 SQLite 平台数据库，并通过 Drizzle-backed repository 访问。迁移时可以先保留 `PluginRegistry`、`FeatureOverrideStore`、`CommandCatalog` 等领域接口，再把底层从 JSON store 替换为 Drizzle repository。
 
 ## 测试重点
 
