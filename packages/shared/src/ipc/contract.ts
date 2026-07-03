@@ -1,3 +1,4 @@
+import type { PluginFeature } from '../plugin/types';
 import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types';
 import type { IPC } from './channels';
 
@@ -41,6 +42,18 @@ export interface IpcInvokeContract {
     [IPC.PLUGIN_PIN]: {
         request: { runtimeId: string; pin: boolean };
         response: { ok: boolean };
+    };
+    [IPC.FEATURE_SET]: {
+        request: { feature: PluginFeature };
+        response: { ok: boolean; error?: string };
+    };
+    [IPC.FEATURE_GET]: {
+        request: { codes?: string[] };
+        response: { ok: boolean; features: PluginFeature[]; error?: string };
+    };
+    [IPC.FEATURE_REMOVE]: {
+        request: { code: string };
+        response: { ok: boolean; error?: string };
     };
 }
 

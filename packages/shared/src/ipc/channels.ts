@@ -20,4 +20,7 @@ export const IPC = {
     SHOW_PLUGIN_MENU: 'plugin:show-menu',
     PLUGIN_PIN: 'plugin:pin',
     PLUGIN_OUT: 'plugin:out',
+    FEATURE_SET: 'feature:set',
+    FEATURE_GET: 'feature:get',
+    FEATURE_REMOVE: 'feature:remove',
 } as const;

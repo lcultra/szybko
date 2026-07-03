@@ -32,8 +32,10 @@ export interface PluginFeature {
     code: string;
     /** 选填。功能简短描述。 */
     explain?: string;
-    /** 选填。功能图标文件（.png/.jpg/.svg），相对路径。 */
+    /** 选填。功能图标文件（.png/.jpg/.svg）或动态 feature 中的 data URL。 */
     icon?: string;
+    /** 选填。动态 feature 可限制平台。 */
+    platform?: string | string[];
     /** 必填。指令集合，最小长度 1。 */
     cmds: (string | MatchCommand)[];
     /** 选填。是否向主搜索框推送内容。 */
