@@ -270,4 +270,23 @@ export class RuntimeManager {
             return existing.runtime;
         return this.create(pluginId);
     }
+
+    /** 获取单个 Runtime */
+    get(runtimeId: string): PluginRuntime | undefined {
+        return this.entries.get(runtimeId)?.runtime;
+    }
+
+    /** 获取所有 Runtime */
+    getAll(): PluginRuntime[] {
+        return Array.from(this.entries.values()).map(e => e.runtime);
+    }
+
+    /** 销毁 Runtime（内部逻辑与 destroyFromWindow 一致，但不操作窗口） */
+    destroy(runtimeId: string): void {
+        const entry = this.entries.get(runtimeId);
+        if (!entry) return;
+        entry.view.webContents.close();
+        this.entries.delete(runtimeId);
+        // Phase 2 Coordinator 会在 destroy 前先 detachFromHost
+    }
 }
