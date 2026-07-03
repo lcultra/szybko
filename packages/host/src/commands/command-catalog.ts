@@ -13,6 +13,8 @@ import { stableJson } from './feature-normalizer';
 
 const INDEX_VERSION = 2;
 
+const sourcePrio = (s: string) => s === 'cmd' ? 1 : 2;
+
 function hashManifest(manifest: PluginManifest): string {
     return createHash('sha256').update(stableJson(manifest.features)).digest('hex');
 }
@@ -23,7 +25,6 @@ function dedupSearchEntries(entries: CommandTriggerSearchProjection[]): CommandT
         const key = `${e.pluginId}:${e.featureCode}:${e.cmdKey}:${e.searchText}`;
         const existing = seen.get(key);
         if (!existing) { seen.set(key, e); continue; }
-        const sourcePrio = (s: string) => s === 'cmd' ? 1 : 2;
         if (sourcePrio(e.source) < sourcePrio(existing.source)) { seen.set(key, e); continue; }
         if (sourcePrio(e.source) > sourcePrio(existing.source)) continue;
         if (e.matchLevel > existing.matchLevel) { seen.set(key, e); continue; }

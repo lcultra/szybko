@@ -21,7 +21,7 @@ export interface CommandSearchRow {
     featureCode: string;
     cmdKey: string;
     triggerIndex: number;
-    source: 'feature_cmd' | 'alias';
+    source: 'feature_cmd';
     type: 'text' | 'regex' | 'over' | 'img' | 'files' | 'window';
     label: string | null;
     scoreBase: number;

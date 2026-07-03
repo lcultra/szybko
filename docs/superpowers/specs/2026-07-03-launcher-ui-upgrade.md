@@ -98,9 +98,12 @@ export interface ResultSection {
     title: string;                 // 显示名 "固定" | "最近使用"
     items: SearchResult[];
     isPinned?: boolean;            // 是否固定 section
-    expanded: boolean;            // 当前展开状态
     totalCount: number;           // 完整数量（展开前 > items.length）
-    canExpand: boolean;           // 是否有更多可展开
+    canExpand: boolean;           // 是否有更多可展开（totalCount > items.length）
+
+    // ⚠️ 注意：expanded 不在此处定义，展开/收起是纯 UI 状态，
+    //    由 Shell 中的 expandedSectionIds: Set<string> 管理。
+    //    数据层不感知展开态，参见下方「展开/收起」章节。
 }
 ```
 
@@ -216,7 +219,7 @@ interface HighlightedTextProps {
 
 ```
 Shell: 输入查询
-  → useSearch: debounce 120ms → IPC search:query
+  → useSearch: debounce 80ms → IPC search:query
     → Main: runBuiltinSearch + CommandCatalog.match()
       → 结果以 section 形式组织返回
         → search:batch { source, section, results }
@@ -238,12 +241,23 @@ interface SearchBatch {
 }
 ```
 
+### 关于 queryId 的注意事项
+
+当前 `useSearch` 的 batch 处理存在一个已知问题：**没有按 queryId 过滤**。如果用户连续快速输入，前一次查询的结果 batch 可能在后一次到达，导致结果污染。
+
+改造时随带修复：
+- `useSearch` 持有 `currentQueryId: string | null`
+- `onSearchBatch` 回调中 `batch.queryId !== currentQueryId` 时丢弃该 batch
+- 新查询开始时 `setCurrentQueryId(newId)` 并 `setResults([])`
+```
+
 ### 展开/收起
 
 - `sections` 状态在 `Shell.tsx` 中用 `useState` 管理
-- `expandedSectionIds: Set<string>` 跟踪已展开的 section
+- `expandedSectionIds: Set<string>` 跟踪已展开的 section（纯 UI 状态，不在 `ResultSection` 模型中定义）
 - `onToggleExpand(sectionId)` → toggle Set → 触发重渲染
 - 默认每个 section 显示 `2 行 × 9 列 = 18` 项
+- 展开/收起不改变数据层返回的 section 内容，只控制前端展示数量
 
 ### 固定/取消固定
 
@@ -289,6 +303,32 @@ interface UseKeyboardOptions {
 - `ArrowLeft`: `selectedIndex - 1`，最小值 0
 - `ArrowRight`: `selectedIndex + 1`，最大值 `totalItems - 1`
 
+### Section 边界处理
+
+`selectedIndex` 是跨所有 section 的全局线性索引。SectionList 内部需要维护一个 **section → 全局索引范围** 的映射来处理导航边界：
+
+```
+Section A: [0..17]    (9列 × 2行 = 18项，未展开)
+Section B: [18..26]   (9列 × 1行 = 9项)
+    ↓ 从第18项按 ↑       → selectedIndex = 18 - 9 = 9（Section A 最后一行开头）
+    ↓ 从第17项按 ↓       → selectedIndex = 17 + 9 = 26（Section B 最后一项）
+    ↓ 从第26项按 ↓       → 已到 totalItems - 1，不变
+```
+
+Section 边界行为矩阵：
+
+| 操作 | 位置 | 行为 |
+|------|------|------|
+| `ArrowDown` | 当前 section 最后一行 | 跳到下一 section 第一行的同列位置（如果下一行列数不够，跳到下一行第一列） |
+| `ArrowUp` | 当前 section 第一行 | 跳到上一 section 最后一行的同列位置 |
+| `ArrowLeft` | section 内第一个元素 | 不变 |
+| `ArrowRight` | section 内最后一个元素 | 不变 |
+
+展开/收起时索引修正：
+- 收起 section → 该 section 的 visible 数量减少 → 后续 section 的全局 index 前移
+- 展开 section → 该 section 的 visible 数量增加 → 后续 section 的全局 index 后移
+- 实现时需维护 `sectionOffsets: number[]` 并在展开/收起时重新计算
+
 当前 useKeyboard 只有上下键。升级需要增加左右键支持，**列数从 `columns` prop 传入，不硬编码**。
 
 ---
@@ -307,7 +347,11 @@ interface UseKeyboardOptions {
     → 菜单点击 → IPC + action
 ```
 
-当前已经有 `plugin:show-menu` IPC 通道。需要新增 `result:context-menu` 通道或复用现有机制。推荐在 Shell.tsx 中监听 contextmenu 事件，通过现有 `window.szybkoInternal?.showPluginMenu(...)` 类似的 API 触发。
+需要新增 IPC 通道：
+- `result:context-menu`（renderer → main，invoke）：右键触发，传入选中的 result 信息和屏幕坐标
+- 菜单项点击对应的 action 复用现有的 `PLUGIN_EXEC` / `executeAction` 机制
+
+**与 plugin menu 的关系**：当前 `SHOW_PLUGIN_MENU` 通道是面向 plugin runtime 的（接收 runtimeId），而结果项右键菜单是完全不同的场景。不复用现有通道，新增独立通道以避免耦合。
 
 ---
 
@@ -347,6 +391,55 @@ interface UseKeyboardOptions {
 13. **搜索流改造** — `search:batch` 支持 section 元数据
 14. **固定态与 CommandCatalog 打通**
 15. **最近使用与 CommandCatalog 打通**
+
+---
+
+## 空状态与加载态
+
+### 空搜索默认页（query = ""）
+
+首次打开搜索框无输入时，不显示 "无结果"，而是展示 pinned + recent section：
+
+```
+搜索栏（聚焦）
+  └── SectionList
+        ├── PinnedSection（如有固定项）
+        └── RecentSection（如有使用记录）
+```
+
+如果 pinned 和 recent 都为空 → 隐藏 SectionList，搜索栏下方留空。
+
+### 搜索无匹配（query 有值但 results 为空）
+
+```
+搜索栏
+  └── 非空提示区域
+        └── "没有找到匹配结果"（淡色文字，居中）
+```
+
+当前 ResultList 在 `results.length === 0` 时返回 `null`，改造后仍需保持同样的视觉（无大块空白报错）。
+
+### 搜索中加载态
+
+搜索结果是 batch 流到达的。首个 batch 到达前，不应该显示空状态提示，而是保持上一次搜索结果或显示一个极简的加载指示：
+
+- Phase 1 实现：首个 batch 到达前不做额外 UI，沿用当前行为（显示旧结果直到新结果覆盖）
+- Phase 2 可以考虑：在搜索栏右侧显示一个微小的 loading 动画（搜索图标旋转或光点脉冲）
+
+---
+
+## 状态管理说明
+
+`useSearch` 与 `app-store` 在当前代码中存在状态重复：
+
+| 字段 | `useSearch` | `app-store` | 改造后 |
+|------|-------------|-------------|--------|
+| `query` | ✅ 使用 | 存在但未读 | 保留 useSearch |
+| `results` | ✅ 使用 | 存在但未读 | 保留 useSearch |
+| `selectedIndex` | ✅ 使用 | 存在但未读 | 保留 useSearch |
+| `expandedSectionIds` | 新增 | - | 放入 useSearch 或 Shell 的 useState |
+
+改造后保持单一状态源：`useSearch` 作为搜索相关状态的 owner，废弃 `app-store` 中重复的 query/results/selectedIndex 字段。
 
 ---
 

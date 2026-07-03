@@ -37,7 +37,7 @@ function filterTriggersByType(triggers: CommandSearchRow[], types: Set<string>):
 }
 
 /** 排序和去重（相同 pluginId+featureCode+cmdKey+payload 只保留最高分） */
-function dedupAndSort(matches: TriggerMatch[]): TriggerMatch[] {
+export function dedupAndSort(matches: TriggerMatch[]): TriggerMatch[] {
     const seen = new Map<string, TriggerMatch>();
     for (const m of matches) {
         const key = `${m.pluginId}:${m.featureCode}:${m.cmdKey}:${m.matchedSource}`;

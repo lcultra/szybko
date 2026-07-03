@@ -13,7 +13,7 @@ import type { TriggerMatch } from '@szybko/shared';
 import { normalizeTextKey } from '../commands/feature-normalizer';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
-import { runPipeline } from '../input/matcher-pipeline';
+import { runPipeline, dedupAndSort } from '../input/matcher-pipeline';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { executeAction } from './execute-action';
 
@@ -21,19 +21,6 @@ type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['reque
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
 
 // ── Register all IPC handlers ─────────────────────────────────────
-
-/** Deduplicate (same pluginId+featureCode+cmdKey+matchedSource, keep highest score) and sort descending by score */
-function dedupAndSort(matches: TriggerMatch[]): TriggerMatch[] {
-    const seen = new Map<string, TriggerMatch>();
-    for (const m of matches) {
-        const key = `${m.pluginId}:${m.featureCode}:${m.cmdKey}:${m.matchedSource}`;
-        const existing = seen.get(key);
-        if (!existing || m.score > existing.score) {
-            seen.set(key, m);
-        }
-    }
-    return [...seen.values()].sort((a, b) => b.score - a.score);
-}
 
 export function registerIpcHandlers(
     windowManager: WindowManager,
