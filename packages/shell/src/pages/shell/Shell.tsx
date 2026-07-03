@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { PluginView } from '../../components/PluginView';
+import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { useAppStore } from '../../stores/app-store';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useSearch } from './hooks/useSearch';
 import { useWindowHeight } from './hooks/useWindowHeight';
 import { ResultList } from './ResultList';
 import { SearchBar } from './SearchBar';
-import { SurfaceFrame } from '../../components/SurfaceFrame';
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -59,7 +59,7 @@ export default function App() {
 
     return (
         <div ref={rootRef}>
-            <SurfaceFrame className="w-full rounded-[20px] shadow-xl">
+            <SurfaceFrame className="w-full">
                 <div className="p-px">
                     {state === 'plugin' ? <PluginView /> : <SearchBar value={query} onChange={setQuery} />}
                     {state !== 'plugin' && (
