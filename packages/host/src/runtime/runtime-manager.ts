@@ -197,7 +197,7 @@ export class RuntimeManager {
 
         const host = entry.runtime.host;
         if (host) {
-            host.detach(entry.runtime);
+            (host as RuntimeHost).detach(entry.runtime);
         }
 
         this.transitionMountState(runtimeId, 'detached', reason);

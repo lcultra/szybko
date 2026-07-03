@@ -1,18 +1,12 @@
-// ── 旧类型（保留至 Phase 2） ──
-/** @deprecated Will be removed in Phase 2. */
-export interface Host {
-    id: string;
-    type: 'launcher' | 'floating';
-    attach: (runtime: PluginRuntime) => void;
-    detach: (runtime: PluginRuntime) => void;
-}
+// ── 旧类型（保留至 host 包切换到新 PluginRuntime） ──
 
-/** @deprecated Will be removed in Phase 2. */
+/** @deprecated Will be removed when host package switches to new PluginRuntime. */
 export interface PluginRuntime {
     id: string;
     pluginId: string;
     instanceId: string;
-    host: Host | null;
+    /** @deprecated Use RuntimeHost from host package instead. */
+    host: { id: string; type: 'launcher' | 'floating' } | null;
     state: RuntimeState;
     cache: Map<string, any>;
 }
