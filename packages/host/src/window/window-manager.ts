@@ -1,6 +1,6 @@
 import type { Host } from '@szybko/shared';
 import type { WebContentsView } from 'electron';
-import { DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
 import { BrowserWindow, screen } from 'electron';
 
 import { FloatingHost } from './hosts/floating-host';
@@ -88,10 +88,10 @@ export class WindowManager {
             return;
         const [, height] = this.window.getSize();
         this.pluginView.setBounds({
-            x: 0,
-            y: SEARCHBAR_HEIGHT,
-            width: DEFAULT_WINDOW_WIDTH,
-            height: Math.max(height - SEARCHBAR_HEIGHT, 0),
+            x: BORDER_WIDTH,
+            y: SEARCHBAR_HEIGHT + BORDER_WIDTH,
+            width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
+            height: Math.max(height - SEARCHBAR_HEIGHT - BORDER_WIDTH * 2, 0),
         });
     }
 }

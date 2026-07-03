@@ -1,3 +1,3 @@
 export function PluginScene() {
-    return <div className="w-full" style={{ height: '400px' }} />;
+    return <div className="min-h-100 w-full" />;
 }

@@ -61,7 +61,9 @@ export default function App() {
         <div ref={rootRef}>
             <SurfaceFrame className="rounded-[20px]">
                 <div className="p-px">
-                    {state === 'plugin' ? <PluginView /> : <SearchBar value={query} onChange={setQuery} />}
+                    {state === 'plugin'
+                        ? <PluginView />
+                        : <SearchBar value={query} onChange={setQuery} />}
                     {state !== 'plugin' && (
                         <ResultList
                             results={results}
