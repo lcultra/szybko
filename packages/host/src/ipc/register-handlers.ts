@@ -160,23 +160,28 @@ export function registerIpcHandlers(
 
     ipcMain.handle(
         IPC.SHOW_PLUGIN_MENU,
-        (_event, { runtimeId }: IpcRequest<typeof IPC.SHOW_PLUGIN_MENU>): IpcResponse<typeof IPC.SHOW_PLUGIN_MENU> => {
-            const menu = Menu.buildFromTemplate([
-                {
-                    label: '分离为独立窗口',
-                    accelerator: 'CmdOrCtrl+D',
-                    click: () => {
-                        runtimeManager?.detachToFloatingWindow(runtimeId);
+        (_event, { runtimeId, variant }: IpcRequest<typeof IPC.SHOW_PLUGIN_MENU>): IpcResponse<typeof IPC.SHOW_PLUGIN_MENU> => {
+            const isFloating = variant === 'floating';
+            const items: Electron.MenuItemConstructorOptions[] = isFloating
+                ? [
+                    {
+                        label: '结束运行',
+                        click: () => { runtimeManager?.destroyFromWindow(runtimeId); },
                     },
-                },
-                { type: 'separator' },
-                {
-                    label: '结束运行',
-                    click: () => {
-                        runtimeManager?.destroyFromWindow(runtimeId);
+                ]
+                : [
+                    {
+                        label: '分离为独立窗口',
+                        accelerator: 'CmdOrCtrl+D',
+                        click: () => { runtimeManager?.detachToFloatingWindow(runtimeId); },
                     },
-                },
-            ]);
+                    { type: 'separator' },
+                    {
+                        label: '结束运行',
+                        click: () => { runtimeManager?.destroyFromWindow(runtimeId); },
+                    },
+                ];
+            const menu = Menu.buildFromTemplate(items);
             menu.popup();
             return { ok: true };
         },

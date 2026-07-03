@@ -30,8 +30,8 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
 
     const handleMenu = useCallback(() => {
         if (activeRuntimeId)
-            window.szybkoInternal?.showPluginMenu(activeRuntimeId);
-    }, [activeRuntimeId]);
+            window.szybkoInternal?.showPluginMenu(activeRuntimeId, variant);
+    }, [activeRuntimeId, variant]);
 
     return (
         <header className="flex h-[68px] shrink-0 items-center gap-2 border-b border-border px-3">
