@@ -80,36 +80,74 @@ function createSchema(sqlite: DatabaseSync): void {
         );
         CREATE INDEX IF NOT EXISTS idx_effective_feature_plugin_source ON effective_feature(plugin_id, source);
 
-        CREATE TABLE IF NOT EXISTS command_trigger (
-          plugin_id TEXT NOT NULL,
-          feature_code TEXT NOT NULL CHECK (length(trim(feature_code)) > 0),
-          cmd_key TEXT NOT NULL CHECK (length(trim(cmd_key)) > 0),
-          trigger_index INTEGER NOT NULL CHECK (trigger_index >= 0),
-          source TEXT NOT NULL CHECK (source IN ('feature_cmd', 'alias')),
-          type TEXT NOT NULL CHECK (type IN ('text', 'regex', 'over', 'img', 'files', 'window')),
-          label TEXT,
-          matcher_json TEXT NOT NULL CHECK (json_valid(matcher_json)),
-          normalized_key TEXT,
-          alias_id INTEGER,
-          target_cmd_key TEXT,
-          score_base INTEGER NOT NULL DEFAULT 90,
-          rebuilt_at INTEGER NOT NULL,
-          PRIMARY KEY (plugin_id, feature_code, source, cmd_key),
-          CHECK (
-            (type = 'text' AND normalized_key IS NOT NULL AND length(normalized_key) > 0)
-            OR
-            (type <> 'text')
-          ),
-          CHECK (
-            (source = 'feature_cmd' AND alias_id IS NULL AND target_cmd_key IS NULL)
-            OR
-            (source = 'alias' AND alias_id IS NOT NULL AND target_cmd_key IS NOT NULL)
-          ),
-          FOREIGN KEY (plugin_id, feature_code) REFERENCES effective_feature(plugin_id, code) ON DELETE CASCADE
+        -- v1 indexes (dropped first for migration safety)
+        DROP INDEX IF EXISTS idx_command_trigger_text_lookup;
+        DROP INDEX IF EXISTS idx_command_trigger_target_cmd;
+
+        -- v2 command_trigger (IF NOT EXISTS so migration path uses command_trigger_v2)
+        CREATE TABLE IF NOT EXISTS command_trigger_v2 (
+          plugin_id       TEXT NOT NULL,
+          feature_code    TEXT NOT NULL,
+          cmd_key         TEXT NOT NULL,
+          trigger_index   INTEGER NOT NULL CHECK (trigger_index >= 0),
+          type            TEXT NOT NULL CHECK (type IN ('text','regex','over','img','files','window')),
+          label           TEXT,
+          matcher_json    TEXT NOT NULL CHECK (json_valid(matcher_json)),
+          score_base      INTEGER NOT NULL DEFAULT 90,
+          rebuilt_at      INTEGER NOT NULL,
+          PRIMARY KEY (plugin_id, feature_code, cmd_key)
         );
-        CREATE INDEX IF NOT EXISTS idx_command_trigger_text_lookup ON command_trigger(normalized_key, plugin_id, feature_code, source) WHERE type = 'text';
-        CREATE INDEX IF NOT EXISTS idx_command_trigger_type ON command_trigger(type);
-        CREATE INDEX IF NOT EXISTS idx_command_trigger_target_cmd ON command_trigger(plugin_id, feature_code, target_cmd_key) WHERE source = 'alias';
+        CREATE INDEX IF NOT EXISTS idx_ct_type ON command_trigger_v2(type);
+
+        CREATE TABLE IF NOT EXISTS command_trigger_search (
+          plugin_id       TEXT NOT NULL,
+          feature_code    TEXT NOT NULL,
+          cmd_key         TEXT NOT NULL,
+          search_text     TEXT NOT NULL CHECK (length(trim(search_text)) > 0),
+          source          TEXT NOT NULL CHECK (source IN ('cmd', 'alias')),
+          match_level     INTEGER NOT NULL CHECK (match_level IN (1, 2, 3)),
+          alias_id        INTEGER,
+          PRIMARY KEY (plugin_id, feature_code, cmd_key, search_text)
+        );
+        CREATE INDEX IF NOT EXISTS idx_cts_lookup ON command_trigger_search(search_text);
+
+        CREATE TABLE IF NOT EXISTS command_alias (
+          id                INTEGER PRIMARY KEY AUTOINCREMENT,
+          plugin_id         TEXT NOT NULL,
+          feature_code      TEXT NOT NULL,
+          alias_key         TEXT NOT NULL,
+          alias_normalized  TEXT NOT NULL,
+          target_cmd_key    TEXT NOT NULL,
+          state             TEXT NOT NULL DEFAULT 'active' CHECK (state IN ('active', 'removed')),
+          created_at        INTEGER NOT NULL,
+          updated_at        INTEGER NOT NULL,
+          FOREIGN KEY (plugin_id) REFERENCES plugin_installation(plugin_id) ON DELETE CASCADE
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_ca_active_unique
+          ON command_alias(plugin_id, feature_code, alias_normalized) WHERE state = 'active';
+        CREATE INDEX IF NOT EXISTS idx_ca_lookup ON command_alias(plugin_id, feature_code);
+
+        CREATE TABLE IF NOT EXISTS pinned_trigger (
+          plugin_id       TEXT NOT NULL,
+          feature_code    TEXT NOT NULL,
+          cmd_key         TEXT NOT NULL,
+          sort_order      INTEGER NOT NULL DEFAULT 0,
+          pinned_at       INTEGER NOT NULL,
+          PRIMARY KEY (plugin_id, feature_code, cmd_key),
+          FOREIGN KEY (plugin_id) REFERENCES plugin_installation(plugin_id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS usage_history (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          plugin_id       TEXT NOT NULL,
+          feature_code    TEXT NOT NULL,
+          cmd_key         TEXT NOT NULL,
+          query           TEXT,
+          match_level     INTEGER,
+          selected_at     INTEGER NOT NULL,
+          FOREIGN KEY (plugin_id) REFERENCES plugin_installation(plugin_id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_uh_lookup ON usage_history(plugin_id, feature_code, cmd_key, selected_at DESC);
 
         CREATE TABLE IF NOT EXISTS command_projection_meta (
           plugin_id TEXT PRIMARY KEY,
@@ -122,6 +160,31 @@ function createSchema(sqlite: DatabaseSync): void {
     `);
 }
 
+function migrateSchema(sqlite: DatabaseSync): void {
+    // Detect v1 command_trigger by checking for the 'source' column
+    const cols = sqlite.prepare("PRAGMA table_info('command_trigger')").all() as { name: string }[];
+    const hasSource = cols.some(c => c.name === 'source');
+
+    if (hasSource) {
+        // v1 → v2: migrate data, drop old, swap in v2
+        sqlite.exec(`
+            INSERT OR IGNORE INTO command_trigger_v2 (
+                plugin_id, feature_code, cmd_key, trigger_index,
+                type, label, matcher_json, score_base, rebuilt_at
+            )
+            SELECT plugin_id, feature_code, cmd_key, trigger_index,
+                   type, label, matcher_json, score_base, rebuilt_at
+            FROM command_trigger;
+        `);
+        sqlite.exec(`DROP TABLE IF EXISTS command_trigger;`);
+        sqlite.exec(`ALTER TABLE command_trigger_v2 RENAME TO command_trigger;`);
+    } else if (cols.length === 0) {
+        // Fresh database (no command_trigger at all): rename v2 → canonical name
+        sqlite.exec(`ALTER TABLE command_trigger_v2 RENAME TO command_trigger;`);
+    }
+    // else: already on v2 schema, nothing to do
+}
+
 function wrapTx<T>(db: PlatformDrizzleDatabase, fn: (db: PlatformDrizzleDatabase) => T): T {
     return (db.transaction as unknown as (cb: (tx: PlatformDrizzleDatabase) => T) => T)(tx => fn(tx as PlatformDrizzleDatabase));
 }
@@ -131,6 +194,7 @@ export function createPlatformDatabase(filePath: string): PlatformDatabase {
     const sqlite = new DatabaseSync(filePath);
     configure(sqlite);
     createSchema(sqlite);
+    migrateSchema(sqlite);
     const db = drizzle({ client: sqlite, schema });
     return {
         open: () => undefined,

@@ -1,4 +1,5 @@
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { eq } from 'drizzle-orm';
+import { foreignKey, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const pluginInstallation = sqliteTable('plugin_installation', {
     pluginId: text('plugin_id').primaryKey(),
@@ -59,21 +60,15 @@ export const commandTrigger = sqliteTable('command_trigger', {
     featureCode: text('feature_code').notNull(),
     cmdKey: text('cmd_key').notNull(),
     triggerIndex: integer('trigger_index').notNull(),
-    source: text('source', { enum: ['feature_cmd', 'alias'] }).notNull(),
     type: text('type', { enum: ['text', 'regex', 'over', 'img', 'files', 'window'] }).notNull(),
     label: text('label'),
     matcherJson: text('matcher_json').notNull(),
-    normalizedKey: text('normalized_key'),
-    aliasId: integer('alias_id'),
-    targetCmdKey: text('target_cmd_key'),
     scoreBase: integer('score_base').notNull().default(90),
     rebuiltAt: integer('rebuilt_at').notNull(),
-}, table => [
-    primaryKey({ columns: [table.pluginId, table.featureCode, table.source, table.cmdKey] }),
-    index('idx_command_trigger_text_lookup').on(table.normalizedKey, table.pluginId, table.featureCode, table.source),
-    index('idx_command_trigger_type').on(table.type),
-    index('idx_command_trigger_target_cmd').on(table.pluginId, table.featureCode, table.targetCmdKey),
-]);
+}, table => ({
+    pk: primaryKey({ columns: [table.pluginId, table.featureCode, table.cmdKey] }),
+    typeIdx: index('idx_ct_type').on(table.type),
+}));
 
 export const commandProjectionMeta = sqliteTable('command_projection_meta', {
     pluginId: text('plugin_id').primaryKey().references(() => pluginInstallation.pluginId, { onDelete: 'cascade' }),
@@ -82,3 +77,56 @@ export const commandProjectionMeta = sqliteTable('command_projection_meta', {
     indexVersion: integer('index_version').notNull(),
     rebuiltAt: integer('rebuilt_at').notNull(),
 });
+
+export const commandTriggerSearch = sqliteTable('command_trigger_search', {
+    pluginId: text('plugin_id').notNull(),
+    featureCode: text('feature_code').notNull(),
+    cmdKey: text('cmd_key').notNull(),
+    searchText: text('search_text').notNull(),
+    source: text('source', { enum: ['cmd', 'alias'] }).notNull(),
+    matchLevel: integer('match_level').notNull(),
+    aliasId: integer('alias_id'),
+}, table => ({
+    pk: primaryKey({ columns: [table.pluginId, table.featureCode, table.cmdKey, table.searchText] }),
+    lookupIdx: index('idx_cts_lookup').on(table.searchText),
+}));
+
+export const commandAlias = sqliteTable('command_alias', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    pluginId: text('plugin_id').notNull(),
+    featureCode: text('feature_code').notNull(),
+    aliasKey: text('alias_key').notNull(),
+    aliasNormalized: text('alias_normalized').notNull(),
+    targetCmdKey: text('target_cmd_key').notNull(),
+    state: text('state', { enum: ['active', 'removed'] }).notNull().default('active'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+}, table => ({
+    pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
+    activeUnique: uniqueIndex('idx_ca_active_unique').on(table.pluginId, table.featureCode, table.aliasNormalized).where(eq(table.state, 'active')),
+    lookupIdx: index('idx_ca_lookup').on(table.pluginId, table.featureCode),
+}));
+
+export const pinnedTrigger = sqliteTable('pinned_trigger', {
+    pluginId: text('plugin_id').notNull(),
+    featureCode: text('feature_code').notNull(),
+    cmdKey: text('cmd_key').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    pinnedAt: integer('pinned_at').notNull(),
+}, table => ({
+    pk: primaryKey({ columns: [table.pluginId, table.featureCode, table.cmdKey] }),
+    pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
+}));
+
+export const usageHistory = sqliteTable('usage_history', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    pluginId: text('plugin_id').notNull(),
+    featureCode: text('feature_code').notNull(),
+    cmdKey: text('cmd_key').notNull(),
+    query: text('query'),
+    matchLevel: integer('match_level'),
+    selectedAt: integer('selected_at').notNull(),
+}, table => ({
+    pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
+    lookupIdx: index('idx_uh_lookup').on(table.pluginId, table.featureCode, table.cmdKey, table.selectedAt),
+}));
