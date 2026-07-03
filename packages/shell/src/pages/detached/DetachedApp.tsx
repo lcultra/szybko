@@ -27,7 +27,7 @@ export function DetachedApp() {
     }, [handleClose]);
 
     return (
-        <SurfaceFrame className="flex h-dvh flex-col">
+        <SurfaceFrame className="flex h-dvh flex-col shadow-xl">
             <PluginView variant="detached" />
         </SurfaceFrame>
     );
