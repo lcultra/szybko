@@ -3,6 +3,7 @@ import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
 import type { PluginRuntime } from './types';
+import { isFocusable } from '../window/hosts/capabilities';
 import { join } from 'node:path';
 import { IPC } from '@szybko/shared';
 import { app, WebContentsView } from 'electron';
@@ -117,9 +118,8 @@ export class RuntimeManager {
 
         // 已在浮动窗口中 → 聚焦窗口，不挂载到新 host
         const existingHost = this.hostMap.get(runtimeId);
-        if (existingHost?.type === 'floating') {
-            const fHost = existingHost as import('../window/hosts/floating-runtime-host').FloatingRuntimeHost;
-            fHost.focus();
+        if (existingHost?.type === 'floating' && isFocusable(existingHost)) {
+            existingHost.focus();
             entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
                 pluginId: entry.runtime.info.pluginId,
                 code: featureCode ?? entry.runtime.info.pluginId,
