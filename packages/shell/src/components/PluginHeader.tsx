@@ -34,17 +34,18 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
 
     const [pinned, setPinned] = useState(false);
     const handlePin = useCallback(() => {
-        if (!activeRuntimeId) return;
+        if (!activeRuntimeId)
+            return;
         const next = !pinned;
         setPinned(next);
         window.szybkoInternal?.pinPlugin(activeRuntimeId, next);
     }, [activeRuntimeId, pinned]);
 
     return (
-        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isDetached ? 'pl-[78px] pr-3' : 'px-3'}`}>
+        <header className={`flex h-[68px] shrink-0 items-center gap-2 border-b border-border ${isDetached ? 'pr-3 pl-[78px]' : 'px-3'}`}>
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
-                <div className="flex items-center gap-2 py-1.5 pl-3 pr-2 select-none">
+                <div className="flex items-center gap-2 py-1.5 pr-2 pl-3 select-none">
                     <span className="font-semibold text-text">{pluginName}</span>
                     {featureExplain && (
                         <>
@@ -54,7 +55,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
                     )}
                 </div>
                 <button
-                    className="grid size-8 cursor-pointer place-items-center border-l border-border text-text-muted outline-none transition-colors hover:bg-danger/10 hover:text-danger"
+                    className="grid size-8 cursor-pointer place-items-center border-l border-border text-text-muted transition-colors outline-none hover:bg-danger/10 hover:text-danger"
                     onClick={handleClose}
                     title="关闭"
                     type="button"
@@ -65,7 +66,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
 
             {/* 中间：拖拽区 */}
             <div
-                className="min-w-0 flex-1 self-stretch cursor-grab active:cursor-grabbing"
+                className="min-w-0 flex-1 cursor-grab self-stretch active:cursor-grabbing"
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             />
 
@@ -81,7 +82,7 @@ export function PluginHeader({ variant = 'launcher' }: PluginHeaderProps) {
                 </button>
             )}
             <button
-                className="grid size-8 cursor-pointer place-items-center rounded-full border border-border text-text-muted outline-none transition-colors hover:bg-surface-card/80 hover:text-text"
+                className="grid size-8 cursor-pointer place-items-center rounded-full border border-border text-text-muted transition-colors outline-none hover:bg-surface-card/80 hover:text-text"
                 onClick={handleMenu}
                 title="更多操作"
                 type="button"

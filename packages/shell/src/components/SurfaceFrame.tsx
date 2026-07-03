@@ -8,7 +8,7 @@ interface SurfaceFrameProps {
 /** 共享的视觉外壳：背景、边框、毛玻璃 */
 export function SurfaceFrame({ children, className = '' }: SurfaceFrameProps) {
     return (
-        <div className={`overflow-hidden border border-border bg-surface backdrop-blur-xl ${className}`}>
+        <div className={`overflow-hidden bg-surface backdrop-blur-xl ${className}`}>
             {children}
         </div>
     );
