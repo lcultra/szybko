@@ -135,6 +135,7 @@ ManifestFeatureRepository
 FeatureOverrideRepository
   - setActive()
   - setRemoved()
+  - clearOverride()
   - listByPlugin()
   - listActiveByPlugin()
 
@@ -144,71 +145,186 @@ CommandProjectionRepository
   - listEffectiveFeatures()
 ```
 
+### Schema 原则
+
+- 事实表和投影表必须分开。`plugin_installation`、`manifest_feature_snapshot`、`feature_override` 是事实来源或事实快照；`effective_feature`、`command_trigger`、`command_projection_meta` 是可重建投影。
+- JSON 字段只保存完整 feature 或 matcher blob。需要查询、约束或索引的字段必须提升为普通列。
+- 所有时间字段使用 Unix milliseconds integer，避免混用 ISO string 和 number。
+- Boolean 使用 `INTEGER`，并用 `CHECK (value IN (0, 1))` 约束。
+- 所有业务写入必须通过 repository，不能在 IPC handler 或 UI service 中直接拼 SQL。
+- 下面 DDL 是逻辑 schema。若使用 Drizzle，可生成等价 migration；若使用裸 SQL，应保留同等主键、外键、CHECK 和索引约束。
+
+### schema_migration
+
+如果使用 Drizzle migration，可以使用 Drizzle 自带迁移表。若使用自管 SQL migration，使用以下表记录数据库版本：
+
+```sql
+CREATE TABLE schema_migration (
+  version INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  checksum TEXT NOT NULL,
+  applied_at INTEGER NOT NULL
+);
+```
+
 ### plugin_installation
 
-```text
-pluginId
-source
-enabled
-path
-version
-manifestHash
-installedAt
-updatedAt
+插件安装状态表。它取代当前 registry JSON 的长期存储职责。
+
+```sql
+CREATE TABLE plugin_installation (
+  plugin_id TEXT PRIMARY KEY CHECK (length(trim(plugin_id)) > 0),
+  source TEXT NOT NULL CHECK (source IN ('built-in', 'local-dev', 'user-installed')),
+  enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+  install_path TEXT NOT NULL CHECK (length(trim(install_path)) > 0),
+  version TEXT,
+  manifest_hash TEXT NOT NULL DEFAULT '',
+  manifest_indexed_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX idx_plugin_installation_enabled
+  ON plugin_installation(enabled, source);
 ```
+
+`manifest_hash` 用于判断插件包内 `plugin.json` 是否变化。`source` 后续如果需要支持市场来源，应通过 migration 扩展枚举，而不是提前把市场表混进当前设计。
 
 ### manifest_feature_snapshot
 
-```text
-pluginId
-code
-featureJson
-manifestHash
-indexedAt
+从 `plugin.json` 重建的静态 feature 快照。插件包仍然是静态 features 的唯一事实来源；该表用于索引和差异判断，不允许插件运行时写入。
+
+```sql
+CREATE TABLE manifest_feature_snapshot (
+  plugin_id TEXT NOT NULL,
+  code TEXT NOT NULL CHECK (length(trim(code)) > 0),
+  feature_order INTEGER NOT NULL CHECK (feature_order >= 0),
+  feature_json TEXT NOT NULL CHECK (json_valid(feature_json)),
+  feature_hash TEXT NOT NULL,
+  manifest_hash TEXT NOT NULL,
+  indexed_at INTEGER NOT NULL,
+  PRIMARY KEY (plugin_id, code),
+  UNIQUE (plugin_id, feature_order),
+  FOREIGN KEY (plugin_id)
+    REFERENCES plugin_installation(plugin_id)
+    ON DELETE CASCADE
+);
 ```
 
-该表是从 `plugin.json` 重建的静态快照。插件包仍然是静态 features 的唯一事实来源。
+`feature_json` 应保存规范化后的 feature JSON，例如稳定 key 顺序、已补默认值、已过滤未知字段。`feature_hash` 用于比较单个 feature 是否变化。
 
 ### feature_override
 
-```text
-pluginId
-code
-state: active | removed
-featureJson
-updatedAt
+动态 feature 的唯一事实来源。`active` 表示动态 feature 直接替换同 `plugin_id + code` 的静态 feature；`removed` 表示 tombstone，禁止同 code 的 manifest feature 自动恢复。
+
+```sql
+CREATE TABLE feature_override (
+  plugin_id TEXT NOT NULL,
+  code TEXT NOT NULL CHECK (length(trim(code)) > 0),
+  state TEXT NOT NULL CHECK (state IN ('active', 'removed')),
+  feature_json TEXT,
+  feature_hash TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (plugin_id, code),
+  CHECK (
+    (state = 'active' AND feature_json IS NOT NULL AND json_valid(feature_json) AND feature_hash IS NOT NULL)
+    OR
+    (state = 'removed' AND feature_json IS NULL AND feature_hash IS NULL)
+  ),
+  FOREIGN KEY (plugin_id)
+    REFERENCES plugin_installation(plugin_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX idx_feature_override_plugin_state
+  ON feature_override(plugin_id, state);
 ```
 
-该表是动态 features 的事实来源。
-
-`active` 记录保存完整动态 feature。`removed` 记录保存删除 tombstone，`featureJson` 可以为空。
+`removeFeature(code)` 不删除该行，而是 upsert 为 `state = 'removed'`。如果未来需要“清除 override 并恢复 manifest 默认值”，应提供平台管理 API 删除该 override 行；插件运行时的 `removeFeature` 不承担恢复默认值语义。
 
 ### effective_feature
 
-```text
-pluginId
-code
-source: manifest | dynamic
-featureJson
-updatedAt
+当前有效 feature 投影。搜索、插件管理 UI、调试视图都应读取该表或读取由该表派生的内存索引。它不是事实来源，可以从 snapshot + override 重建。
+
+```sql
+CREATE TABLE effective_feature (
+  plugin_id TEXT NOT NULL,
+  code TEXT NOT NULL CHECK (length(trim(code)) > 0),
+  source TEXT NOT NULL CHECK (source IN ('manifest', 'dynamic')),
+  feature_order INTEGER NOT NULL CHECK (feature_order >= 0),
+  feature_json TEXT NOT NULL CHECK (json_valid(feature_json)),
+  feature_hash TEXT NOT NULL,
+  rebuilt_at INTEGER NOT NULL,
+  PRIMARY KEY (plugin_id, code),
+  UNIQUE (plugin_id, feature_order),
+  FOREIGN KEY (plugin_id)
+    REFERENCES plugin_installation(plugin_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX idx_effective_feature_plugin_source
+  ON effective_feature(plugin_id, source);
 ```
 
-该表是可重建投影，表示搜索和运行时看到的当前有效 feature。
+动态新增的 feature 如果没有 manifest 顺序，`feature_order` 应排在 manifest features 之后，并保持 deterministic，例如按动态 code 排序后分配顺序。
 
 ### command_trigger
 
-```text
-pluginId
-featureCode
-triggerIndex
-type: text | regex | over | img | files | window
-label
-matcherJson
-normalizedKey
-scoreBase
+由 effective features 的 `cmds` 展开的触发器投影。它是搜索系统的主要查询表，不保存无法从 effective feature 重建的事实。
+
+```sql
+CREATE TABLE command_trigger (
+  plugin_id TEXT NOT NULL,
+  feature_code TEXT NOT NULL CHECK (length(trim(feature_code)) > 0),
+  trigger_index INTEGER NOT NULL CHECK (trigger_index >= 0),
+  type TEXT NOT NULL CHECK (type IN ('text', 'regex', 'over', 'img', 'files', 'window')),
+  label TEXT,
+  matcher_json TEXT NOT NULL CHECK (json_valid(matcher_json)),
+  normalized_key TEXT,
+  score_base INTEGER NOT NULL DEFAULT 90,
+  rebuilt_at INTEGER NOT NULL,
+  PRIMARY KEY (plugin_id, feature_code, trigger_index),
+  CHECK (
+    (type = 'text' AND normalized_key IS NOT NULL AND length(normalized_key) > 0)
+    OR
+    (type <> 'text')
+  ),
+  FOREIGN KEY (plugin_id, feature_code)
+    REFERENCES effective_feature(plugin_id, code)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX idx_command_trigger_text_lookup
+  ON command_trigger(normalized_key, plugin_id, feature_code)
+  WHERE type = 'text';
+
+CREATE INDEX idx_command_trigger_type
+  ON command_trigger(type);
 ```
 
-该表是可重建搜索索引。第一阶段可只对 `type = text` 建可用匹配，其他类型先规范化入表但不参与搜索，或明确跳过并记录不支持。
+`matcher_json` 对 string command 保存为 `{"type":"text","text":"原始指令"}`。对象 command 保存为规范化后的 matcher object。第一阶段可只查询 `type = 'text'` 的触发器；其他类型可以入表但不参与搜索，也可以在 projection builder 中跳过并记录不支持，二者必须在实现计划里明确选择。
+
+`normalized_key` 由平台统一生成，不由插件提供。文本指令的归一化规则应至少包含 trim、Unicode NFKC 和大小写折叠；如果归一化后为空，projection builder 必须拒绝该 trigger。
+
+### command_projection_meta
+
+投影元数据表，用来判断 projection 是否与当前 manifest snapshot、dynamic overrides 和索引版本一致。
+
+```sql
+CREATE TABLE command_projection_meta (
+  plugin_id TEXT PRIMARY KEY,
+  manifest_hash TEXT NOT NULL,
+  override_fingerprint TEXT NOT NULL,
+  index_version INTEGER NOT NULL,
+  rebuilt_at INTEGER NOT NULL,
+  FOREIGN KEY (plugin_id)
+    REFERENCES plugin_installation(plugin_id)
+    ON DELETE CASCADE
+);
+```
+
+`index_version` 由平台代码定义。当 command normalization、matcher 展开规则或排序基础分变化时递增，并触发全量 projection 重建。
 
 ## 合并规则
 
@@ -300,6 +416,31 @@ sequenceDiagram
 - 归一化后精确匹配。
 - 命中后生成 `plugin.open` action，payload 包含 `pluginId` 和 `featureCode`。
 
+文本指令查询必须过滤禁用插件：
+
+```sql
+SELECT
+  ct.plugin_id,
+  ct.feature_code,
+  ct.trigger_index,
+  ct.label,
+  ct.score_base,
+  ef.feature_json
+FROM command_trigger ct
+JOIN effective_feature ef
+  ON ef.plugin_id = ct.plugin_id
+ AND ef.code = ct.feature_code
+JOIN plugin_installation pi
+  ON pi.plugin_id = ct.plugin_id
+WHERE pi.enabled = 1
+  AND ct.type = 'text'
+  AND ct.normalized_key = ?
+ORDER BY
+  ct.score_base DESC,
+  ef.feature_order ASC,
+  ct.trigger_index ASC;
+```
+
 后续可以在 `CommandIndex` 内扩展 regex、over、files、img、window 等 matcher。
 
 ## 数据重建
@@ -321,10 +462,30 @@ sequenceDiagram
 
 重建必须是事务性的：
 
-1. 删除该插件旧的 `effective_feature` 和 `command_trigger`。
-2. 根据 snapshot + override 重新写入 effective features。
-3. 展开 cmds 重新写入 command triggers。
-4. 提交事务后通知搜索层索引变化。
+1. `BEGIN IMMEDIATE`，串行化同一数据库内的写事务。
+2. 读取该插件的 `manifest_feature_snapshot` 和 `feature_override`。
+3. 在内存中按合并规则生成 effective features 和 command triggers。
+4. 删除该插件旧的 `effective_feature`。`command_trigger` 通过外键 `ON DELETE CASCADE` 自动删除。
+5. 插入新的 `effective_feature`。
+6. 插入新的 `command_trigger`。
+7. upsert `command_projection_meta`，写入 `manifest_hash`、`override_fingerprint`、`index_version`、`rebuilt_at`。
+8. `COMMIT`。
+9. 提交事务后通知搜索层索引变化。
+
+如果任一步失败，整个事务必须回滚。不得出现 `effective_feature` 已更新但 `command_trigger` 仍是旧索引的状态。
+
+插件 manifest 变化时，静态快照替换和 projection 重建也应在同一事务内完成：
+
+1. 更新 `plugin_installation.manifest_hash` 和 `manifest_indexed_at`。
+2. 删除该插件旧的 `manifest_feature_snapshot`。
+3. 插入新的 manifest feature snapshot。
+4. 按上面的 projection 重建流程刷新 effective 和 trigger。
+
+动态 feature 修改时，override 写入和 projection 重建应在同一事务内完成：
+
+1. `setFeature` upsert `feature_override(state = 'active')`。
+2. 或 `removeFeature` upsert `feature_override(state = 'removed')`。
+3. 重建该插件 projection。
 
 ## 校验与安全
 
@@ -354,10 +515,16 @@ sequenceDiagram
 
 ## 测试重点
 
+- schema migration 可在空数据库上创建所有表、索引和外键。
+- `plugin_id + code` 在 manifest snapshot、feature override、effective feature 中保持唯一。
+- `feature_override` 不允许 `active` 缺少 `feature_json`，也不允许 `removed` 携带 `feature_json`。
+- 删除插件安装记录会级联清理 snapshot、override、effective、trigger 和 projection meta。
+- 禁用插件后，已有 `command_trigger` 不会被搜索命中。
 - manifest feature 无 override 时可以被搜索命中。
 - dynamic active 同 code 直接替换 manifest feature。
 - dynamic removed 同 code 后搜索不再命中，插件重启后仍不恢复。
 - 插件升级后，被 override 或 removed 的 code 仍按动态层语义生效。
 - 插件 A 不能修改插件 B 的 dynamic features。
 - projection 重建后 `effective_feature` 和 `command_trigger` 没有旧数据残留。
+- projection 重建失败时事务回滚，不会留下半新半旧的 effective/trigger 数据。
 - 搜索入口不再依赖 `PluginCatalog.matchFeatures()`。
