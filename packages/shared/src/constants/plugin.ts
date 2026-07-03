@@ -1,1 +1,0 @@
-export const PLUGIN_SEARCH_TIMEOUT_MS = 5000;

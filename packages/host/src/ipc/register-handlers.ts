@@ -1,6 +1,5 @@
 import type {
     IpcInvokeContract,
-    IpcRendererToMainEventContract,
     SearchResult,
 } from '@szybko/shared';
 import type { BrowserWindow } from 'electron';
@@ -18,7 +17,6 @@ import { executeAction } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
-type RendererEvent<C extends keyof IpcRendererToMainEventContract> = IpcRendererToMainEventContract[C];
 
 // ── Register all IPC handlers ─────────────────────────────────────
 
@@ -81,9 +79,6 @@ export function registerIpcHandlers(
                 });
             }
 
-            // Plugin search (async — results come back via plugin:search-result)
-            coordinator.sendPluginSearch(req);
-
             // Final batch (empty, signals end of built-in results)
             if (win && !win.isDestroyed()) {
                 win.webContents.send(IPC.SEARCH_BATCH, {
@@ -105,21 +100,6 @@ export function registerIpcHandlers(
             return { ok: true };
         },
     );
-
-    // ── Plugin search results ──────────────────────────────────────
-
-    ipcMain.on(IPC.PLUGIN_SEARCH_RESULT, (_event, batch: RendererEvent<typeof IPC.PLUGIN_SEARCH_RESULT>) => {
-        const win = windowManager.getWindow();
-        if (win && !win.isDestroyed()) {
-            win.webContents.send(IPC.SEARCH_BATCH, {
-                queryId: batch.queryId,
-                batchSeq: 0,
-                source: 'plugin',
-                results: batch.results,
-                isFinal: true,
-            });
-        }
-    });
 
     // ── Window control ─────────────────────────────────────────────
 
@@ -159,8 +139,6 @@ export function registerIpcHandlers(
                                 payload: resolved.match.payload,
                                 option: resolved.match.option ?? undefined,
                                 from: resolved.match.from,
-                                keyword: resolved.match.matchedSource,
-                                query: resolved.match.matchedSource,
                                 matchId: resolved.match.matchId,
                             },
                         );

@@ -1,14 +1,12 @@
 import type {
     IpcInvokeContract,
     IpcMainToRendererEventContract,
-    IpcRendererToMainEventContract,
 } from '@szybko/shared';
 import { ipcRenderer } from 'electron';
 
 type InvokePayload<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type InvokeResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
 type MainEventPayload<C extends keyof IpcMainToRendererEventContract> = IpcMainToRendererEventContract[C];
-type RendererEventPayload<C extends keyof IpcRendererToMainEventContract> = IpcRendererToMainEventContract[C];
 
 export function invoke<C extends keyof IpcInvokeContract>(
     channel: C,
@@ -25,10 +23,4 @@ export function on<C extends keyof IpcMainToRendererEventContract>(
         ipcRenderer.on(channel, handler);
         return () => ipcRenderer.removeListener(channel, handler);
     };
-}
-
-export function send<C extends keyof IpcRendererToMainEventContract>(
-    channel: C,
-): (payload: RendererEventPayload<C>) => void {
-    return (payload: RendererEventPayload<C>) => ipcRenderer.send(channel, payload);
 }

@@ -1,4 +1,4 @@
-import type { PluginEnterPayload, SearchRequest } from '@szybko/shared';
+import type { PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
 import type { Closable } from '../window/hosts/capabilities';
@@ -134,13 +134,6 @@ export class RuntimeCoordinator {
      */
     getOrCreateRuntime(pluginId: string): PluginRuntime | null {
         return this.runtimeManager.getOrCreate(pluginId);
-    }
-
-    /**
-     * Forward a search query to all active plugin runtimes.
-     */
-    sendPluginSearch(req: SearchRequest): void {
-        this.runtimeManager.sendPluginSearch(req);
     }
 
     /**

@@ -12,8 +12,6 @@ export const IPC = {
     WINDOW_SHOW: 'window:show',
     THEME_CHANGED: 'theme:changed',
     THEME_GET: 'theme:get',
-    PLUGIN_SEARCH: 'plugin:search',
-    PLUGIN_SEARCH_RESULT: 'plugin:search-result',
     PLUGIN_ENTER: 'plugin:enter',
     PLUGIN_HIDE: 'plugin:hide',
     PLUGIN_DESTROY: 'plugin:destroy',

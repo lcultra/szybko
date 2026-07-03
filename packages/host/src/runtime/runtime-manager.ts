@@ -1,4 +1,4 @@
-import type { LoadState, MountState, PluginEnterPayload, PluginSearchContext, SearchRequest } from '@szybko/shared';
+import type { LoadState, MountState, PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
@@ -95,22 +95,6 @@ export class RuntimeManager {
         return null;
     }
 
-    sendPluginSearch(req: SearchRequest): void {
-        for (const [, entry] of this.entries) {
-            const { mountState, loadState } = entry.runtime.info;
-            // 只要不是在 detached 且不是 error 的，都发搜索
-            if (mountState !== 'detached' && loadState !== 'error') {
-                const ctx: PluginSearchContext = {
-                    queryId: req.queryId,
-                    keyword: req.query.split(/\s+/)[0] || '',
-                    query: req.query,
-                    fullQuery: req.query,
-                };
-                entry.runtime.webContents.send(IPC.PLUGIN_SEARCH, ctx);
-            }
-        }
-    }
-
     get runtimeCount(): number {
         return this.entries.size;
     }
@@ -182,7 +166,6 @@ export class RuntimeManager {
             fHost.focus();
             entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
                 pluginId: entry.runtime.info.pluginId,
-                featureCode,
                 code: featureCode ?? entry.runtime.info.pluginId,
                 type: 'text',
                 payload: null,
@@ -225,7 +208,6 @@ export class RuntimeManager {
         // 通知插件进入，携带 featureCode 或完整 enterPayload
         entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
             pluginId: entry.runtime.info.pluginId,
-            featureCode,
             code: featureCode ?? entry.runtime.info.pluginId,
             type: 'text',
             payload: null,

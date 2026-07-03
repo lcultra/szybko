@@ -1,6 +1,6 @@
 import type { EntryIntent } from '../input/types';
 import type { PluginFeature } from '../plugin/types';
-import type { ActionDescriptor, PluginSearchContext, SearchBatch, SearchRequest } from '../search/types';
+import type { ActionDescriptor, SearchBatch, SearchRequest } from '../search/types';
 import type { IPC } from './channels';
 
 export interface IpcInvokeContract {
@@ -70,9 +70,8 @@ export interface RuntimeStatePayload {
 
 export interface PluginEnterPayload {
     pluginId: string;
-    featureCode: string;
     featureExplain?: string;
-    /** uTools-compatible: the feature code for the plugin's enter dispatch */
+    /** The feature code for the plugin's enter dispatch */
     code: string;
     /** Matcher trigger type (text/regex/over/files/img/window) */
     type: 'text' | 'regex' | 'over' | 'file' | 'img' | 'window';
@@ -82,10 +81,6 @@ export interface PluginEnterPayload {
     option?: string;
     /** Entry intent (main/panel/hotkey/redirect) */
     from: EntryIntent;
-    /** original keyword for backward compat */
-    keyword?: string;
-    /** original query for backward compat */
-    query?: string;
     /** MatchSession ID for the originating context, if available */
     matchId?: string;
 }
@@ -111,11 +106,9 @@ export interface IpcMainToRendererEventContract {
     [IPC.WINDOW_SHOW]: void;
     [IPC.THEME_CHANGED]: { isDark: boolean };
     [IPC.PLUGIN_RUNTIME_STATE]: RuntimeStatePayload;
-    [IPC.PLUGIN_SEARCH]: PluginSearchContext;
     [IPC.PLUGIN_ENTER]: PluginEnterPayload;
     [IPC.PLUGIN_OUT]: PluginOutPayload;
 }
 
 export interface IpcRendererToMainEventContract {
-    [IPC.PLUGIN_SEARCH_RESULT]: SearchBatch;
 }

@@ -1,6 +1,6 @@
 import type { PluginOutPayload } from '../ipc/contract';
 import type { PluginFeature } from '../plugin/types';
-import type { ActionDescriptor, PluginSearchContext, SearchResult } from '../search/types';
+import type { ActionDescriptor } from '../search/types';
 
 export interface SzybkoPluginApi {
     execute: (action: ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;
@@ -9,7 +9,6 @@ export interface SzybkoPluginApi {
     getFeatures: (codes?: string[]) => Promise<PluginFeature[]>;
     removeFeature: (code: string) => Promise<{ ok: boolean; error?: string }>;
     onRuntimeStateChanged: (cb: (state: unknown) => void) => () => void;
-    onSearch: (cb: (ctx: PluginSearchContext) => SearchResult[]) => () => void;
     onPluginEnter: (cb: (payload: unknown) => void) => () => void;
     onPluginOut: (cb: (payload: PluginOutPayload) => void) => () => void;
 }

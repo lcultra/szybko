@@ -12,13 +12,6 @@ export interface SearchBatch {
     isFinal: boolean;
 }
 
-export interface PluginSearchContext {
-    queryId: string;
-    keyword: string;
-    query: string;
-    fullQuery: string;
-}
-
 export interface SearchResult {
     id: string;
     title: string;
@@ -34,7 +27,7 @@ export type ActionDescriptor
         | { type: 'shell.openUrl'; payload: { url: string } }
         | { type: 'clipboard.writeText'; payload: { text: string } }
         | { type: 'process.launchApp'; payload: { bundleId: string } }
-        | { type: 'plugin.open'; payload: { pluginId: string; url?: string; featureCode?: string; matchId?: string } }
+        | { type: 'plugin.open'; payload: { pluginId: string; featureCode?: string; matchId?: string } }
         | { type: 'plugin.runCommand'; payload: { pluginId: string; command: string; args?: any[] } }
         | { type: 'text.paste'; payload: { text: string } }
         | { type: 'redirect'; payload: { label: string; payload?: any } };
