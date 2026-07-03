@@ -1,7 +1,8 @@
+import type { NodeSQLiteDatabase } from 'drizzle-orm/node-sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { drizzle, type NodeSQLiteDatabase } from 'drizzle-orm/node-sqlite';
+import { drizzle } from 'drizzle-orm/node-sqlite';
 import * as schema from './schema';
 
 export type PlatformDrizzleDatabase = NodeSQLiteDatabase<typeof schema>;
@@ -122,7 +123,7 @@ function createSchema(sqlite: DatabaseSync): void {
 }
 
 function wrapTx<T>(db: PlatformDrizzleDatabase, fn: (db: PlatformDrizzleDatabase) => T): T {
-    return (db.transaction as unknown as (cb: (tx: PlatformDrizzleDatabase) => T) => T)((tx) => fn(tx as PlatformDrizzleDatabase));
+    return (db.transaction as unknown as (cb: (tx: PlatformDrizzleDatabase) => T) => T)(tx => fn(tx as PlatformDrizzleDatabase));
 }
 
 export function createPlatformDatabase(filePath: string): PlatformDatabase {

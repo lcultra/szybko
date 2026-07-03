@@ -9,26 +9,28 @@ export class ManifestFeatureRepository {
     constructor(private db: PlatformDrizzleDatabase) {}
 
     replaceForPlugin(pluginId: string, manifestHash: string, features: PluginFeature[], now: number): void {
-        this.db.delete(manifestFeatureSnapshot)
-            .where(eq(manifestFeatureSnapshot.pluginId, pluginId))
-            .run();
+        this.db.transaction((tx) => {
+            tx.delete(manifestFeatureSnapshot)
+                .where(eq(manifestFeatureSnapshot.pluginId, pluginId))
+                .run();
 
-        if (features.length === 0) return;
+            if (features.length === 0) return;
 
-        const values = features.map((feature, index) => {
-            const normalized = normalizeFeature(feature);
-            return {
-                pluginId,
-                code: feature.code,
-                featureOrder: index,
-                featureJson: normalized.featureJson,
-                featureHash: normalized.featureHash,
-                manifestHash,
-                indexedAt: now,
-            };
+            const values = features.map((feature, index) => {
+                const normalized = normalizeFeature(feature);
+                return {
+                    pluginId,
+                    code: feature.code,
+                    featureOrder: index,
+                    featureJson: normalized.featureJson,
+                    featureHash: normalized.featureHash,
+                    manifestHash,
+                    indexedAt: now,
+                };
+            });
+
+            tx.insert(manifestFeatureSnapshot).values(values).run();
         });
-
-        this.db.insert(manifestFeatureSnapshot).values(values).run();
     }
 
     listForProjection(pluginId: string): ManifestFeatureInput[] {

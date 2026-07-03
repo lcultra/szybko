@@ -1,10 +1,10 @@
 import type { SearchRequest } from '@szybko/shared';
-import type { PluginRuntime } from '../runtime/types';
-import type { RuntimeManager } from './runtime-manager';
-import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
-import type { RuntimeHost } from '../window/hosts/runtime-host';
-import type { Closable } from '../window/hosts/capabilities';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
+import type { PluginRuntime } from '../runtime/types';
+import type { Closable } from '../window/hosts/capabilities';
+import type { RuntimeHost } from '../window/hosts/runtime-host';
+import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
+import type { RuntimeManager } from './runtime-manager';
 import { Menu } from 'electron';
 
 /**
@@ -26,7 +26,8 @@ export class RuntimeCoordinator {
      */
     activatePlugin(pluginId: string, featureCode?: string): void {
         const runtime = this.runtimeManager.getOrCreate(pluginId);
-        if (!runtime) return;
+        if (!runtime)
+            return;
 
         // Detach any runtime currently on the launcher host
         for (const r of this.runtimeManager.getAll()) {
@@ -45,7 +46,8 @@ export class RuntimeCoordinator {
      */
     moveToHost(runtimeId: string, targetType: 'launcher' | 'floating'): void {
         const runtime = this.runtimeManager.get(runtimeId);
-        if (!runtime) return;
+        if (!runtime)
+            return;
 
         if (runtime.host) {
             this.runtimeManager.detachFromHost(runtimeId);
@@ -71,13 +73,15 @@ export class RuntimeCoordinator {
      */
     destroyRuntime(runtimeId: string): void {
         const runtime = this.runtimeManager.get(runtimeId);
-        if (!runtime) return;
+        if (!runtime)
+            return;
 
         const host = runtime.host;
         if (host && 'close' in host) {
             // FloatingRuntimeHost — close window then destroy
             (host as RuntimeHost & Closable).close();
-        } else if (host) {
+        }
+        else if (host) {
             // LauncherRuntimeHost — detach with destroy reason (sends plugin:out)
             this.runtimeManager.detachFromHost(runtimeId, 'destroy');
         }
@@ -100,23 +104,23 @@ export class RuntimeCoordinator {
         const isFloating = variant === 'floating';
         const items: Electron.MenuItemConstructorOptions[] = isFloating
             ? [
-                {
-                    label: '结束运行',
-                    click: () => { this.destroyRuntime(runtimeId); },
-                },
-            ]
+                    {
+                        label: '结束运行',
+                        click: () => { this.destroyRuntime(runtimeId); },
+                    },
+                ]
             : [
-                {
-                    label: '分离为独立窗口',
-                    accelerator: 'CmdOrCtrl+D',
-                    click: () => { this.moveToHost(runtimeId, 'floating'); },
-                },
-                { type: 'separator' },
-                {
-                    label: '结束运行',
-                    click: () => { this.destroyRuntime(runtimeId); },
-                },
-            ];
+                    {
+                        label: '分离为独立窗口',
+                        accelerator: 'CmdOrCtrl+D',
+                        click: () => { this.moveToHost(runtimeId, 'floating'); },
+                    },
+                    { type: 'separator' },
+                    {
+                        label: '结束运行',
+                        click: () => { this.destroyRuntime(runtimeId); },
+                    },
+                ];
 
         const menu = Menu.buildFromTemplate(items);
         menu.popup();

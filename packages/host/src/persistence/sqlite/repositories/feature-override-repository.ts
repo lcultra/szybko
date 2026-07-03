@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { PluginFeature } from '@szybko/shared';
 import type { PlatformDrizzleDatabase } from '../platform-database';
 import { featureOverride } from '../schema';
@@ -59,6 +59,7 @@ export class FeatureOverrideRepository {
         const rows = this.db.select()
             .from(featureOverride)
             .where(eq(featureOverride.pluginId, pluginId))
+            .orderBy(asc(featureOverride.code))
             .all();
 
         return rows.map((row) => {
