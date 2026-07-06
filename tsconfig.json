@@ -2,9 +2,9 @@
     "references": [
         { "path": "./packages/shared" },
         { "path": "./packages/host" },
-        { "path": "./packages/shell" },
-        { "path": "./packages/design-system" },
+        { "path": "./packages/ui-kit" },
         { "path": "./packages/sdk" },
+        { "path": "./packages/native" },
         { "path": "./apps/desktop" },
         { "path": "./apps/desktop/tsconfig.web.json" },
         { "path": "./apps/desktop/tsconfig.node.json" }

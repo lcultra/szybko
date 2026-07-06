@@ -11,7 +11,7 @@ function createRootElement(selector: string): HTMLElement {
     const el = document.querySelector(selector);
     if (!el) {
         throw new Error(
-            `[@szybko/shell] Root element "${selector}" not found. `
+            `[renderer] Root element "${selector}" not found. `
             + 'Ensure the HTML template has a matching element.',
         );
     }
