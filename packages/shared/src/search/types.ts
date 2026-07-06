@@ -10,8 +10,7 @@ export type LauncherItemId
 // ── IconDescriptor ────────────────────────────────────────────────
 
 export type IconDescriptor
-    = | { type: 'emoji'; value: string }
-        | { type: 'url'; value: string }
+    = | { type: 'url'; value: string }
         | { type: 'asset'; value: string };
 
 // ── TextMatch（高亮） ─────────────────────────────────────────────
