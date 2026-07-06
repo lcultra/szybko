@@ -6,28 +6,18 @@ import type { LauncherItem, LauncherItemId } from '@szybko/shared';
 import { GridTile } from './GridTile';
 import { SortableGridTile } from './SortableGridTile';
 
-interface GridBaseProps {
+interface GridProps {
   items: LauncherItem[];
   startIndex: number;
   selectedIndex: number;
   columns: number;
+  draggable: boolean;
+  onReorder?: (itemId: LauncherItemId, toIndex: number) => void;
   onSelect: (globalIndex: number) => void;
   onExecute: (itemId: LauncherItemId) => void;
   onPinToggle: (itemId: LauncherItemId) => void;
   onContextMenu: (itemId: LauncherItemId, e: React.MouseEvent) => void;
 }
-
-interface GridStaticProps extends GridBaseProps {
-  draggable: false;
-  onReorder?: undefined;
-}
-
-interface GridDraggableProps extends GridBaseProps {
-  draggable: true;
-  onReorder: (itemId: LauncherItemId, toIndex: number) => void;
-}
-
-type GridProps = GridStaticProps | GridDraggableProps;
 
 const SUPPRESS_DURATION_MS = 250;
 

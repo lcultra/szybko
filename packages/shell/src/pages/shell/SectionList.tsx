@@ -74,34 +74,18 @@ export function SectionList({
                                 onToggle={() => onToggleExpand(section.id)}
                             />
                         )}
-                        {isPinned
-                            ? (
-                                    <Grid
-                                        items={items}
-                                        startIndex={offset.start}
-                                        selectedIndex={selectedIndex}
-                                        columns={DEFAULT_COLUMNS}
-                                        draggable={true}
-                                        onReorder={onReorder}
-                                        onSelect={onSelect}
-                                        onExecute={onExecute}
-                                        onPinToggle={onPinToggle}
-                                        onContextMenu={onContextMenu}
-                                    />
-                                )
-                            : (
-                                    <Grid
-                                        items={items}
-                                        startIndex={offset.start}
-                                        selectedIndex={selectedIndex}
-                                        columns={DEFAULT_COLUMNS}
-                                        draggable={false}
-                                        onSelect={onSelect}
-                                        onExecute={onExecute}
-                                        onPinToggle={onPinToggle}
-                                        onContextMenu={onContextMenu}
-                                    />
-                                )}
+                        <Grid
+                            items={items}
+                            startIndex={offset.start}
+                            selectedIndex={selectedIndex}
+                            columns={DEFAULT_COLUMNS}
+                            draggable={isPinned}
+                            onReorder={isPinned ? onReorder : undefined}
+                            onSelect={onSelect}
+                            onExecute={onExecute}
+                            onPinToggle={onPinToggle}
+                            onContextMenu={onContextMenu}
+                        />
                     </div>
                 );
             })}
