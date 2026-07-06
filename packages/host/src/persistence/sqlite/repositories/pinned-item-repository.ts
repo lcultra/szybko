@@ -32,7 +32,8 @@ export class PinnedItemRepository {
     reorder(itemId: string, toIndex: number): void {
         const all = this.list(); // ordered by sortOrder asc
         const sourceIndex = all.findIndex(r => r.itemId === itemId);
-        if (sourceIndex === -1) return;
+        if (sourceIndex === -1)
+            return;
 
         // Remove from current position and insert at new position
         const [moved] = all.splice(sourceIndex, 1);

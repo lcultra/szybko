@@ -60,7 +60,7 @@ export default function App() {
     const onExecuteItem = (itemId: string) => {
         if (!sessionId || !currentQueryId)
             return;
-        if (status === 'loading')  // Guard: don't execute while loading
+        if (status === 'loading') // Guard: don't execute while loading
             return;
         // 先发 execute IPC，再清搜索（避免 setQuery('') 触发的新搜索 IPC 抢先替换掉 currentSession）
         window.szybkoInternal?.execute({ sessionId, queryId: currentQueryId, itemId: itemId as any });
@@ -149,21 +149,21 @@ export default function App() {
                             onFocusCapture={handleFocusCapture}
                         >
                             {sections.length > 0
-                            ? (
-                                    <SectionList
-                                        sections={sections}
-                                        itemsById={itemsById}
-                                        selectedIndex={selectedIndex}
-                                        expandedSectionIds={expandedSectionIds}
-                                        onSelect={setSelectedIndex}
-                                        onExecute={onExecuteItem}
-                                        onPinToggle={onPinToggle}
-                                        onToggleExpand={toggleExpand}
-                                        onReorder={onReorder}
-                                        onContextMenu={onContextMenu}
-                                    />
-                                )
-                            : null}
+                                ? (
+                                        <SectionList
+                                            sections={sections}
+                                            itemsById={itemsById}
+                                            selectedIndex={selectedIndex}
+                                            expandedSectionIds={expandedSectionIds}
+                                            onSelect={setSelectedIndex}
+                                            onExecute={onExecuteItem}
+                                            onPinToggle={onPinToggle}
+                                            onToggleExpand={toggleExpand}
+                                            onReorder={onReorder}
+                                            onContextMenu={onContextMenu}
+                                        />
+                                    )
+                                : null}
                         </div>
                     )}
                 </div>

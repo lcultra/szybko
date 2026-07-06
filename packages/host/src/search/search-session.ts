@@ -54,7 +54,8 @@ export class SearchSession {
     /** 执行一次完整搜索，按结果类型组装 sections */
     async search(snapshot: InputContextSnapshot): Promise<void> {
         this.itemsById.clear();
-        if (this.#cancelled) return;
+        if (this.#cancelled)
+            return;
 
         // 并行调用所有 provider
         const results = await Promise.all(
@@ -69,7 +70,8 @@ export class SearchSession {
             }),
         );
 
-        if (this.#cancelled) return;
+        if (this.#cancelled)
+            return;
 
         // Build itemsById registry (dedup: same id → higher score wins)
         // Also categorize sections by source
@@ -78,7 +80,8 @@ export class SearchSession {
         const pinnedSectionData: Array<{ section: any; items: LauncherItem[] }> = [];
 
         for (const { providerId, result } of results) {
-            if (!result.section) continue;
+            if (!result.section)
+                continue;
 
             const section = result.section;
             const dedupedItems: LauncherItem[] = [];
@@ -120,7 +123,8 @@ export class SearchSession {
             sections = this.buildDefaultSections(recentSectionData, pinnedSectionData);
         }
 
-        if (this.#cancelled) return;
+        if (this.#cancelled)
+            return;
 
         this.emit('partial', sections);
         this.emit('final', sections);

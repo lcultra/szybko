@@ -43,20 +43,24 @@ export function registerIpcHandlers(
     const resolveFromProviders = async (itemId: LauncherItemId): Promise<LauncherItem | null> => {
         // 1. Try current session cache
         const sessionItem = currentSession?.resolveItem(itemId);
-        if (sessionItem) return sessionItem;
+        if (sessionItem)
+            return sessionItem;
 
         // 2. Try owner provider's resolve
         if (itemId.startsWith('plugin://') && pluginProvider) {
             const resolved = await pluginProvider.resolve(itemId);
-            if (resolved) return resolved;
+            if (resolved)
+                return resolved;
         }
 
         // 3. Try independent providers as fallback (skip pinned/recent — their resolve()
         //    delegates back to this function, which would cause infinite recursion)
         for (const p of [pluginProvider].filter(Boolean) as SearchProvider[]) {
-            if (itemId.startsWith('plugin://') && p.id === 'plugin') continue; // already tried in step 2
+            if (itemId.startsWith('plugin://') && p.id === 'plugin')
+                continue; // already tried in step 2
             const resolved = await p.resolve(itemId);
-            if (resolved) return resolved;
+            if (resolved)
+                return resolved;
         }
 
         return null;
@@ -78,7 +82,8 @@ export function registerIpcHandlers(
             return;
 
         const win = windowManager.getWindow();
-        if (!win || win.isDestroyed()) return;
+        if (!win || win.isDestroyed())
+            return;
 
         if (currentSession) {
             currentSession.cancel();
@@ -196,7 +201,8 @@ export function registerIpcHandlers(
             const isPinned = pinnedRepo?.list().some(r => r.itemId === itemId) ?? false;
 
             const win = BrowserWindow.getFocusedWindow();
-            if (!win) return { ok: false };
+            if (!win)
+                return { ok: false };
 
             const menuBuilder: Electron.MenuItemConstructorOptions[] = [
                 {

@@ -11,16 +11,16 @@
         "postinstall": "electron-builder install-app-deps"
     },
     "dependencies": {
-        "@szybko/ui-kit": "workspace:*",
-        "@szybko/host": "workspace:*",
-        "@szybko/shared": "workspace:*",
         "@dnd-kit/core": "^6.3.0",
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
+        "@szybko/host": "workspace:*",
+        "@szybko/shared": "workspace:*",
+        "@szybko/ui-kit": "workspace:*",
         "lucide-react": "^0.468.0",
         "react": "^19.2.7",
-        "zustand": "^5.0",
-        "react-dom": "^19.2.7"
+        "react-dom": "^19.2.7",
+        "zustand": "^5.0"
     },
     "devDependencies": {
         "@types/node": "^26.0",

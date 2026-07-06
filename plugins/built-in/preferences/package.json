@@ -8,8 +8,8 @@
         "typecheck": "tsc -p tsconfig.preload.json --noEmit && tsc -p tsconfig.renderer.json --noEmit"
     },
     "dependencies": {
-        "@szybko/ui-kit": "workspace:*",
         "@szybko/shared": "workspace:*",
+        "@szybko/ui-kit": "workspace:*",
         "@vitejs/plugin-react": "^6.0.3",
         "react": "^19.2.7",
         "react-dom": "^19.2.7"

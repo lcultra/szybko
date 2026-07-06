@@ -48,7 +48,7 @@ export class PluginProvider implements SearchProvider {
         const session = this.sessionManager.create(snapshot);
         this.sessionManager.addMatches(session.sessionId, matches);
 
-        const items: LauncherItem[] = matches.map(m => {
+        const items: LauncherItem[] = matches.map((m) => {
             const itemId = `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId;
             this.itemMatchMap.set(itemId, m.matchId);
             return {
@@ -71,17 +71,20 @@ export class PluginProvider implements SearchProvider {
     }
 
     async resolve(itemId: LauncherItemId): Promise<LauncherItem | null> {
-        if (!itemId.startsWith('plugin://')) return null;
+        if (!itemId.startsWith('plugin://'))
+            return null;
 
         const path = itemId.replace('plugin://', '');
         const parts = path.split('/');
-        if (parts.length < 3) return null;
+        if (parts.length < 3)
+            return null;
 
         const [pluginId, featureCode, cmdKey] = parts;
 
         try {
             const trigger = this.searchService.getTrigger(pluginId, featureCode, cmdKey);
-            if (!trigger) return null;
+            if (!trigger)
+                return null;
 
             return {
                 id: itemId,

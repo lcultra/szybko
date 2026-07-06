@@ -37,7 +37,7 @@ export default antfu(
         extends: [tailwindcss.configs.recommended],
         settings: {
             tailwindcss: {
-                cssConfigPath: '/Users/pengcheng17/Documents/workspace/ai/szybko/packages/design-system/src/index.css',
+                cssConfigPath: '/Users/pengcheng17/Documents/workspace/ai/szybko/packages/ui-kit/src/index.css',
             },
         },
     },
