@@ -2,7 +2,7 @@
 
 ## 概述
 
-为 Szybko 插件系统引入强制图标规则：每个插件必须在 `plugin.json` 配置图标（.png/.jpg/.svg），不支持 emoji；feature 可单独配置图标，不配置时以插件图标兜底。同时建立通用的 `asset://` 自定义协议框架。
+为 Szybko 插件系统引入强制图标规则：每个插件必须在 `plugin.json` 配置图标（.png/.jpg/.jpeg/.svg），不支持 emoji；feature 可单独配置图标，不配置时以插件图标兜底。同时建立通用的 `asset://` 自定义协议框架。
 
 ## 动机
 
@@ -15,7 +15,7 @@
 
 | 层次 | 组件 | 职责 |
 |---|---|---|
-| 类型 | `PluginManifest.logo` | 必填，.png/.jpg/.svg 相对路径 |
+| 类型 | `PluginManifest.logo` | 必填，.png/.jpg/.jpeg/.svg 相对路径 |
 | 类型 | `PluginFeature.icon` | 选填，同上格式，不填用 logo |
 | 类型 | `IconDescriptor` | 移除 `emoji` 分支，仅保留 `url` / `asset` |
 | 校验 | `PluginLoader` | 启动时校验格式，不通过则跳过该插件 |
@@ -31,7 +31,7 @@
 export interface PluginManifest {
     id: string;
     main: string;
-    /** 必填。插件图标，支持 .png / .jpg / .svg，相对于 plugin.json 的路径。 */
+    /** 必填。插件图标，支持 .png / .jpg / .jpeg / .svg，相对于 plugin.json 的路径。 */
     logo: string;
     preload?: string;
     pluginSetting?: { single?: boolean; height?: number };
@@ -47,7 +47,7 @@ export interface PluginFeature {
     code: string;
     explain?: string;
     /**
-     * 选填。功能图标，支持 .png / .jpg / .svg，相对于 plugin.json 的路径。
+     * 选填。功能图标，支持 .png / .jpg / .jpeg / .svg，相对于 plugin.json 的路径。
      * 不配置时使用 manifest.logo 兜底。
      */
     icon?: string;
@@ -101,9 +101,35 @@ export function registerPluginAssetHandler(catalog: PluginCatalog): void;
 1. 从 URL pathname 解析 `<pluginId>/<relative-path>`
 2. 从 `PluginCatalog` 查找插件路径
 3. 校验文件扩展名为 `.png | .jpg | .jpeg | .svg`
-4. 读取文件并返回带 MIME 类型的 `Response`
+4. 执行 **路径逃逸检查**：`resolve(plugin.path, relativePath)` 后验证结果在 `plugin.path` 之下，拒绝 `..` 越界
+5. 读取文件并返回带 MIME 类型的 `Response`
 
-支持的 MIME 映射（实际查找时 `.jpeg` 也归一化为 `.jpg` 处理，不重复登记）：
+路径逃逸检查实现：
+
+```typescript
+import { resolve, relative } from 'node:path';
+
+function isContainedIn(base: string, target: string): boolean {
+    const relativePath = relative(base, target);
+    return !relativePath.startsWith('..') && !relativePath.startsWith('/');
+}
+
+// 资产处理时
+const assetPath = resolve(plugin.path, fileName);
+if (!isContainedIn(plugin.path, assetPath))
+    return new Response('Forbidden', { status: 403 });
+```
+
+URL 构建（在 PluginProvider 中）也需要转义路径段，防止 `#`、`?`、空格、`..` 混入：
+
+```typescript
+const encodedPath = iconPath.split('/').map(encodeURIComponent).join('/');
+const url = `asset://plugin/${encodeURIComponent(plugin.id)}/${encodedPath}`;
+```
+
+这里的方案是用 `split('/')` 逐段 `encodeURIComponent`，只编码文件名段内的特殊字符，保留 `/` 分隔符不被编码。`..` 会被编码为 `%2E%2E`，到 handler 侧在执行 `resolve` 前先 `decodeURIComponent` 还原，再走 containment 检查。
+
+MIME 映射（处理时统一 `.jpeg` → `.jpg` 查找）：
 | 扩展名 | Content-Type |
 |---|---|
 | .png | image/png |
@@ -120,12 +146,33 @@ export function registerPluginAssetHandler(catalog: PluginCatalog): void;
 
 ### 调用入口
 
-`initAssetProtocol()` 在 Electron 应用 `ready` 事件中调用（目前位于 `packages/host/src/main.ts` 的初始化流程中），`registerPluginAssetHandler()` 紧随 `catalog.init()` 之后调用。
+分两步：
+
+1. **`app` ready 之前**：注册 scheme privilege，让 Electron 知道 `asset://` 是一个内容协议
 
 ```typescript
-// main.ts 或 host 入口
+// apps/desktop/src/main/index.ts
+import { protocol } from 'electron';
+
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: 'asset',
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            corsEnabled: true,
+        },
+    },
+]);
+```
+
+2. **`app.whenReady()` 之后**：注册协议处理器
+
+```typescript
+// apps/desktop/src/main/index.ts
 app.whenReady().then(async () => {
-    initAssetProtocol();
+    initAssetProtocol();   // protocol.handle('asset', ...)
 
     const catalog = new PluginCatalog(platformDb, pluginsDir);
     await catalog.init();
@@ -135,16 +182,31 @@ app.whenReady().then(async () => {
 });
 ```
 
-## Plugin Loader 校验
+## 图标校验
+
+### PluginLoader（manifest 静态 feature）
 
 在 `PluginLoader.loadOne()` 中新增校验：
 
-- `manifest.logo` 必填，若缺失则跳过该插件
+- `manifest.logo` 必填且文件必须存在，若缺失或找不到文件则跳过该插件
 - `manifest.logo` 扩展名必须是 `.png / .jpg / .jpeg / .svg`，否则跳过
 - 各 `feature.icon`（若有）同样检查扩展名格式
-- loader 不检查文件是否存在——由 asset protocol 404 处理，渲染层 fallback 首字符
+- 校验 `icon` 路径不逃逸插件目录（resolve + containment check）
 
 校验失败视为该插件无效，跳过加载。
+
+### 动态 feature 图标（FEATURE_SET）
+
+动态 feature 通过 SDK 的 `setFeature()` / `removeFeature()` 注册，走 IPC `FEATURE_SET` -> `CommandCatalog.setFeature()` 路径。当前类型注释允许动态 feature 的 `icon` 使用 data URL，这轮改动**不再允许 data URL**——动态 feature 的图标规则与 manifest 静态 feature 一致：只支持相对于 plugin.json 的图片路径，不支持 emoji 和 data URL。
+
+在 `CommandCatalog.setFeature()` 中新增校验（`packages/host/src/commands/command-catalog.ts`）：
+
+- `feature.icon` 若存在，扩展名必须是 `.png / .jpg / .jpeg / .svg`
+- 路径不能逃逸插件目录
+- 文件必须存在
+- 校验不通过时 `setFeature` 返回错误，设置失败
+
+这样动态 feature 的图标在运行时也能被 `PluginProvider` 的图标解析逻辑消费（与 manifest feature 共用 `resolveFeatureIcon` 路径）。
 
 ## PluginProvider 图标消费
 
@@ -164,14 +226,21 @@ constructor(
 
 ```typescript
 function resolveFeatureIcon(plugin: PluginInfo, featureCode: string): IconDescriptor | undefined {
+    // 1. 先在 manifest.features 中查找（静态 feature）
     const feature = plugin.manifest.features.find(f => f.code === featureCode);
     const iconPath = feature?.icon ?? plugin.manifest.logo;
-    return { type: 'url', value: `asset://plugin/${plugin.id}/${iconPath}` };
+    // 逐段编码，保留 / 不编码；防止 #、?、空格、.. 混入
+    const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
+    return {
+        type: 'url',
+        value: `asset://plugin/${encodeURIComponent(plugin.id)}/${encoded}`,
+    };
 }
 ```
 
 - pluginId 在 catalog 中查不到 → 返回 `undefined` → 渲染层显示首字符
 - feature 没有 `icon` → 使用 `manifest.logo` 兜底
+- **动态 feature**（`featureCode` 不在 `manifest.features` 中）：回退到 `manifest.logo`。动态 feature 的 `icon` 字段在 `setFeature()` 中已校验，但 PluginProvider 不额外查询其值——统一走插件图标兜底，保持实现简单
 
 ## resolve-fallback 清理
 
@@ -197,7 +266,7 @@ function resolveFeatureIcon(plugin: PluginInfo, featureCode: string): IconDescri
 
 两个内置插件 `launcher` 和 `preferences` 各：
 
-1. 新增 `icon.svg` 文件（占位图标）
+1. 在插件根目录新增 `icon.svg` 文件（占位图标）
 2. 更新 `plugin.json`：添加 `"logo": "icon.svg"`，移除 feature 中的 emoji `icon` 值
 
 数据结构：
@@ -205,11 +274,27 @@ function resolveFeatureIcon(plugin: PluginInfo, featureCode: string): IconDescri
 ```
 plugins/built-in/
   launcher/
-    icon.svg        ← SVG 图标
-    plugin.json     ← 添加 logo 字段
+    icon.svg            ← SVG 图标
+    plugin.json         ← 添加 logo 字段
+    package.json        ← 修改 build 脚本包含图标
   preferences/
-    icon.svg        ← SVG 图标
-    plugin.json     ← 添加 logo 字段
+    icon.svg            ← SVG 图标
+    plugin.json         ← 添加 logo 字段
+    package.json        ← 修改 build 脚本包含图标
+```
+
+### 构建脚本更新
+
+当前 `PackageDiscovery` 扫描的是 `<pluginDir>/dist/` 中的 `plugin.json`，所以构建脚本必须将图标文件复制到 `dist/`：
+
+**launcher/package.json**（当前 `"build": "vite build ... && cp index.html plugin.json dist/"`）：
+```json
+"build": "vite build --config vite.preload.config.ts && cp index.html plugin.json icon.svg dist/"
+```
+
+**preferences/package.json**（当前 `"build": "... && cp plugin.json dist/"`）：
+```json
+"build": "vite build --config vite.preload.config.ts && vite build && cp plugin.json icon.svg dist/"
 ```
 
 ## 涉及文件清单
@@ -220,14 +305,17 @@ plugins/built-in/
 | `packages/shared/src/plugin/types.ts` | 修改 — 更新注释 |
 | `packages/host/src/protocol/asset-protocol.ts` | 新增 — 通用资产协议框架 |
 | `packages/host/src/plugins/plugin-asset-handler.ts` | 新增 — 插件资产处理器（注册到 asset 协议） |
-| `packages/host/src/plugins/plugin-loader.ts` | 修改 — 新增 logo/icon 格式校验 |
+| `packages/host/src/plugins/plugin-loader.ts` | 修改 — 新增 logo/icon 格式校验 + 文件存在检查 + containment |
+| `packages/host/src/commands/command-catalog.ts` | 修改 — setFeature 中新增图标校验（格式 + 存在 + containment） |
 | `packages/host/src/search/plugin-provider.ts` | 修改 — 使用真实图标替换硬编码 emoji，新增 catalog 依赖 |
 | `packages/host/src/search/resolve-fallback.ts` | 修改 — 移除所有 emoji 引用 |
 | `packages/host/src/ipc/register-handlers.ts` | 修改 — 接收 `pluginCatalog` 参数，传入 PluginProvider |
-| `packages/host/src/main.ts` | 修改 — 调用 initAssetProtocol 和 registerPluginAssetHandler |
+| `apps/desktop/src/main/index.ts` | 修改 — 添加 scheme privilege 注册 + initAssetProtocol 调用 |
 | `packages/host/src/plugins/plugin-catalog.ts` | 不动 — 已有 get/getAll 方法 |
 | `apps/desktop/src/renderer/pages/shell/ResultIcon.tsx` | 修改 — 删除 emoji 渲染分支 |
 | `plugins/built-in/launcher/icon.svg` | 新增 |
 | `plugins/built-in/launcher/plugin.json` | 修改 |
+| `plugins/built-in/launcher/package.json` | 修改 — build 脚本增加 icon.svg 复制 |
 | `plugins/built-in/preferences/icon.svg` | 新增 |
 | `plugins/built-in/preferences/plugin.json` | 修改 |
+| `plugins/built-in/preferences/package.json` | 修改 — build 脚本增加 icon.svg 复制 |
