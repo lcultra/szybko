@@ -257,6 +257,27 @@ importers:
         specifier: ^8.1.2
         version: 8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.5)(yaml@2.9.0)
 
+  plugins/built-in/test-react:
+    dependencies:
+      '@szybko/plugin-tools':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-tools
+      '@szybko/sdk':
+        specifier: workspace:*
+        version: link:../../../packages/sdk
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+
+  plugins/built-in/test-simple:
+    dependencies:
+      '@szybko/plugin-tools':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-tools
+
 packages:
 
   '@antfu/eslint-config@9.1.0':

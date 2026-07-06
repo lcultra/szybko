@@ -1,5 +1,6 @@
 import { copyFileSync, cpSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { build } from 'vite';
 import { createPreloadViteConfig } from '../configs/preload';
 import { createRendererViteConfig } from '../configs/renderer';

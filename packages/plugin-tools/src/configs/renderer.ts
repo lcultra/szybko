@@ -2,6 +2,7 @@ import type { InlineConfig } from 'vite';
 import type { PluginConfig } from '../index';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { mergeConfig } from 'vite';

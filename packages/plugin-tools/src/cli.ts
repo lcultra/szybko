@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { cac } from 'cac';
 import { buildPlugin } from './commands/build';
@@ -22,7 +23,7 @@ function getVersion(): string {
 /**
  * 创建 CLI 并注册命令
  */
-export function run(): void {
+function main(): void {
     const cli = cac('szybko-plugin');
 
     cli.version(getVersion());
@@ -60,3 +61,5 @@ export function run(): void {
     // 解析参数并运行
     cli.parse();
 }
+
+main();

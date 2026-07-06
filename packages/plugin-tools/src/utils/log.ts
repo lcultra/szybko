@@ -1,26 +1,26 @@
 /* eslint-disable no-console */
-import { blue, cyan, dim, green, red, yellow } from 'picocolors';
+import pc from 'picocolors';
 
 export function info(msg: string): void {
-    console.log(cyan(`▸ ${msg}`));
+    console.log(pc.cyan(`▸ ${msg}`));
 }
 
 export function success(msg: string): void {
-    console.log(green(`✔ ${msg}`));
+    console.log(pc.green(`✔ ${msg}`));
 }
 
 export function warn(msg: string): void {
-    console.log(yellow(`⚠ ${msg}`));
+    console.log(pc.yellow(`⚠ ${msg}`));
 }
 
 export function error(msg: string): void {
-    console.error(red(`✖ ${msg}`));
+    console.error(pc.red(`✖ ${msg}`));
 }
 
 export function dimmed(msg: string): void {
-    console.log(dim(msg));
+    console.log(pc.dim(msg));
 }
 
 export function highlight(msg: string): void {
-    console.log(blue(msg));
+    console.log(pc.blue(msg));
 }

@@ -1,6 +1,7 @@
 import type { PluginConfig } from '../index';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { error } from './log';
 
 export interface LoadedConfig {

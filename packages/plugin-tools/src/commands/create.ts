@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { info, error as logError, success } from '../utils/log';
 
 export interface CreateOptions {

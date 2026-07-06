@@ -37,10 +37,10 @@ export function GridTile({
         <div
             role="button"
             tabIndex={-1}
-            className={`relative grid size-full cursor-pointer grid-rows-[1fr_auto] place-items-center gap-1.5 rounded-2xl border p-2 text-center text-inherit transition-[opacity,background-color,border-color] duration-150 outline-none ${
+            className={`group relative grid size-full cursor-pointer grid-rows-[1fr_auto] place-items-center gap-1 rounded-xl p-1.5 text-center transition-[background-color,box-shadow] duration-100 outline-none ${
                 selected
-                    ? 'border-primary/40 bg-primary/15 text-text'
-                    : 'border-transparent bg-transparent hover:bg-surface-hover/60 focus-visible:bg-surface-hover/60'
+                    ? 'bg-accent/12 ring-1 ring-accent/30 ring-inset dark:bg-accent/15'
+                    : 'bg-transparent hover:bg-surface-hover/60 focus-visible:bg-surface-hover/60'
             }`}
             data-interactive
             onClick={handleClick}
@@ -49,7 +49,7 @@ export function GridTile({
             onKeyDown={handleKeyDown}
         >
             <ResultIcon icon={item.icon} title={item.title} />
-            <div className="w-full truncate px-1 text-center">
+            <div className={`w-full truncate px-0.5 text-center text-xs leading-4 ${selected ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
                 <HighlightedText text={item.title} ranges={item.matches?.title} />
             </div>
         </div>
