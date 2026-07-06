@@ -1,4 +1,4 @@
-import type { IpcInvokeContract } from '@szybko/shared';
+import type { IpcInvokeContract, LauncherItem, LauncherItemId } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
@@ -14,6 +14,7 @@ import {
     PinnedSectionProvider,
     PluginProvider,
     RecentSectionProvider,
+    SearchProvider,
     SearchSession,
 } from '../search';
 import { createExecutor } from './execute-action';
@@ -38,17 +39,34 @@ export function registerIpcHandlers(
         ? new PluginProvider(platformDb.drizzle(), coordinator, sessionManager)
         : null;
 
+    const resolveFromProviders = async (itemId: LauncherItemId): Promise<LauncherItem | null> => {
+        // 1. Try current session cache
+        const sessionItem = currentSession?.resolveItem(itemId);
+        if (sessionItem) return sessionItem;
+
+        // 2. Try owner provider's resolve
+        if (itemId.startsWith('plugin://') && pluginProvider) {
+            const resolved = await pluginProvider.resolve(itemId);
+            if (resolved) return resolved;
+        }
+
+        // 3. Try independent providers as fallback (skip pinned/recent — their resolve()
+        //    delegates back to this function, which would cause infinite recursion)
+        for (const p of [pluginProvider].filter(Boolean) as SearchProvider[]) {
+            if (itemId.startsWith('plugin://') && p.id === 'plugin') continue; // already tried in step 2
+            const resolved = await p.resolve(itemId);
+            if (resolved) return resolved;
+        }
+
+        return null;
+    };
+
     const pinnedProvider = platformDb
-        ? new PinnedSectionProvider(platformDb.drizzle(), async (itemId) => {
-                // resolve 通过 session 缓存或 pluginProvider
-                return currentSession?.resolveItem(itemId) ?? null;
-            })
+        ? new PinnedSectionProvider(platformDb.drizzle(), resolveFromProviders)
         : null;
 
     const recentProvider = platformDb
-        ? new RecentSectionProvider(platformDb.drizzle(), async (itemId) => {
-                return currentSession?.resolveItem(itemId) ?? null;
-            })
+        ? new RecentSectionProvider(platformDb.drizzle(), resolveFromProviders)
         : null;
 
     const pinnedRepo = platformDb ? new PinnedItemRepository(platformDb.drizzle()) : null;
@@ -73,7 +91,7 @@ export function registerIpcHandlers(
                 return { ok: false };
 
             // 所有 provider 都在 session 中注册（用于 execute），但只调用有结果的 provider search
-            const providers = [pinnedProvider, recentProvider, pluginProvider].filter(Boolean) as import('../search').SearchProvider[];
+            const providers = [pinnedProvider, recentProvider, pluginProvider].filter(Boolean) as SearchProvider[];
 
             const session = new SearchSession(req.queryId, providers, (res) => {
                 if (!win.isDestroyed()) {

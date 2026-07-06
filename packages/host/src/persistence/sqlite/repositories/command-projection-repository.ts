@@ -87,6 +87,28 @@ export class CommandProjectionRepository {
             .all();
     }
 
+    getTrigger(pluginId: string, featureCode: string, cmdKey: string): CommandSearchRow | null {
+        return this.db.select({
+            pluginId: commandTrigger.pluginId,
+            featureCode: commandTrigger.featureCode,
+            cmdKey: commandTrigger.cmdKey,
+            triggerIndex: commandTrigger.triggerIndex,
+            source: sql<'feature_cmd'>`'feature_cmd'`,
+            type: commandTrigger.type,
+            label: commandTrigger.label,
+            scoreBase: commandTrigger.scoreBase,
+            matcherJson: commandTrigger.matcherJson,
+        })
+            .from(commandTrigger)
+            .where(and(
+                eq(commandTrigger.pluginId, pluginId),
+                eq(commandTrigger.featureCode, featureCode),
+                eq(commandTrigger.cmdKey, cmdKey),
+            ))
+            .limit(1)
+            .get() ?? null;
+    }
+
     searchByText(normalizedQuery: string): TextSearchMatch[] {
         return this.db.select({
             pluginId: commandTriggerSearch.pluginId,

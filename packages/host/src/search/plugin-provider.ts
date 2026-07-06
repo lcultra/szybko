@@ -70,10 +70,33 @@ export class PluginProvider implements SearchProvider {
         };
     }
 
-    async resolve(_itemId: LauncherItemId): Promise<LauncherItem | null> {
-        // PluginProvider 的结果会在 search 时完整返回给 SearchSession，
-        // 不需要独立 resolve。对 pinned/recent 的 resolve 走 session itemsById 缓存。
-        return null;
+    async resolve(itemId: LauncherItemId): Promise<LauncherItem | null> {
+        if (!itemId.startsWith('plugin://')) return null;
+
+        const path = itemId.replace('plugin://', '');
+        const parts = path.split('/');
+        if (parts.length < 3) return null;
+
+        const [pluginId, featureCode, cmdKey] = parts;
+
+        try {
+            const trigger = this.searchService.getTrigger(pluginId, featureCode, cmdKey);
+            if (!trigger) return null;
+
+            return {
+                id: itemId,
+                ownerProvider: 'plugin',
+                title: trigger.label || cmdKey,
+                subtitle: `打开 ${pluginId}`,
+                icon: { type: 'emoji', value: '🧩' },
+                score: trigger.scoreBase,
+                capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
+                state: { pinned: false },
+            };
+        }
+        catch {
+            return null;
+        }
     }
 
     async execute(itemId: LauncherItemId, _ctx: ExecuteContext): Promise<ExecuteResult> {

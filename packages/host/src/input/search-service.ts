@@ -56,4 +56,9 @@ export class SearchService {
         // 3. Dedup + Sort
         return dedupAndSort(allMatches);
     }
+
+    getTrigger(pluginId: string, featureCode: string, cmdKey: string): import('../persistence/sqlite/repositories/command-projection-repository').CommandSearchRow | null {
+        const repo = new CommandProjectionRepository(this.db);
+        return repo.getTrigger(pluginId, featureCode, cmdKey);
+    }
 }
