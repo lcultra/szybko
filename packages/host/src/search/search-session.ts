@@ -139,7 +139,7 @@ export class SearchSession {
     private buildSearchSection(items: LauncherItem[]): ResultSection[] {
         return [{
             id: 'best',
-            title: '最佳匹配结果',
+            title: '搜索结果',
             source: 'search',
             layout: 'grid',
             itemIds: items.map(i => i.id),

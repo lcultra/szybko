@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, Ref } from 'react';
 import { Slot } from '@radix-ui/react-slot';
+import clsx from 'clsx';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     asChild?: boolean;
@@ -11,7 +12,10 @@ export function Input({ asChild, className = '', ref, ...props }: InputProps) {
     return (
         <Comp
             ref={ref}
-            className={`w-full border-none bg-transparent text-2xl text-text placeholder-text-muted outline-none focus:ring-0 ${className}`}
+            className={clsx(
+                'w-full border-none bg-transparent text-2xl text-text placeholder-text-muted outline-none focus:ring-0',
+                className,
+            )}
             {...props}
         />
     );

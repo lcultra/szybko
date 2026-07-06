@@ -1,17 +1,44 @@
 @theme {
-    --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
-    --text-xs: 12px;
-    --text-sm: 14px;
-    --text-base: 16px;
-    --text-lg: 18px;
-    --text-xl: 20px;
-    --text-2xl: 24px;
-    --font-normal: 400;
-    --font-medium: 500;
-    --font-semibold: 600;
-    --font-bold: 700;
-    --leading-tight: 1.25;
-    --leading-normal: 1.5;
-    --leading-relaxed: 1.75;
+    /* ==========================================
+       1. 跨平台系统字体族 (Font Family)
+       针对 Electron 桌面端优化，优先渲染原生系统高质量字体
+       ========================================== */
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'PingFang SC', 'Hiragino Sans GB',
+        'Microsoft YaHei', 'Source Han Sans CN', sans-serif;
+
+    /* 适合代码编辑器、日志查看器、数据表格 */
+    --font-mono:
+        'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, Consolas, 'PingFang SC', 'Microsoft YaHei', monospace;
+
+    /* ==========================================
+       2. 高密度工具类字阶 (Font Size)
+       Electron 应用信息密度高，字阶间距应更紧凑（以 12px/14px 为核心体量）
+       ========================================== */
+    --text-xs: 11px; /* 状态栏、次要徽章、快捷键提示 (Caption/Tooltip) */
+    --text-sm: 12px; /* 侧边栏菜单、表单 Label、小型表格数据 (Compact Body) */
+    --text-base: 13px; /* 标准内容正文、主输入框文本 (Standard Body) */
+    --text-md: 14px; /* 对话框正文、设置项标题 (Large Body) */
+    --text-lg: 16px; /* 模块小标题、卡片头部 (Subheading) */
+    --text-xl: 18px; /* 弹窗大标题、常规面板顶部 (Heading) */
+    --text-2xl: 22px; /* 空状态提示、欢迎页大标题 (Display) */
+
+    /* ==========================================
+       3. 严谨的字重定义 (Font Weight)
+       保证在 Mac (Retina) 和 Windows (ClearType) 上都具备高可读性
+       ========================================== */
+    --font-weight-light: 300; /* 极少使用，偶尔用于超大数字显示 */
+    --font-weight-normal: 400; /* 绝大部分正文、普通文本 */
+    --font-weight-medium: 500; /* 按钮文本、激活态菜单、表单标签 */
+    --font-weight-semibold: 600; /* 章节标题、强调文本 */
+    --font-weight-bold: 700; /* 极少使用，仅用于强烈的视觉警示或大标题 */
+
+    /* ==========================================
+       4. 工具端高密度行高 (Line Height)
+       工具类应用需要压缩垂直空间，行高不宜过大
+       ========================================== */
+    --leading-none: 1; /* 图标对齐、单行标签 */
+    --leading-tight: 1.25; /* 多行标题、紧凑列表 (125%) */
+    --leading-snug: 1.4; /* 默认段落正文，兼顾易读性与密度 (140%) */
+    --leading-normal: 1.5; /* 帮助文档、大段说明文字 (150%) */
 }

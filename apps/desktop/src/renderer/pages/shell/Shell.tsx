@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useMemo, useRef } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
@@ -128,38 +129,46 @@ export default function App() {
         event.preventDefault();
     }
 
+    const hasSections = sections.length > 0;
+
+    const shell = (
+        <>
+            <SearchBar
+                className={clsx({
+                    '-mb-2': hasSections,
+                })}
+                value={query}
+                onChange={setQuery}
+            />
+            <div
+                className="max-h-150 min-h-0 overflow-y-auto overscroll-contain"
+                onMouseDown={handleMouseDown}
+                onFocusCapture={handleFocusCapture}
+            >
+                {sections.length > 0
+                    ? (
+                            <SectionList
+                                sections={sections}
+                                itemsById={itemsById}
+                                selectedIndex={selectedIndex}
+                                expandedSectionIds={expandedSectionIds}
+                                onSelect={setSelectedIndex}
+                                onExecute={onExecuteItem}
+                                onToggleExpand={toggleExpand}
+                                onReorder={onReorder}
+                                onContextMenu={onContextMenu}
+                            />
+                        )
+                    : null}
+            </div>
+        </>
+    );
+
     return (
-        <div ref={rootRef}>
+        <section ref={rootRef}>
             <SurfaceFrame>
-                <div className="p-px">
-                    {state === 'plugin'
-                        ? <PluginView />
-                        : <SearchBar value={query} onChange={setQuery} />}
-                    {state !== 'plugin' && (
-                        <div
-                            className="max-h-[424px] min-h-0 overflow-y-auto overscroll-contain"
-                            onMouseDown={handleMouseDown}
-                            onFocusCapture={handleFocusCapture}
-                        >
-                            {sections.length > 0
-                                ? (
-                                        <SectionList
-                                            sections={sections}
-                                            itemsById={itemsById}
-                                            selectedIndex={selectedIndex}
-                                            expandedSectionIds={expandedSectionIds}
-                                            onSelect={setSelectedIndex}
-                                            onExecute={onExecuteItem}
-                                            onToggleExpand={toggleExpand}
-                                            onReorder={onReorder}
-                                            onContextMenu={onContextMenu}
-                                        />
-                                    )
-                                : null}
-                        </div>
-                    )}
-                </div>
+                { state === 'plugin' ? <PluginView /> : shell }
             </SurfaceFrame>
-        </div>
+        </section>
     );
 }

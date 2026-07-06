@@ -1,4 +1,5 @@
 import type { WebContentsView } from 'electron';
+import process from 'node:process';
 import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
 import { BrowserWindow, screen } from 'electron';
 
@@ -26,10 +27,13 @@ export class WindowManager {
             },
         });
 
-        this.window.on('blur', () => this.window?.hide());
-        // this.window.once('ready-to-show', () => {
-        //     this.window?.contentView.setBorderRadius(100);
-        // });
+        /**
+         * 禁用主窗口自动隐藏 DISABLE_AUTO_HIDE=true
+         */
+        if (process.env.DISABLE_AUTO_HIDE !== 'true') {
+            this.window.on('blur', () => this.hide());
+        }
+
         return this.window;
     }
 
@@ -48,7 +52,10 @@ export class WindowManager {
         this.relayout();
     }
 
-    hide() { this.window?.hide(); }
+    hide() {
+        this.window?.hide();
+    }
+
     show() {
         this.repositionToCursor();
         this.window?.show();

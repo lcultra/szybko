@@ -23,9 +23,9 @@ export function SectionHeader({
     onToggle,
 }: SectionHeaderProps) {
     return (
-        <div className="flex h-7 items-center justify-between px-2">
+        <div className="flex h-7 items-center justify-between px-2 hover:bg-surface-hover">
             <div className="flex items-baseline gap-1.5">
-                <span className="font-medium text-xs leading-none tracking-wide text-text-muted">{title}</span>
+                <span className="font-bold text-md leading-none tracking-wide text-text-muted">{title}</span>
                 {totalCount > shownCount && (
                     <span className="text-[10px] leading-none text-text-muted/50 tabular-nums">
                         {shownCount}
@@ -34,13 +34,12 @@ export function SectionHeader({
                     </span>
                 )}
             </div>
-            {canExpand && (
+            {!canExpand && (
                 <button
                     onClick={onToggle}
                     className="flex h-5 items-center gap-0.5 rounded-md px-1.5 text-xs leading-none text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
                 >
                     {expanded ? '收起' : '更多'}
-                    <ChevronDown className={`size-3 transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`} />
                 </button>
             )}
         </div>

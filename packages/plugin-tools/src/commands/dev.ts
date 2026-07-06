@@ -15,7 +15,7 @@ export async function devPlugin(options: DevOptions): Promise<void> {
     const config = await loadConfig(cwd);
 
     if (config.renderer) {
-        const port = await findFreePort(5173);
+        const port = await findFreePort(10901);
         info(`启动 renderer dev server (端口: ${port})...`);
         writePluginManifest(cwd, `http://localhost:${port}/`);
 
