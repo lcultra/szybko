@@ -1,10 +1,10 @@
+import type { InlineConfig } from 'vite';
+import type { PluginConfig } from '../index';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { InlineConfig } from 'vite';
-import { mergeConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import type { PluginConfig } from '../index';
+import react from '@vitejs/plugin-react';
+import { mergeConfig } from 'vite';
 import { error } from '../utils/log';
 
 /**

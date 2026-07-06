@@ -1,7 +1,7 @@
 import type { InlineConfig } from 'vite';
+import type { PluginConfig } from '../index';
 import { resolve } from 'node:path';
 import { mergeConfig } from 'vite';
-import type { PluginConfig } from '../index';
 
 /**
  * 创建 preload 构建的 vite 内联配置

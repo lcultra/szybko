@@ -13,7 +13,8 @@ export function findProjectRoot(cwd: string): string | null {
             return dir;
         }
         const parent = resolve(dir, '..');
-        if (parent === dir) break; // 到根了
+        if (parent === dir)
+            break; // 到根了
         dir = parent;
     }
 

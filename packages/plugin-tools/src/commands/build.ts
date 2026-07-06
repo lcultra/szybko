@@ -1,11 +1,11 @@
-import { copyFileSync, existsSync, cpSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { build } from 'vite';
-import { loadConfig } from '../utils/config';
 import { createPreloadViteConfig } from '../configs/preload';
 import { createRendererViteConfig } from '../configs/renderer';
+import { loadConfig } from '../utils/config';
 import { writePluginManifest } from '../utils/devmanifest';
-import { info, success, error as logError } from '../utils/log';
+import { info, error as logError, success } from '../utils/log';
 
 export interface BuildOptions {
     cwd: string;

@@ -17,10 +17,6 @@ export function ResultIcon({ icon, title }: ResultIconProps) {
         return <span className="grid size-10 place-items-center overflow-hidden font-semibold text-sm text-text-muted">{firstChar(title)}</span>;
     }
 
-    if (icon.type === 'emoji') {
-        return <span className="grid size-10 place-items-center overflow-hidden font-semibold text-sm text-text-muted">{icon.value}</span>;
-    }
-
     if (failed) {
         return <span className="grid size-10 place-items-center overflow-hidden font-semibold text-sm text-text-muted">{firstChar(title)}</span>;
     }

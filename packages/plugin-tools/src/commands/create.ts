@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { info, success, error as logError } from '../utils/log';
+import { info, error as logError, success } from '../utils/log';
 
 export interface CreateOptions {
     name: string;
@@ -27,7 +27,7 @@ export default defineConfig({
 });
 `;
 
-const PACKAGE_JSON_TEMPLATE = (name: string, hasRenderer: boolean) => {
+function PACKAGE_JSON_TEMPLATE(name: string, hasRenderer: boolean) {
     const deps: Record<string, string> = {};
     if (hasRenderer) {
         deps['@szybko/sdk'] = 'workspace:*';
@@ -38,7 +38,7 @@ const PACKAGE_JSON_TEMPLATE = (name: string, hasRenderer: boolean) => {
         ...deps,
         '@szybko/plugin-tools': 'workspace:*',
     };
-    return JSON.stringify({
+    return `${JSON.stringify({
         name: `@szybko/plugin-${name}`,
         version: '0.1.0',
         private: true,
@@ -47,16 +47,18 @@ const PACKAGE_JSON_TEMPLATE = (name: string, hasRenderer: boolean) => {
             dev: 'szybko-plugin dev',
         },
         dependencies: allDeps,
-    }, null, 4) + '\n';
-};
+    }, null, 4)}\n`;
+}
 
-const PLUGIN_JSON_TEMPLATE = (id: string) => JSON.stringify({
-    id,
-    main: 'index.html',
-    preload: 'preload.js',
-    pluginSetting: { single: true },
-    features: [],
-}, null, 4) + '\n';
+function PLUGIN_JSON_TEMPLATE(id: string) {
+    return `${JSON.stringify({
+        id,
+        main: 'index.html',
+        preload: 'preload.js',
+        pluginSetting: { single: true },
+        features: [],
+    }, null, 4)}\n`;
+}
 
 const PRELOAD_TEMPLATE = `// @szybko/plugin-{{name}} — preload
 // 插件 preload 脚本，运行在沙盒环境中

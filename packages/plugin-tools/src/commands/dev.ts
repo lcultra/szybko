@@ -1,10 +1,10 @@
 import { build, createServer } from 'vite';
-import { loadConfig } from '../utils/config';
 import { createPreloadViteConfig } from '../configs/preload';
 import { createRendererViteConfig } from '../configs/renderer';
+import { loadConfig } from '../utils/config';
 import { writePluginManifest } from '../utils/devmanifest';
+import { dimmed, info, success } from '../utils/log';
 import { findFreePort } from '../utils/port';
-import { info, success, dimmed } from '../utils/log';
 
 export interface DevOptions {
     cwd: string;

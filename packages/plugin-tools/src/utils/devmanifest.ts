@@ -39,5 +39,5 @@ export function writePluginManifest(cwd: string, devUrl?: string): void {
     }
 
     const outPath = resolve(cwd, 'dist', 'plugin.json');
-    writeFileSync(outPath, JSON.stringify(manifest, null, 4) + '\n');
+    writeFileSync(outPath, `${JSON.stringify(manifest, null, 4)}\n`);
 }

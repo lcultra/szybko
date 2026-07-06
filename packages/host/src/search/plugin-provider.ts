@@ -107,7 +107,8 @@ export class PluginProvider implements SearchProvider {
                 subtitle: `打开 ${pluginId}`,
                 icon: (() => {
                     const plugin = this.catalog.get(pluginId);
-                    if (!plugin) return undefined;
+                    if (!plugin)
+                        return undefined;
                     const feature = plugin.manifest.features.find(f => f.code === featureCode);
                     const iconPath = feature?.icon ?? plugin.manifest.logo;
                     const encoded = iconPath.split('/').map(encodeURIComponent).join('/');

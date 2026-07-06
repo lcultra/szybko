@@ -1,7 +1,7 @@
 import type { PluginCatalog } from './plugin-catalog';
-import { registerAssetHandler } from '../protocol/asset-protocol';
 import { readFile } from 'node:fs/promises';
-import { resolve, relative, extname } from 'node:path';
+import { extname, relative, resolve } from 'node:path';
+import { registerAssetHandler } from '../protocol/asset-protocol';
 
 const MIME_MAP: Record<string, string> = {
     '.png': 'image/png',
@@ -48,7 +48,8 @@ export function registerPluginAssetHandler(catalog: PluginCatalog): void {
                 status: 200,
                 headers: { 'Content-Type': MIME_MAP[normalizedExt] },
             });
-        } catch {
+        }
+        catch {
             return null;
         }
     });

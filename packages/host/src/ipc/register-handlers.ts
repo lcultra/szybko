@@ -1,7 +1,7 @@
 import type { IpcInvokeContract, LauncherItem, LauncherItemId, SearchRequest } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
-import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
+import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
