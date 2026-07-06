@@ -1,4 +1,4 @@
-import { initTheme } from '@szybko/design-system';
+import { initTheme } from '@szybko/ui-kit';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';

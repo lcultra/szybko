@@ -1,4 +1,4 @@
-import { Input } from '@szybko/design-system';
+import { Input } from '@szybko/ui-kit';
 import { useEffect, useRef } from 'react';
 
 interface SearchBarProps {
