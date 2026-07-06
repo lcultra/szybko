@@ -1,4 +1,4 @@
-import { mountFloating } from '@szybko/shell';
+import { mountFloating } from './mount';
 import './main.css';
 
 mountFloating();

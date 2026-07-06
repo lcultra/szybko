@@ -1,4 +1,4 @@
-import { mountMain } from '@szybko/shell';
+import { mountMain } from './mount';
 import './main.css';
 
 mountMain();
