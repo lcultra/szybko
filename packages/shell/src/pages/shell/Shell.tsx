@@ -49,7 +49,7 @@ export default function App() {
                 : Math.min(s.itemIds.length, MAX_VISIBLE),
         }));
         let total = 0;
-        const offsets = counts.map(c => {
+        const offsets = counts.map((c) => {
             const start = total;
             total += c.count;
             return { sectionId: c.sectionId, start, length: c.count };
@@ -120,13 +120,15 @@ export default function App() {
     // 焦点锁定：阻止点击结果项让搜索框失焦
     function handleMouseDown(event: React.MouseEvent) {
         const target = event.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+            return;
         event.preventDefault();
     }
 
     function handleFocusCapture(event: React.FocusEvent) {
         const target = event.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+            return;
         event.preventDefault();
     }
 
