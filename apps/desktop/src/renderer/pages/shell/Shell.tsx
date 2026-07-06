@@ -60,6 +60,8 @@ export default function App() {
     const onExecuteItem = (itemId: string) => {
         if (!sessionId || !currentQueryId)
             return;
+        if (status === 'loading')  // Guard: don't execute while loading
+            return;
         // 先发 execute IPC，再清搜索（避免 setQuery('') 触发的新搜索 IPC 抢先替换掉 currentSession）
         window.szybkoInternal?.execute({ sessionId, queryId: currentQueryId, itemId: itemId as any });
         setQuery('');
@@ -147,27 +149,21 @@ export default function App() {
                             onFocusCapture={handleFocusCapture}
                         >
                             {sections.length > 0
-                                ? (
-                                        <SectionList
-                                            sections={sections}
-                                            itemsById={itemsById}
-                                            selectedIndex={selectedIndex}
-                                            expandedSectionIds={expandedSectionIds}
-                                            onSelect={setSelectedIndex}
-                                            onExecute={onExecuteItem}
-                                            onPinToggle={onPinToggle}
-                                            onToggleExpand={toggleExpand}
-                                            onReorder={onReorder}
-                                            onContextMenu={onContextMenu}
-                                        />
-                                    )
-                                : status === 'final' && query
-                                    ? (
-                                            <div className="flex items-center justify-center py-8 text-sm text-text-muted">
-                                                没有找到匹配结果
-                                            </div>
-                                        )
-                                    : null}
+                            ? (
+                                    <SectionList
+                                        sections={sections}
+                                        itemsById={itemsById}
+                                        selectedIndex={selectedIndex}
+                                        expandedSectionIds={expandedSectionIds}
+                                        onSelect={setSelectedIndex}
+                                        onExecute={onExecuteItem}
+                                        onPinToggle={onPinToggle}
+                                        onToggleExpand={toggleExpand}
+                                        onReorder={onReorder}
+                                        onContextMenu={onContextMenu}
+                                    />
+                                )
+                            : null}
                         </div>
                     )}
                 </div>

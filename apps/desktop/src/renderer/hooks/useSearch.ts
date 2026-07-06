@@ -56,7 +56,8 @@ export function useSearch() {
     }, [setPartial]);
 
     const handleQueryChange = useCallback((value: string) => {
-        setPartial({ query: value, status: value ? 'loading' : 'loading', selectedIndex: 0 });
+        // Invalidate execution context immediately on query change
+        setPartial({ query: value, status: value ? 'loading' : 'loading', selectedIndex: 0, currentQueryId: null, sessionId: null });
 
         clearTimeout(timerRef.current);
 
