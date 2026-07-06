@@ -31,7 +31,7 @@ export function FloatingApp() {
     useEffect(() => {
         setSlot(initialSlot);
         setAppState('plugin');
-    }, []);
+    }, [setAppState, setSlot]);
 
     const handleClose = useCallback(() => {
         if (initialSlot.runtimeId)

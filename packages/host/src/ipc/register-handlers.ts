@@ -4,7 +4,7 @@ import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, ipcMain, Menu } from 'electron';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
@@ -160,7 +160,6 @@ export function registerIpcHandlers(
 
             const win = BrowserWindow.getFocusedWindow();
             if (win && menuBuilder.length > 0) {
-                const { Menu } = require('electron');
                 const built = Menu.buildFromTemplate(menuBuilder);
                 built.popup({ window: win, x: screenX, y: screenY });
             }

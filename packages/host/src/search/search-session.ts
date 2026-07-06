@@ -60,7 +60,7 @@ export class SearchSession {
 
         // 注册 items 到 registry（去重：同名 id 取高 score）
         const sectionData: Array<{ section: any; items: LauncherItem[] }> = [];
-        for (const { providerId, result } of results) {
+        for (const { result } of results) {
             if (!result.section)
                 continue;
             const dedupedItems: LauncherItem[] = [];

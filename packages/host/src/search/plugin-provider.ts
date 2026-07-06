@@ -63,7 +63,7 @@ export class PluginProvider implements SearchProvider {
         };
     }
 
-    async resolve(itemId: LauncherItemId): Promise<LauncherItem | null> {
+    async resolve(_itemId: LauncherItemId): Promise<LauncherItem | null> {
         // PluginProvider 的结果会在 search 时完整返回给 SearchSession，
         // 不需要独立 resolve。对 pinned/recent 的 resolve 走 session itemsById 缓存。
         return null;

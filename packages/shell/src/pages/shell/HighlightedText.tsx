@@ -36,10 +36,10 @@ export function HighlightedText({ text, ranges }: HighlightedTextProps) {
 
     return (
         <>
-            {parts.map((part, i) =>
+            {parts.map(part =>
                 part.highlight
-                    ? <span key={i} className="font-semibold text-primary">{part.text}</span>
-                    : <span key={i}>{part.text}</span>,
+                    ? <span key={part.text + (part.highlight ? 'hl' : '')} className="font-semibold text-primary">{part.text}</span>
+                    : <span key={part.text + (part.highlight ? 'hl' : '')}>{part.text}</span>,
             )}
         </>
     );

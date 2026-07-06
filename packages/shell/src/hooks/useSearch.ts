@@ -21,7 +21,7 @@ export interface SearchState {
  * 搜索 hook — 接收 SearchResponse 快照替换 SearchBatch 累加。
  */
 export function useSearch() {
-    const [state, setState] = useState<SearchState>({
+    const [state, setState] = useState<SearchState>(() => ({
         query: '',
         sections: [],
         itemsById: {},
@@ -30,7 +30,7 @@ export function useSearch() {
         sessionId: null,
         selectedIndex: 0,
         expandedSectionIds: new Set(),
-    });
+    }));
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const queryIdRef = useRef<string | null>(null);
