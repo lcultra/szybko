@@ -14,11 +14,14 @@ export class RuntimeViewFactory {
     create(plugin: PluginInfo): { view: WebContentsView; runtimeId: string } {
         const view = new WebContentsView({
             webPreferences: {
+                sandbox: true,
                 preload: this.pluginPreloadPath,
                 contextIsolation: true,
                 nodeIntegration: false,
             },
         });
+
+        view.setBackgroundColor('#00000000');
 
         const runtimeId = `${plugin.id}-${this.nextInstanceId++}`;
 

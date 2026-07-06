@@ -60,8 +60,9 @@ export default function App() {
     const onExecuteItem = (itemId: string) => {
         if (!sessionId || !currentQueryId)
             return;
-        setQuery('');
+        // 先发 execute IPC，再清搜索（避免 setQuery('') 触发的新搜索 IPC 抢先替换掉 currentSession）
         window.szybkoInternal?.execute({ sessionId, queryId: currentQueryId, itemId: itemId as any });
+        setQuery('');
     };
 
     const onEscape = () => {

@@ -14,6 +14,7 @@ export class WindowManager {
         this.window = new BrowserWindow({
             width: DEFAULT_WINDOW_WIDTH,
             height: MIN_WINDOW_HEIGHT,
+            hasShadow: false,
             frame: false,
             transparent: true,
             resizable: false,
@@ -24,9 +25,11 @@ export class WindowManager {
                 nodeIntegration: false,
             },
         });
-        this.window.contentView.setBorderRadius(8);
 
         this.window.on('blur', () => this.window?.hide());
+        // this.window.once('ready-to-show', () => {
+        //     this.window?.contentView.setBorderRadius(100);
+        // });
         return this.window;
     }
 
@@ -87,7 +90,7 @@ export class WindowManager {
                 x: BORDER_WIDTH,
                 y: SEARCHBAR_HEIGHT,
                 width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
-                height: Math.max(winHeight - SEARCHBAR_HEIGHT - BORDER_WIDTH, 0),
+                height: Math.max(winHeight - SEARCHBAR_HEIGHT - BORDER_WIDTH * 2, 0),
             });
         }
     }

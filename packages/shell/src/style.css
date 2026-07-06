@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+@import '@szybko/design-system/index.css';
+
+@source '../../../../packages';

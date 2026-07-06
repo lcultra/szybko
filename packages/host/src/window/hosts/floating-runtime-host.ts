@@ -29,12 +29,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         if (view) {
             this.view = view;
             this.window!.contentView.addChildView(view);
-            view.setBounds({
-                x: BORDER_WIDTH,
-                y: SEARCHBAR_HEIGHT,
-                width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
-                height: 600 - SEARCHBAR_HEIGHT - BORDER_WIDTH,
-            });
+            this.relayout();
         }
         this.window!.show();
     }
@@ -52,6 +47,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             width: DEFAULT_WINDOW_WIDTH,
             height: 600,
             frame: false,
+            hasShadow: false,
             transparent: true,
             titleBarStyle: 'hidden',
             trafficLightPosition: { x: 12, y: 26 },
@@ -62,7 +58,10 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             },
         });
 
-        this.window.getContentView().setBorderRadius(10);
+        // 窗口尺寸变化时重新布局子 view
+        this.window.on('resize', this.relayout);
+        this.window.on('maximize', this.relayout);
+        this.window.on('unmaximize', this.relayout);
 
         const slot: RuntimeSlot = {
             runtimeId: meta.runtimeId,
@@ -84,6 +83,19 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         }
     }
 
+    /** 重新计算子 view 边界（箭头函数 = 绑定 this） */
+    private relayout = (): void => {
+        if (!this.window || !this.view || this.window.isDestroyed())
+            return;
+        const { width, height } = this.window.contentView.getBounds();
+        this.view.setBounds({
+            x: BORDER_WIDTH,
+            y: SEARCHBAR_HEIGHT,
+            width: Math.max(width - BORDER_WIDTH * 2, 0),
+            height: Math.max(height - SEARCHBAR_HEIGHT - BORDER_WIDTH, 0),
+        });
+    };
+
     /** 显示并聚焦浮动窗口 */
     focus(): void {
         if (this.window && !this.window.isDestroyed()) {
@@ -101,7 +113,12 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
 
     /** 关闭并销毁浮动窗口 */
     close(): void {
-        this.window?.close();
+        if (this.window) {
+            this.window.removeListener('resize', this.relayout);
+            this.window.removeListener('maximize', this.relayout);
+            this.window.removeListener('unmaximize', this.relayout);
+            this.window.close();
+        }
         this.window = null;
         this.view = null;
         this.currentMeta = null;

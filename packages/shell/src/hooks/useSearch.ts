@@ -105,25 +105,6 @@ export function useSearch() {
         });
     }, [setPartial]);
 
-    const executeSelected = useCallback(() => {
-        const { sections, itemsById, selectedIndex, currentQueryId, sessionId } = stateRef.current;
-        if (!currentQueryId || !sessionId)
-            return;
-
-        // 展平所有 visible items 找到选中的 itemId
-        const flatIds = sections.flatMap(s => s.itemIds.slice(0, 18)); // 展开逻辑同 SectionList
-        const itemId = flatIds[selectedIndex];
-        if (!itemId)
-            return;
-
-        const item = itemsById[itemId];
-        if (!item)
-            return;
-
-        setPartial({ query: '', sections: [], itemsById: {}, status: 'idle', currentQueryId: null, selectedIndex: 0 });
-        window.szybkoInternal?.execute({ sessionId, queryId: currentQueryId, itemId });
-    }, [setPartial]);
-
     // 计算当前可见 items（展开/收起影响）
     const visibleItemIds = (() => {
         const { sections, expandedSectionIds } = stateRef.current;
@@ -141,7 +122,6 @@ export function useSearch() {
         setQuery: handleQueryChange,
         setSelectedIndex,
         toggleExpand,
-        executeSelected,
         visibleItemIds,
     };
 }
