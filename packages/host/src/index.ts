@@ -9,9 +9,11 @@ export { ElectronNativeCapabilityService } from './native/electron-native-capabi
 export { type NativeCapabilityService } from './native/native-capability-service';
 export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { InstallationSynchronizer } from './plugins/installation-synchronizer';
+export { registerPluginAssetHandler } from './plugins/plugin-asset-handler';
 export { PluginCatalog } from './plugins/plugin-catalog';
 export { PluginDiscovery } from './plugins/plugin-discovery';
 export { PluginLoader } from './plugins/plugin-loader';
+export { type AssetResolver, initAssetProtocol, registerAssetHandler } from './protocol/asset-protocol';
 export { RuntimeCoordinator } from './runtime/runtime-coordinator';
 export { RuntimeHostAttacher } from './runtime/runtime-host-attacher';
 export { RuntimeManager } from './runtime/runtime-manager';

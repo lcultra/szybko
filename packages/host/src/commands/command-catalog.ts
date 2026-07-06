@@ -2,6 +2,8 @@ import type { PluginFeature, PluginManifest } from '@szybko/shared';
 import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
 import type { CommandProjection, CommandTriggerSearchProjection } from './command-projection-builder';
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { extname, relative, resolve } from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { FeatureOverrideRepository } from '../persistence/sqlite/repositories/feature-override-repository';
@@ -12,6 +14,8 @@ import { buildCommandProjection, buildSearchEntries } from './command-projection
 import { stableJson } from './feature-normalizer';
 
 const INDEX_VERSION = 2;
+
+const ALLOWED_IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.svg'];
 
 const sourcePrio = (s: string) => s === 'cmd' ? 1 : 2;
 
@@ -61,6 +65,12 @@ function createRepositories(db: PlatformDrizzleDatabase) {
 export class CommandCatalog {
     constructor(private platformDb: PlatformDatabase) {}
 
+    private pluginCatalog: import('../plugins/plugin-catalog').PluginCatalog | null = null;
+
+    setPluginCatalog(catalog: import('../plugins/plugin-catalog').PluginCatalog): void {
+        this.pluginCatalog = catalog;
+    }
+
     static createForDatabase(platformDb: PlatformDatabase): CommandCatalog {
         return new CommandCatalog(platformDb);
     }
@@ -95,7 +105,39 @@ export class CommandCatalog {
         });
     }
 
+    private validateFeatureIcon(pluginId: string, iconPath: string): string | null {
+        const plugin = this.pluginCatalog?.get(pluginId);
+        if (!plugin) {
+            return 'Plugin not found or catalog not initialized';
+        }
+
+        const ext = extname(iconPath).toLowerCase();
+        const normalizedExt = ext === '.jpeg' ? '.jpg' : ext;
+        if (!ALLOWED_IMAGE_EXTS.includes(normalizedExt)) {
+            return `icon 必须是 .png / .jpg / .jpeg / .svg 格式，实际: ${ext}`;
+        }
+
+        const resolved = resolve(plugin.path, iconPath);
+        const rel = relative(plugin.path, resolved);
+        if (rel.startsWith('..') || rel === '') {
+            return 'icon 路径逃逸了插件目录';
+        }
+
+        if (!existsSync(resolved)) {
+            return `icon 文件不存在: ${resolved}`;
+        }
+
+        return null;
+    }
+
     setFeature(pluginId: string, feature: PluginFeature): { ok: boolean; error?: string } {
+        if (feature.icon) {
+            const validationError = this.validateFeatureIcon(pluginId, feature.icon);
+            if (validationError) {
+                return { ok: false, error: validationError };
+            }
+        }
+
         try {
             this.platformDb.transaction((tx) => {
                 const repos = createRepositories(tx);

@@ -1,10 +1,22 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { CommandCatalog, createPlatformDatabase, PluginCatalog, registerIpcHandlers, RuntimeCoordinator, RuntimeManager, ShortcutManager, WindowManager } from '@szybko/host';
-import { app } from 'electron';
+import { CommandCatalog, createPlatformDatabase, initAssetProtocol, PluginCatalog, registerIpcHandlers, registerPluginAssetHandler, RuntimeCoordinator, RuntimeManager, ShortcutManager, WindowManager } from '@szybko/host';
+import { app, protocol } from 'electron';
 
 const windowManager = new WindowManager();
 const shortcutManager = new ShortcutManager();
+
+protocol.registerSchemesAsPrivileged([
+    {
+        scheme: 'asset',
+        privileges: {
+            standard: true,
+            secure: true,
+            supportFetchAPI: true,
+            corsEnabled: true,
+        },
+    },
+]);
 
 void app.whenReady().then(async () => {
     const preloadPath = join(__dirname, '../preload/host.js');
@@ -23,6 +35,11 @@ void app.whenReady().then(async () => {
 
     const pluginManager = new PluginCatalog(platformDb, pluginsDir);
     await pluginManager.init();
+
+    initAssetProtocol();
+    registerPluginAssetHandler(pluginManager);
+
+    commandCatalog.setPluginCatalog(pluginManager);
 
     // Index manifest features for all enabled plugins into the command catalog
     for (const plugin of pluginManager.getEnabled()) {
@@ -62,7 +79,7 @@ void app.whenReady().then(async () => {
         }
     });
 
-    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb);
+    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager);
     shortcutManager.registerToggle(windowManager);
 });
 

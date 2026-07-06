@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+
 interface SectionHeaderProps {
     title: string;
     shownCount: number;
@@ -21,25 +23,26 @@ export function SectionHeader({
     onToggle,
 }: SectionHeaderProps) {
     return (
-        <div className="flex h-8 items-center justify-between px-2 pb-1">
-            <span className="font-medium text-sm leading-none text-text-muted">{title}</span>
-            <div className="flex h-full items-center gap-2">
+        <div className="flex h-7 items-center justify-between px-2">
+            <div className="flex items-baseline gap-1.5">
+                <span className="font-medium text-xs leading-none tracking-wide text-text-muted">{title}</span>
                 {totalCount > shownCount && (
-                    <span className="text-xs leading-none text-text-muted/60">
+                    <span className="text-[10px] leading-none text-text-muted/50 tabular-nums">
                         {shownCount}
                         /
                         {totalCount}
                     </span>
                 )}
-                {canExpand && (
-                    <button
-                        onClick={onToggle}
-                        className="h-5 rounded-md px-2 text-xs leading-none text-primary transition-colors hover:bg-surface-hover"
-                    >
-                        {expanded ? '收起' : '更多'}
-                    </button>
-                )}
             </div>
+            {canExpand && (
+                <button
+                    onClick={onToggle}
+                    className="flex h-5 items-center gap-0.5 rounded-md px-1.5 text-xs leading-none text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+                >
+                    {expanded ? '收起' : '更多'}
+                    <ChevronDown className={`size-3 transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`} />
+                </button>
+            )}
         </div>
     );
 }

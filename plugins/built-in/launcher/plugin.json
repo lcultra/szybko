@@ -1,13 +1,14 @@
 {
     "id": "launcher",
     "main": "index.html",
+    "logo": "icon.svg",
     "preload": "preload.js",
     "pluginSetting": { "single": true },
     "features": [
-        { "code": "test", "explain": "测试复制", "cmds": ["测试", "test"], "icon": "🧪" },
-        { "code": "lock", "explain": "锁定屏幕", "cmds": ["锁屏", "lock"], "icon": "🔒" },
-        { "code": "sleep", "explain": "休眠", "cmds": ["休眠", "sleep"], "icon": "💤" },
-        { "code": "restart", "explain": "重新启动", "cmds": ["重启", "restart", "重新启动"], "icon": "🔄" },
-        { "code": "shutdown", "explain": "关机", "cmds": ["关机", "shutdown"], "icon": "⏻" }
+        { "code": "test", "explain": "测试复制", "cmds": ["测试", "test"] },
+        { "code": "lock", "explain": "锁定屏幕", "cmds": ["锁屏", "lock"] },
+        { "code": "sleep", "explain": "休眠", "cmds": ["休眠", "sleep"] },
+        { "code": "restart", "explain": "重新启动", "cmds": ["重启", "restart", "重新启动"] },
+        { "code": "shutdown", "explain": "关机", "cmds": ["关机", "shutdown"] }
     ]
 }

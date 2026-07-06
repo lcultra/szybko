@@ -6,7 +6,7 @@ export interface PluginManifest {
     id: string;
     /** 必填。插件运行入口，相对于 plugin.json 的 .html 路径。 */
     main: string;
-    /** 必填。插件 Logo 图标，相对路径的图片文件。 */
+    /** 必填。插件图标，支持 .png / .jpg / .jpeg / .svg，相对于 plugin.json 的路径。 */
     logo: string;
     /** 选填。窗口加载前执行的预加载脚本（.js）。运行在独立预加载环境，可使用 Node.js 能力。 */
     preload?: string;
@@ -34,7 +34,10 @@ export interface PluginFeature {
     code: string;
     /** 选填。功能简短描述。 */
     explain?: string;
-    /** 选填。功能图标文件（.png/.jpg/.svg）或动态 feature 中的 data URL。 */
+    /**
+     * 选填。功能图标，支持 .png / .jpg / .jpeg / .svg，相对于 plugin.json 的路径。
+     * 不配置时使用 manifest.logo 兜底。
+     */
     icon?: string;
     /** 选填。动态 feature 可限制平台。 */
     platform?: string | string[];

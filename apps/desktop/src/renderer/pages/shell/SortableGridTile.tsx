@@ -12,16 +12,19 @@ export function SortableGridTile(props: GridTileProps) {
         transform: CSS.Transform.toString(transform),
         transition,
         pointerEvents: isDragging ? ('none' as const) : undefined,
-        outline: isOver ? '2px solid var(--color-primary)' : undefined,
-        outlineOffset: isOver ? -1 : undefined,
-        borderRadius: isOver ? 16 : undefined,
     };
+
+    const stateClass = isDragging
+        ? 'z-10 scale-105 bg-surface-card opacity-90 shadow-lg will-change-transform'
+        : isOver
+            ? 'ring-2 ring-accent/50 ring-inset'
+            : '';
 
     return (
         <div
             ref={setNodeRef}
             style={style}
-            className={isDragging ? 'opacity-45 will-change-transform' : ''}
+            className={`rounded-xl transition-shadow duration-100 ${stateClass}`}
             {...attributes}
             {...listeners}
         >

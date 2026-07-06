@@ -1,0 +1,16 @@
+{
+    "name": "@szybko/plugin-{{name}}",
+    "type": "module",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "build": "szybko-plugin build",
+        "dev": "szybko-plugin dev"
+    },
+    "dependencies": {
+        "@szybko/plugin-tools": "workspace:*",
+        "@szybko/sdk": "workspace:*",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7"
+    }
+}

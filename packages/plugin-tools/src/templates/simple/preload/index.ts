@@ -1,0 +1,1 @@
+// @szybko/plugin-{{name}} — preload

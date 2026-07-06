@@ -1,0 +1,12 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "rootDir": "src",
+        "types": ["node"],
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "outDir": "dist"
+    },
+    "include": ["src"],
+    "exclude": ["src/templates"]
+}
