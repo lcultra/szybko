@@ -30,6 +30,23 @@ export class PinnedItemRepository {
     }
 
     reorder(itemId: string, toIndex: number): void {
-        this.db.update(pinnedItem).set({ sortOrder: toIndex }).where(eq(pinnedItem.itemId, itemId)).run();
+        const all = this.list(); // ordered by sortOrder asc
+        const sourceIndex = all.findIndex(r => r.itemId === itemId);
+        if (sourceIndex === -1) return;
+
+        // Remove from current position and insert at new position
+        const [moved] = all.splice(sourceIndex, 1);
+        const insertAt = Math.min(toIndex, all.length);
+        all.splice(insertAt, 0, moved);
+
+        // Reassign contiguous sortOrder in a transaction
+        this.db.transaction((tx) => {
+            for (let i = 0; i < all.length; i++) {
+                tx.update(pinnedItem)
+                    .set({ sortOrder: i })
+                    .where(eq(pinnedItem.itemId, all[i].itemId))
+                    .run();
+            }
+        });
     }
 }
