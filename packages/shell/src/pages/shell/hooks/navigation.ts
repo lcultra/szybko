@@ -29,6 +29,7 @@ export function buildNavigationMap(
     sectionItemCounts: Array<{ sectionId: string; count: number }>,
     columns: number,
     selectedIndex: number,
+    sectionOffsets: Array<{ sectionId: string; start: number; length: number }>,
 ): NavigationMap {
     const cells: VisualCell[] = [];
     let globalIdx = 0;
@@ -53,9 +54,30 @@ export function buildNavigationMap(
         return { currentCell: cells[0]!, cells, up: null, down: null, left: null, right: null };
     }
 
-    // 按空间坐标找最近邻居
-    const up = cells.find(c => c.col === current.col && c.row === current.row - 1 && c.sectionId === current.sectionId);
-    const down = cells.find(c => c.col === current.col && c.row === current.row + 1);
+    // 找到当前 section 在 sectionOffsets 中的位置
+    const sectionOrder = sectionOffsets
+        .filter(o => o.length > 0)
+        .sort((a, b) => a.start - b.start);
+    const currentSectionIdx = sectionOrder.findIndex(o => o.sectionId === current.sectionId);
+
+    // down: 同 section 下一行 → 下一 section 第一行同列 → null
+    const down = cells.find(
+        c => c.col === current.col && c.row === current.row + 1 && c.sectionId === current.sectionId,
+    ) ?? (currentSectionIdx < sectionOrder.length - 1
+        ? cells.find(
+            c => c.col === current.col && c.row === 0 && c.sectionId === sectionOrder[currentSectionIdx + 1].sectionId,
+        ) ?? null
+        : null);
+
+    // up: 同 section 上一行 → 上一 section 最后一行同列 → null
+    const up = cells.find(
+        c => c.col === current.col && c.row === current.row - 1 && c.sectionId === current.sectionId,
+    ) ?? (currentSectionIdx > 0
+        ? cells.findLast(
+            c => c.col === current.col && c.sectionId === sectionOrder[currentSectionIdx - 1].sectionId,
+        ) ?? null
+        : null);
+
     const left = cells.find(c => c.row === current.row && c.col === current.col - 1 && c.sectionId === current.sectionId);
     const right = cells.find(c => c.row === current.row && c.col === current.col + 1 && c.sectionId === current.sectionId);
 
