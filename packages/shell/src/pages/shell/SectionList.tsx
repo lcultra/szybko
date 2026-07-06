@@ -1,7 +1,6 @@
 import type { LauncherItem, LauncherItemId, ResultSection } from '@szybko/shared';
-import { useCallback, useMemo } from 'react';
-import { PinnedGrid } from './PinnedGrid';
-import { ResultGrid } from './ResultGrid';
+import { useMemo } from 'react';
+import { Grid } from './Grid';
 import { SectionHeader } from './SectionHeader';
 
 const DEFAULT_ROWS = 2;
@@ -44,10 +43,6 @@ export function SectionList({
         return { sectionOffsets: offsets, visibleCount: total };
     }, [sections, expandedSectionIds]);
 
-    const handleReorder = useCallback((itemId: LauncherItemId, toIndex: number) => {
-        onReorder(itemId, toIndex);
-    }, [onReorder]);
-
     if (sections.length === 0)
         return null;
 
@@ -81,24 +76,26 @@ export function SectionList({
                         )}
                         {isPinned
                             ? (
-                                    <PinnedGrid
+                                    <Grid
                                         items={items}
                                         startIndex={offset.start}
                                         selectedIndex={selectedIndex}
                                         columns={DEFAULT_COLUMNS}
+                                        draggable={true}
+                                        onReorder={onReorder}
                                         onSelect={onSelect}
                                         onExecute={onExecute}
                                         onPinToggle={onPinToggle}
-                                        onReorder={handleReorder}
                                         onContextMenu={onContextMenu}
                                     />
                                 )
                             : (
-                                    <ResultGrid
+                                    <Grid
                                         items={items}
                                         startIndex={offset.start}
                                         selectedIndex={selectedIndex}
                                         columns={DEFAULT_COLUMNS}
+                                        draggable={false}
                                         onSelect={onSelect}
                                         onExecute={onExecute}
                                         onPinToggle={onPinToggle}

@@ -48,7 +48,13 @@ export default function App() {
                 ? s.itemIds.length
                 : Math.min(s.itemIds.length, MAX_VISIBLE),
         }));
-        return buildNavigationMap(counts, DEFAULT_COLUMNS, selectedIndex);
+        let total = 0;
+        const offsets = counts.map(c => {
+            const start = total;
+            total += c.count;
+            return { sectionId: c.sectionId, start, length: c.count };
+        });
+        return buildNavigationMap(counts, DEFAULT_COLUMNS, selectedIndex, offsets);
     }, [sections, expandedSectionIds, selectedIndex]);
 
     const onExecuteItem = (itemId: string) => {
@@ -111,6 +117,19 @@ export default function App() {
         window.szybkoInternal?.openContextMenu({ itemId: itemId as any, screenX: e.clientX, screenY: e.clientY });
     };
 
+    // 焦点锁定：阻止点击结果项让搜索框失焦
+    function handleMouseDown(event: React.MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        event.preventDefault();
+    }
+
+    function handleFocusCapture(event: React.FocusEvent) {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        event.preventDefault();
+    }
+
     return (
         <div ref={rootRef}>
             <SurfaceFrame>
@@ -119,7 +138,11 @@ export default function App() {
                         ? <PluginView />
                         : <SearchBar value={query} onChange={setQuery} />}
                     {state !== 'plugin' && (
-                        <div className="max-h-[424px] min-h-0 overflow-y-auto overscroll-contain ">
+                        <div
+                            className="max-h-[424px] min-h-0 overflow-y-auto overscroll-contain"
+                            onMouseDown={handleMouseDown}
+                            onFocusCapture={handleFocusCapture}
+                        >
                             {sections.length > 0
                                 ? (
                                         <SectionList
