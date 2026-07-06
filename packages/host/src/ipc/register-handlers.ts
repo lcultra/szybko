@@ -1,4 +1,4 @@
-import type { IpcInvokeContract, LauncherItem, LauncherItemId } from '@szybko/shared';
+import type { IpcInvokeContract, LauncherItem, LauncherItemId, SearchRequest } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
@@ -23,6 +23,7 @@ type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['reque
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
 
 let currentSession: SearchSession | null = null;
+let lastSearchRequest: SearchRequest | null = null;
 
 export function registerIpcHandlers(
     windowManager: WindowManager,
@@ -72,6 +73,32 @@ export function registerIpcHandlers(
     const pinnedRepo = platformDb ? new PinnedItemRepository(platformDb.drizzle()) : null;
     const usageRepo = platformDb ? new UsageEventRepository(platformDb.drizzle()) : null;
 
+    function triggerRefresh(): void {
+        if (!lastSearchRequest || !platformDb || !pluginProvider || !pinnedProvider || !recentProvider)
+            return;
+
+        const win = windowManager.getWindow();
+        if (!win || win.isDestroyed()) return;
+
+        if (currentSession) {
+            currentSession.cancel();
+        }
+
+        const snapshot = collectFromSearch(lastSearchRequest);
+        const providers = [pinnedProvider, recentProvider, pluginProvider].filter(Boolean) as SearchProvider[];
+
+        const session = new SearchSession(lastSearchRequest.queryId, providers, (res) => {
+            if (!win.isDestroyed()) {
+                win.webContents.send(IPC.SEARCH_RESPONSE, res);
+            }
+        });
+
+        currentSession = session;
+        session.search(snapshot).catch((err) => {
+            console.error('[IPC] Refresh search error:', err);
+        });
+    }
+
     // ── Search ─────────────────────────────────────────────────────
 
     ipcMain.handle(
@@ -83,7 +110,13 @@ export function registerIpcHandlers(
                 return { ok: false };
 
             // 取消上一个仍在进行的会话
+            if (currentSession) {
+                currentSession.cancel();
+            }
             currentSession = null;
+
+            // 保存请求用于后续刷新
+            lastSearchRequest = req;
 
             const snapshot = collectFromSearch(req);
             const win = windowManager.getWindow();
@@ -113,7 +146,10 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.SEARCH_CANCEL,
         (): IpcResponse<typeof IPC.SEARCH_CANCEL> => {
-            currentSession = null;
+            if (currentSession) {
+                currentSession.cancel();
+                currentSession = null;
+            }
             return { ok: true };
         },
     );
@@ -131,6 +167,8 @@ export function registerIpcHandlers(
             else {
                 pinnedRepo.remove(itemId);
             }
+            // Re-run current search to refresh UI
+            triggerRefresh();
             return { ok: true };
         },
     );
@@ -141,6 +179,8 @@ export function registerIpcHandlers(
             if (!pinnedRepo)
                 return { ok: false };
             pinnedRepo.reorder(itemId, toIndex);
+            // Re-run current search to refresh UI
+            triggerRefresh();
             return { ok: true };
         },
     );
@@ -151,36 +191,30 @@ export function registerIpcHandlers(
         IPC.ITEM_CONTEXT_MENU,
         (_event, req: IpcRequest<typeof IPC.ITEM_CONTEXT_MENU>): IpcResponse<typeof IPC.ITEM_CONTEXT_MENU> => {
             const { itemId, screenX, screenY } = req;
-            const item = currentSession?.resolveItem(itemId);
-            if (!item)
-                return { ok: false };
 
-            const menuBuilder: Electron.MenuItemConstructorOptions[] = [];
-
-            if (item.capabilities.pin) {
-                menuBuilder.push({
-                    label: item.state.pinned ? '取消固定' : '固定到搜索栏',
-                    click: () => {
-                        pinnedRepo?.add(itemId, item.state.pinned ? 0 : Date.now());
-                    },
-                });
-            }
-            if (item.capabilities.reveal) {
-                menuBuilder.push({
-                    label: '在访达中显示',
-                    click: () => {
-                        if (itemId.startsWith('file://')) {
-                            new ElectronNativeCapabilityService().openPath(itemId.replace('file://', ''));
-                        }
-                    },
-                });
-            }
+            // Check with repo if item is pinned
+            const isPinned = pinnedRepo?.list().some(r => r.itemId === itemId) ?? false;
 
             const win = BrowserWindow.getFocusedWindow();
-            if (win && menuBuilder.length > 0) {
-                const built = Menu.buildFromTemplate(menuBuilder);
-                built.popup({ window: win, x: screenX, y: screenY });
-            }
+            if (!win) return { ok: false };
+
+            const menuBuilder: Electron.MenuItemConstructorOptions[] = [
+                {
+                    label: isPinned ? '取消固定"搜索框"' : '固定到"搜索框"',
+                    click: () => {
+                        if (isPinned) {
+                            pinnedRepo?.remove(itemId);
+                        }
+                        else {
+                            pinnedRepo?.add(itemId, Date.now());
+                        }
+                        triggerRefresh();
+                    },
+                },
+            ];
+
+            const built = Menu.buildFromTemplate(menuBuilder);
+            built.popup({ window: win, x: screenX, y: screenY });
 
             return { ok: true };
         },
@@ -196,11 +230,23 @@ export function registerIpcHandlers(
         ): Promise<IpcResponse<typeof IPC.ITEM_EXECUTE>> => {
             const { sessionId, queryId, itemId } = req;
 
-            if (!currentSession || currentSession.sessionId !== sessionId) {
+            // Validate session
+            if (!currentSession || currentSession.isCancelled) {
+                return { ok: false, error: 'Session expired' };
+            }
+            if (currentSession.sessionId !== sessionId) {
+                return { ok: false, error: 'Session expired' };
+            }
+            if (currentSession.queryId !== queryId) {
                 return { ok: false, error: 'Session expired' };
             }
 
-            // 记录使用
+            // Validate item exists in current session
+            if (!currentSession.resolveItem(itemId)) {
+                return { ok: false, error: 'Item not found in current session' };
+            }
+
+            // Record usage
             usageRepo?.record(itemId);
 
             const result = await currentSession.executeItem(itemId, {
