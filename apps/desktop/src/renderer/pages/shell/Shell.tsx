@@ -1,3 +1,4 @@
+import type { ResultSection } from '@szybko/shared';
 import clsx from 'clsx';
 import { useMemo, useRef } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
@@ -13,9 +14,25 @@ import { useWindowHeight } from './hooks/useWindowHeight';
 import { SearchBar } from './SearchBar';
 import { SectionList } from './SectionList';
 
-const DEFAULT_COLUMNS = 9;
 const DEFAULT_ROWS = 2;
-const MAX_VISIBLE = DEFAULT_ROWS * DEFAULT_COLUMNS;
+const DEFAULT_COLUMNS = 9;
+
+function getCollapsedItemLimit(layout: ResultSection['layout']) {
+    switch (layout) {
+        case 'grid':
+            return DEFAULT_ROWS * DEFAULT_COLUMNS;
+        case 'list':
+        case 'compact':
+            return DEFAULT_ROWS;
+    }
+}
+
+function getVisibleItemCount(section: ResultSection, expanded: boolean) {
+    if (expanded)
+        return section.itemIds.length;
+
+    return Math.min(section.itemIds.length, getCollapsedItemLimit(section.layout));
+}
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -45,9 +62,7 @@ export default function App() {
     const navigationMap = useMemo(() => {
         const counts = sections.map(s => ({
             sectionId: s.id,
-            count: expandedSectionIds.has(s.id)
-                ? s.itemIds.length
-                : Math.min(s.itemIds.length, MAX_VISIBLE),
+            count: getVisibleItemCount(s, expandedSectionIds.has(s.id)),
         }));
         let total = 0;
         const offsets = counts.map((c) => {
@@ -92,7 +107,7 @@ export default function App() {
             let idx = 0;
             for (const section of sections) {
                 const expanded = expandedSectionIds.has(section.id);
-                const visible = expanded ? section.itemIds.length : Math.min(section.itemIds.length, MAX_VISIBLE);
+                const visible = getVisibleItemCount(section, expanded);
                 if (selectedIndex < idx + visible) {
                     const itemId = section.itemIds[selectedIndex - idx];
                     if (itemId)
@@ -152,7 +167,6 @@ export default function App() {
                                 itemsById={itemsById}
                                 selectedIndex={selectedIndex}
                                 expandedSectionIds={expandedSectionIds}
-                                onSelect={setSelectedIndex}
                                 onExecute={onExecuteItem}
                                 onToggleExpand={toggleExpand}
                                 onReorder={onReorder}

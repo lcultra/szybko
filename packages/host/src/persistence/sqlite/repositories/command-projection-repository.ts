@@ -1,12 +1,18 @@
 import type { CommandProjection } from '../../../commands/command-projection-builder';
 import type { PlatformDrizzleDatabase } from '../platform-database';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { commandProjectionMeta, commandTrigger, commandTriggerSearch, effectiveFeature, pluginInstallation } from '../schema';
+import { commandAlias, commandProjectionMeta, commandTrigger, commandTriggerSearch, effectiveFeature, pluginInstallation } from '../schema';
+
+function escapeLikePattern(value: string): string {
+    return value.replace(/[\\%_]/g, char => `\\${char}`);
+}
 
 export interface TextSearchMatch {
     pluginId: string;
     featureCode: string;
     cmdKey: string;
+    searchText: string;
+    sourceText: string | null;
     type: 'text';
     label: string | null;
     matcherJson: string;
@@ -110,10 +116,24 @@ export class CommandProjectionRepository {
     }
 
     searchByText(normalizedQuery: string): TextSearchMatch[] {
+        const escapedQuery = escapeLikePattern(normalizedQuery);
+        const containsPattern = `%${escapedQuery}%`;
+        const prefixPattern = `${escapedQuery}%`;
+        const matchPriority = sql<number>`case
+            when ${commandTriggerSearch.searchText} = ${normalizedQuery} then 0
+            when ${commandTriggerSearch.searchText} like ${prefixPattern} escape '\\' then 1
+            else 2
+        end`;
+
         return this.db.select({
             pluginId: commandTriggerSearch.pluginId,
             featureCode: commandTriggerSearch.featureCode,
             cmdKey: commandTriggerSearch.cmdKey,
+            searchText: commandTriggerSearch.searchText,
+            sourceText: sql<string | null>`case
+                when ${commandTriggerSearch.source} = 'alias' then ${commandAlias.aliasNormalized}
+                else ${commandTrigger.label}
+            end`,
             type: sql<'text'>`'text'`,
             label: commandTrigger.label,
             matcherJson: commandTrigger.matcherJson,
@@ -129,11 +149,13 @@ export class CommandProjectionRepository {
                 eq(commandTrigger.cmdKey, commandTriggerSearch.cmdKey),
             ))
             .innerJoin(pluginInstallation, eq(pluginInstallation.pluginId, commandTriggerSearch.pluginId))
+            .leftJoin(commandAlias, eq(commandAlias.id, commandTriggerSearch.aliasId))
             .where(and(
                 eq(pluginInstallation.enabled, 1),
-                eq(commandTriggerSearch.searchText, normalizedQuery),
+                sql`${commandTriggerSearch.searchText} like ${containsPattern} escape '\\'`,
             ))
             .orderBy(
+                matchPriority,
                 desc(commandTriggerSearch.matchLevel),
                 desc(commandTrigger.scoreBase),
                 asc(commandTrigger.triggerIndex),

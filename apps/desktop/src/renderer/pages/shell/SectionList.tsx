@@ -6,12 +6,28 @@ import { SectionHeader } from './SectionHeader';
 const DEFAULT_ROWS = 2;
 const DEFAULT_COLUMNS = 9;
 
+function getCollapsedItemLimit(layout: ResultSection['layout']) {
+    switch (layout) {
+        case 'grid':
+            return DEFAULT_ROWS * DEFAULT_COLUMNS;
+        case 'list':
+        case 'compact':
+            return DEFAULT_ROWS;
+    }
+}
+
+function getVisibleItemCount(section: ResultSection, expanded: boolean) {
+    if (expanded)
+        return section.itemIds.length;
+
+    return Math.min(section.itemIds.length, getCollapsedItemLimit(section.layout));
+}
+
 interface SectionListProps {
     sections: ResultSection[];
     itemsById: Record<LauncherItemId, LauncherItem>;
     selectedIndex: number;
     expandedSectionIds: Set<string>;
-    onSelect: (globalIndex: number) => void;
     onExecute: (itemId: LauncherItemId) => void;
     onToggleExpand: (sectionId: string) => void;
     onReorder: (itemId: LauncherItemId, toIndex: number) => void;
@@ -23,7 +39,6 @@ export function SectionList({
     itemsById,
     selectedIndex,
     expandedSectionIds,
-    onSelect,
     onExecute,
     onToggleExpand,
     onReorder,
@@ -34,7 +49,7 @@ export function SectionList({
         let total = 0;
         for (const section of sections) {
             const expanded = expandedSectionIds.has(section.id);
-            const visible = expanded ? section.itemIds.length : Math.min(section.itemIds.length, DEFAULT_ROWS * DEFAULT_COLUMNS);
+            const visible = getVisibleItemCount(section, expanded);
             offsets.push({ sectionId: section.id, start: total, length: visible });
             total += visible;
         }
@@ -49,9 +64,11 @@ export function SectionList({
             {sections.map((section) => {
                 const offset = sectionOffsets.find(o => o.sectionId === section.id)!;
                 const expanded = expandedSectionIds.has(section.id);
+                const collapsedItemLimit = getCollapsedItemLimit(section.layout);
+                const canExpand = section.source === 'search' && section.totalCount > collapsedItemLimit;
                 const visibleIds = expanded
                     ? section.itemIds
-                    : section.itemIds.slice(0, DEFAULT_ROWS * DEFAULT_COLUMNS);
+                    : section.itemIds.slice(0, collapsedItemLimit);
 
                 const items = visibleIds
                     .map(id => itemsById[id])
@@ -60,14 +77,12 @@ export function SectionList({
                 const isPinned = section.source === 'pinned';
 
                 return (
-                    <div key={section.id} className="flex flex-col">
+                    <div key={section.id} className="flex flex-col gap-1">
                         <SectionHeader
                             title={section.title}
-                            shownCount={items.length}
                             totalCount={section.totalCount}
                             expanded={expanded}
-                            canExpand={section.hasMore || section.totalCount > DEFAULT_ROWS * DEFAULT_COLUMNS}
-                            layout={section.layout}
+                            canExpand={canExpand}
                             onToggle={() => onToggleExpand(section.id)}
                         />
                         <Grid
@@ -77,7 +92,6 @@ export function SectionList({
                             columns={DEFAULT_COLUMNS}
                             draggable={isPinned}
                             onReorder={isPinned ? onReorder : undefined}
-                            onSelect={onSelect}
                             onExecute={onExecute}
                             onContextMenu={onContextMenu}
                         />

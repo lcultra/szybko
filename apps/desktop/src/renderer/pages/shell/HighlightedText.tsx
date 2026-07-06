@@ -38,7 +38,7 @@ export function HighlightedText({ text, ranges }: HighlightedTextProps) {
         <>
             {parts.map(part =>
                 part.highlight
-                    ? <span key={part.text + (part.highlight ? 'hl' : '')} className="text-accent font-semibold">{part.text}</span>
+                    ? <span key={part.text + (part.highlight ? 'hl' : '')} className="text-danger font-semibold">{part.text}</span>
                     : <span key={part.text + (part.highlight ? 'hl' : '')}>{part.text}</span>,
             )}
         </>

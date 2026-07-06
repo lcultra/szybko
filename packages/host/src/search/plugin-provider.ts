@@ -9,6 +9,7 @@ import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { ContextMenuItem, SearchProvider } from './provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from './types';
+import { findTitleMatchRanges } from '../commands/feature-normalizer';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { SearchService } from '../input/search-service';
 
@@ -54,6 +55,8 @@ export class PluginProvider implements SearchProvider {
         const items: LauncherItem[] = matches.map((m) => {
             const itemId = `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId;
             this.itemMatchMap.set(itemId, m.matchId);
+            const title = m.label || m.featureCode;
+            const titleMatchRanges = findTitleMatchRanges(title, query);
 
             // 解析图标
             const plugin = this.catalog.get(m.pluginId);
@@ -68,12 +71,13 @@ export class PluginProvider implements SearchProvider {
             return {
                 id: itemId,
                 ownerProvider: 'plugin',
-                title: m.label || m.featureCode,
+                title,
                 subtitle: `打开 ${m.pluginId}`,
                 icon,
                 score: m.score,
                 capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
                 state: { pinned: false },
+                matches: titleMatchRanges ? { title: titleMatchRanges } : undefined,
                 matchLevel: m.score > 95 ? 3 : m.score > 50 ? 2 : 1,
             };
         });

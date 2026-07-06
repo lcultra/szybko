@@ -1,6 +1,5 @@
 /**
- * VisualCell 导航模型——不依赖全局列数算术。
- * SectionList 根据实际可见 items 生成 cells 数组，
+ * 导航模型——将所有可见项视为一个整体，同时保留 section 之间的视觉空位。
  * useKeyboard 只消费 NavigationMap 中的 up/down/left/right 指针。
  */
 
@@ -23,70 +22,70 @@ export interface NavigationMap {
 
 /**
  * 根据每 section 的可见 items 数量和列数生成 VisualCell 网格。
- * 每个 section 独立计算行列，然后拼接到全局 cells 数组。
+ * 每个 section 独立占用自己的行块，section 末尾不足一行的空位会保留。
+ * 导航方向键在可见项集合上移动：
+ *   - left/right: 前一个/后一个（首尾循环）
+ *   - up/down: 上一/下一视觉行同列（跨 section，首尾循环）
  */
 export function buildNavigationMap(
     sectionItemCounts: Array<{ sectionId: string; count: number }>,
     columns: number,
     selectedIndex: number,
-    sectionOffsets: Array<{ sectionId: string; start: number; length: number }>,
+    _sectionOffsets: Array<{ sectionId: string; start: number; length: number }>,
 ): NavigationMap {
     const cells: VisualCell[] = [];
     let globalIdx = 0;
+    let rowOffset = 0;
 
     for (const { sectionId, count } of sectionItemCounts) {
         for (let i = 0; i < count; i++) {
-            const row = Math.floor(i / columns);
-            const col = i % columns;
             cells.push({
                 globalIndex: globalIdx,
                 sectionId,
-                row,
-                col,
+                row: rowOffset + Math.floor(i / columns),
+                col: i % columns,
                 colSpan: 1,
             });
             globalIdx++;
         }
+
+        rowOffset += Math.ceil(count / columns);
     }
 
-    const current = cells.find(c => c.globalIndex === selectedIndex) ?? cells[0];
+    const total = cells.length;
+    const currentPosition = cells.findIndex(c => c.globalIndex === selectedIndex);
+    const position = currentPosition === -1 ? 0 : currentPosition;
+    const current = cells[position];
     if (!current) {
         return { currentCell: cells[0]!, cells, up: null, down: null, left: null, right: null };
     }
 
-    // 找到当前 section 在 sectionOffsets 中的位置
-    const sectionOrder = sectionOffsets
-        .filter(o => o.length > 0)
-        .sort((a, b) => a.start - b.start);
-    const currentSectionIdx = sectionOrder.findIndex(o => o.sectionId === current.sectionId);
+    const rows = [...new Set(cells.map(c => c.row))].sort((a, b) => a - b);
+    const currentRowPosition = rows.indexOf(current.row);
 
-    // down: 同 section 下一行 → 下一 section 第一行同列 → null
-    const down = cells.find(
-        c => c.col === current.col && c.row === current.row + 1 && c.sectionId === current.sectionId,
-    ) ?? (currentSectionIdx < sectionOrder.length - 1
-        ? cells.find(
-            c => c.col === current.col && c.row === 0 && c.sectionId === sectionOrder[currentSectionIdx + 1].sectionId,
-        ) ?? null
-        : null);
+    function findSameColumnInRow(direction: 1 | -1) {
+        if (rows.length <= 1)
+            return null;
 
-    // up: 同 section 上一行 → 上一 section 最后一行同列 → null
-    const up = cells.find(
-        c => c.col === current.col && c.row === current.row - 1 && c.sectionId === current.sectionId,
-    ) ?? (currentSectionIdx > 0
-        ? cells.findLast(
-            c => c.col === current.col && c.sectionId === sectionOrder[currentSectionIdx - 1].sectionId,
-        ) ?? null
-        : null);
+        for (let step = 1; step < rows.length; step++) {
+            const nextRow = rows[(currentRowPosition + direction * step + rows.length) % rows.length];
+            const cell = cells.find(c => c.row === nextRow && c.col === current.col);
+            if (cell)
+                return cell.globalIndex;
+        }
 
-    const left = cells.find(c => c.row === current.row && c.col === current.col - 1 && c.sectionId === current.sectionId);
-    const right = cells.find(c => c.row === current.row && c.col === current.col + 1 && c.sectionId === current.sectionId);
+        return null;
+    }
+
+    const right = cells[(position + 1) % total]?.globalIndex ?? null;
+    const left = cells[(position - 1 + total) % total]?.globalIndex ?? null;
 
     return {
         currentCell: current,
         cells,
-        up: up?.globalIndex ?? null,
-        down: down?.globalIndex ?? null,
-        left: left?.globalIndex ?? null,
-        right: right?.globalIndex ?? null,
+        up: findSameColumnInRow(-1),
+        down: findSameColumnInRow(1),
+        left,
+        right,
     };
 }

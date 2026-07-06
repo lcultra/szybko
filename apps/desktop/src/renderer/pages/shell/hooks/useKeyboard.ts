@@ -47,6 +47,17 @@ export function useKeyboard({
                     e.preventDefault();
                     onExecute();
                     break;
+                case 'Tab':
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        if (map.left !== null)
+                            onSelect(map.left);
+                    }
+                    else {
+                        if (map.right !== null)
+                            onSelect(map.right);
+                    }
+                    break;
                 case 'Escape':
                     e.preventDefault();
                     onEscape();

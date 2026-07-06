@@ -1,6 +1,6 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
 import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
-import { normalizeTextKey } from '../commands/feature-normalizer';
+import { doesCommandSearchTextMatch, normalizeTextKey } from '../commands/feature-normalizer';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { dedupAndSort, runPipeline } from './matcher-pipeline';
 
@@ -25,7 +25,13 @@ export class SearchService {
             const normalized = normalizeTextKey(query);
             if (normalized) {
                 const repo = new CommandProjectionRepository(this.db);
-                const textMatches = repo.searchByText(normalized);
+                const textMatches = repo.searchByText(normalized)
+                    .filter(m => doesCommandSearchTextMatch({
+                        searchText: m.searchText,
+                        sourceText: m.sourceText,
+                        matchLevel: m.matchLevel,
+                        query: normalized,
+                    }));
                 for (const m of textMatches) {
                     const score = m.scoreBase + (m.matchLevel === 3 ? 10 : m.matchLevel === 2 ? 5 : 2);
                     allMatches.push({

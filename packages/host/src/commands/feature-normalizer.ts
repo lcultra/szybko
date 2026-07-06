@@ -1,4 +1,4 @@
-import type { MatchCommand, PluginFeature } from '@szybko/shared';
+import type { MatchCommand, MatchRange, PluginFeature } from '@szybko/shared';
 import { createHash } from 'node:crypto';
 import { pinyin } from 'pinyin-pro';
 
@@ -40,6 +40,186 @@ export function computePinyin(text: string): PinyinResult {
     const full = chars.map(c => c.trim()).filter(Boolean).join('').toLocaleLowerCase();
     const initials = chars.map(c => (c.trim() ? c.trim()[0]! : '')).filter(Boolean).join('').toLocaleLowerCase();
     return { full, initials };
+}
+
+interface IndexedPinyinSegment {
+    titleStart: number;
+    titleEnd: number;
+    fullStart: number;
+    fullEnd: number;
+    initialStart: number;
+    initialEnd: number;
+    full: string;
+    initial: string;
+}
+
+export interface CommandSearchTextMatchInput {
+    searchText: string;
+    sourceText: string | null;
+    matchLevel: 1 | 2 | 3;
+    query: string;
+}
+
+function buildIndexedPinyinSegments(title: string): IndexedPinyinSegment[] {
+    const titleChars = Array.from(title);
+    const pinyinChars = pinyin(title, { toneType: 'none', type: 'array' });
+    const segments: IndexedPinyinSegment[] = [];
+    let fullPosition = 0;
+    let initialPosition = 0;
+
+    titleChars.forEach((char, index) => {
+        const full = normalizeTextKey(pinyinChars[index] ?? char) || normalizeTextKey(char);
+        if (!full)
+            return;
+
+        const initial = full[0] ?? '';
+        const fullStart = fullPosition;
+        const initialStart = initialPosition;
+        fullPosition += full.length;
+        initialPosition += initial ? 1 : 0;
+
+        segments.push({
+            titleStart: index,
+            titleEnd: index + 1,
+            fullStart,
+            fullEnd: fullPosition,
+            initialStart,
+            initialEnd: initialPosition,
+            full,
+            initial,
+        });
+    });
+
+    return segments;
+}
+
+function mergeMatchRanges(ranges: MatchRange[]): MatchRange[] {
+    const sorted = [...ranges].sort((a, b) => a.start - b.start || a.end - b.end);
+    const merged: MatchRange[] = [];
+
+    for (const range of sorted) {
+        const previous = merged.at(-1);
+        if (previous && range.start <= previous.end) {
+            previous.end = Math.max(previous.end, range.end);
+            continue;
+        }
+
+        merged.push({ ...range });
+    }
+
+    return merged;
+}
+
+function titleRangeFromIndexedSpan(
+    segments: IndexedPinyinSegment[],
+    start: number,
+    end: number,
+    key: 'full' | 'initial',
+): MatchRange | undefined {
+    const startKey = key === 'full' ? 'fullStart' : 'initialStart';
+    const endKey = key === 'full' ? 'fullEnd' : 'initialEnd';
+    const matchedSegments = segments.filter(segment => segment[endKey] > start && segment[startKey] < end);
+
+    if (matchedSegments.length === 0)
+        return undefined;
+
+    return {
+        start: matchedSegments[0]!.titleStart,
+        end: matchedSegments[matchedSegments.length - 1]!.titleEnd,
+    };
+}
+
+function findDirectTitleMatchRanges(title: string, query: string): MatchRange[] | undefined {
+    const titleChars = Array.from(title);
+    const queryChars = Array.from(query.trim());
+    if (queryChars.length === 0 || queryChars.length > titleChars.length)
+        return undefined;
+
+    const normalizedQuery = normalizeTextKey(queryChars.join(''));
+    const ranges: MatchRange[] = [];
+
+    for (let i = 0; i <= titleChars.length - queryChars.length; i++) {
+        const candidate = normalizeTextKey(titleChars.slice(i, i + queryChars.length).join(''));
+        if (candidate !== normalizedQuery)
+            continue;
+
+        ranges.push({ start: i, end: i + queryChars.length });
+        i += queryChars.length - 1;
+    }
+
+    return ranges.length > 0 ? ranges : undefined;
+}
+
+function findFullPinyinTitleMatchRanges(title: string, query: string): MatchRange[] | undefined {
+    const normalizedQuery = normalizeTextKey(query);
+    if (!normalizedQuery)
+        return undefined;
+
+    const segments = buildIndexedPinyinSegments(title);
+    const fullText = segments.map(segment => segment.full).join('');
+    const ranges: MatchRange[] = [];
+
+    for (const segment of segments) {
+        if (!fullText.startsWith(normalizedQuery, segment.fullStart))
+            continue;
+
+        const range = titleRangeFromIndexedSpan(
+            segments,
+            segment.fullStart,
+            segment.fullStart + normalizedQuery.length,
+            'full',
+        );
+        if (range)
+            ranges.push(range);
+    }
+
+    return ranges.length > 0 ? mergeMatchRanges(ranges) : undefined;
+}
+
+function findInitialTitleMatchRanges(title: string, query: string): MatchRange[] | undefined {
+    const normalizedQuery = normalizeTextKey(query);
+    if (!normalizedQuery)
+        return undefined;
+
+    const segments = buildIndexedPinyinSegments(title);
+    const initials = segments.map(segment => segment.initial).join('');
+    const ranges: MatchRange[] = [];
+
+    let index = initials.indexOf(normalizedQuery);
+    while (index >= 0) {
+        const range = titleRangeFromIndexedSpan(segments, index, index + normalizedQuery.length, 'initial');
+        if (range)
+            ranges.push(range);
+        index = initials.indexOf(normalizedQuery, index + normalizedQuery.length);
+    }
+
+    return ranges.length > 0 ? mergeMatchRanges(ranges) : undefined;
+}
+
+export function findTitleMatchRanges(title: string, query: string): MatchRange[] | undefined {
+    return findDirectTitleMatchRanges(title, query)
+        ?? findFullPinyinTitleMatchRanges(title, query)
+        ?? findInitialTitleMatchRanges(title, query);
+}
+
+export function doesCommandSearchTextMatch(input: CommandSearchTextMatchInput): boolean {
+    const normalizedQuery = normalizeTextKey(input.query);
+    const normalizedSearchText = normalizeTextKey(input.searchText);
+    if (!normalizedQuery || !normalizedSearchText.includes(normalizedQuery))
+        return false;
+
+    const sourceText = input.sourceText?.trim();
+
+    if (input.matchLevel === 3)
+        return findDirectTitleMatchRanges(sourceText || input.searchText, normalizedQuery) !== undefined;
+
+    if (!sourceText)
+        return false;
+
+    if (input.matchLevel === 2)
+        return findFullPinyinTitleMatchRanges(sourceText, normalizedQuery) !== undefined;
+
+    return findInitialTitleMatchRanges(sourceText, normalizedQuery) !== undefined;
 }
 
 export function normalizeFeatureCode(value: string): string {

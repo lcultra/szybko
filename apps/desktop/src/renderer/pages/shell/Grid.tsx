@@ -11,25 +11,31 @@ interface GridProps {
     startIndex: number;
     selectedIndex: number;
     columns: number;
+    /** 是否允许拖拽排序。为 true 时 items.length > 1 才实际启用 DndContext。 */
     draggable: boolean;
     onReorder?: (itemId: LauncherItemId, toIndex: number) => void;
-    onSelect: (globalIndex: number) => void;
     onExecute: (itemId: LauncherItemId) => void;
     onContextMenu: (itemId: LauncherItemId, e: React.MouseEvent) => void;
 }
 
 const SUPPRESS_DURATION_MS = 250;
 
-export function Grid(props: GridProps) {
-    const { items, startIndex, selectedIndex, columns, onSelect, onExecute, onContextMenu } = props;
-    const draggable = props.draggable;
-    // discriminated: onReorder only available when draggable is true
-    const onReorder = props.draggable ? props.onReorder : undefined;
-
+export function Grid({
+    items,
+    startIndex,
+    selectedIndex,
+    columns,
+    draggable,
+    onReorder,
+    onExecute,
+    onContextMenu,
+}: GridProps) {
     const [suppressClickId, setSuppressClickId] = useState<LauncherItemId | null>(null);
     const suppressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // 用 ref 透传，避免 handleExecute 随 suppressClickId 变化而重建
+    const suppressRef = useRef(suppressClickId);
+    suppressRef.current = suppressClickId;
 
-    // 清理 timer 在 unmount 时
     useEffect(() => {
         return () => {
             if (suppressTimerRef.current !== null) {
@@ -53,7 +59,7 @@ export function Grid(props: GridProps) {
             clearTimeout(suppressTimerRef.current);
         }
         suppressTimerRef.current = setTimeout(() => {
-            setSuppressClickId(prev => prev === sourceId ? null : prev);
+            setSuppressClickId(prev => (prev === sourceId ? null : prev));
         }, SUPPRESS_DURATION_MS);
 
         if (!onReorder)
@@ -71,67 +77,44 @@ export function Grid(props: GridProps) {
         onReorder(sourceId, newIndex);
     }, [onReorder, itemIds]);
 
+    // 稳定引用，不随 suppressClickId 变化，避免所有子组件不必要重渲染
     const handleExecute = useCallback((itemId: LauncherItemId) => {
-        if (suppressClickId === itemId)
+        if (suppressRef.current === itemId)
             return;
         onExecute(itemId);
-    }, [suppressClickId, onExecute]);
-
-    const handleContextMenu = useCallback((itemId: LauncherItemId, e: React.MouseEvent) => {
-        onContextMenu(itemId, e);
-    }, [onContextMenu]);
+    }, [onExecute]);
 
     if (items.length === 0)
         return null;
 
-    // For draggable grids with 0 or 1 items, skip DndContext overhead
-    if (draggable && items.length <= 1) {
-        return (
-            <div
-                className="grid gap-1.5"
-                style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '76px' }}
-            >
-                {items.map((item, i) => (
-                    <GridTile
-                        key={item.id}
-                        item={item}
-                        selected={startIndex + i === selectedIndex}
-                        suppressClick={false}
-                        onSelect={() => onSelect(startIndex + i)}
-                        onExecute={onExecute}
-                        onContextMenu={e => onContextMenu(item.id, e)}
-                    />
-                ))}
-            </div>
-        );
-    }
+    // items.length > 1 时才真正需要 DnD 能力
+    const canDrag = draggable && items.length > 1;
 
     const grid = (
         <div
-            className="grid gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '76px' }}
+            className="grid px-2"
+            style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '89px' }}
         >
             {items.map((item, i) => {
                 const globalIdx = startIndex + i;
                 const selected = globalIdx === selectedIndex;
-                const TileComponent = draggable ? SortableGridTile : GridTile;
+                const TileComponent = canDrag ? SortableGridTile : GridTile;
 
                 return (
                     <TileComponent
                         key={item.id}
                         item={item}
                         selected={selected}
-                        suppressClick={suppressClickId === item.id}
-                        onSelect={() => onSelect(globalIdx)}
+                        suppressClick={canDrag && suppressClickId === item.id}
                         onExecute={handleExecute}
-                        onContextMenu={e => handleContextMenu(item.id, e)}
+                        onContextMenu={e => onContextMenu(item.id, e)}
                     />
                 );
             })}
         </div>
     );
 
-    if (!draggable)
+    if (!canDrag)
         return grid;
 
     return (
