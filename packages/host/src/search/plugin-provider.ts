@@ -1,9 +1,11 @@
 import type {
+    IconDescriptor,
     InputContextSnapshot,
     LauncherItem,
     LauncherItemId,
 } from '@szybko/shared';
 import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { ContextMenuItem, SearchProvider } from './provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from './types';
@@ -25,6 +27,7 @@ export class PluginProvider implements SearchProvider {
     constructor(
         db: PlatformDrizzleDatabase,
         private coordinator: RuntimeCoordinator,
+        private catalog: PluginCatalog,
         sessionManager?: MatchSessionManager,
     ) {
         this.searchService = new SearchService(db);
@@ -51,12 +54,23 @@ export class PluginProvider implements SearchProvider {
         const items: LauncherItem[] = matches.map((m) => {
             const itemId = `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId;
             this.itemMatchMap.set(itemId, m.matchId);
+
+            // 解析图标
+            const plugin = this.catalog.get(m.pluginId);
+            let icon: IconDescriptor | undefined;
+            if (plugin) {
+                const feature = plugin.manifest.features.find(f => f.code === m.featureCode);
+                const iconPath = feature?.icon ?? plugin.manifest.logo;
+                const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
+                icon = { type: 'url', value: `asset://plugin/${encodeURIComponent(plugin.id)}/${encoded}` };
+            }
+
             return {
                 id: itemId,
                 ownerProvider: 'plugin',
                 title: m.label || m.featureCode,
                 subtitle: `打开 ${m.pluginId}`,
-                icon: { type: 'emoji', value: '🧩' },
+                icon,
                 score: m.score,
                 capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
                 state: { pinned: false },
@@ -91,7 +105,14 @@ export class PluginProvider implements SearchProvider {
                 ownerProvider: 'plugin',
                 title: trigger.label || cmdKey,
                 subtitle: `打开 ${pluginId}`,
-                icon: { type: 'emoji', value: '🧩' },
+                icon: (() => {
+                    const plugin = this.catalog.get(pluginId);
+                    if (!plugin) return undefined;
+                    const feature = plugin.manifest.features.find(f => f.code === featureCode);
+                    const iconPath = feature?.icon ?? plugin.manifest.logo;
+                    const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
+                    return { type: 'url', value: `asset://plugin/${encodeURIComponent(pluginId)}/${encoded}` };
+                })(),
                 score: trigger.scoreBase,
                 capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
                 state: { pinned: false },

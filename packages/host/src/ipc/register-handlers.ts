@@ -1,5 +1,6 @@
 import type { IpcInvokeContract, LauncherItem, LauncherItemId, SearchRequest } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
+import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
@@ -30,14 +31,15 @@ export function registerIpcHandlers(
     coordinator: RuntimeCoordinator,
     commandCatalog: CommandCatalog,
     platformDb?: PlatformDatabase,
+    pluginCatalog?: PluginCatalog,
 ) {
     const sessionManager = new MatchSessionManager();
     const executor = createExecutor(new ElectronNativeCapabilityService());
 
     // ── Providers ──────────────────────────────────────────────────
 
-    const pluginProvider = platformDb
-        ? new PluginProvider(platformDb.drizzle(), coordinator, sessionManager)
+    const pluginProvider = platformDb && pluginCatalog
+        ? new PluginProvider(platformDb.drizzle(), coordinator, pluginCatalog, sessionManager)
         : null;
 
     const resolveFromProviders = async (itemId: LauncherItemId): Promise<LauncherItem | null> => {
