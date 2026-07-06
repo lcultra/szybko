@@ -15,7 +15,7 @@ export function HighlightedText({ text, ranges }: HighlightedTextProps) {
     }
 
     const chars = Array.from(text);
-    const isHighlighted: boolean[] = Array.from({ length: chars.length }).fill(false);
+    const isHighlighted: boolean[] = Array.from({ length: chars.length }).fill(false) as boolean[];
     for (const { start, end } of ranges) {
         for (let i = start; i < end && i < chars.length; i++) {
             isHighlighted[i] = true;
