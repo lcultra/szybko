@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+
 interface SectionHeaderProps {
     title: string;
     shownCount: number;

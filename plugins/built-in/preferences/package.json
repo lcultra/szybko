@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "vite --port 5177",
-        "build": "vite build --config vite.preload.config.ts && vite build && cp plugin.json dist/",
+        "build": "vite build --config vite.preload.config.ts && vite build && cp plugin.json icon.svg dist/",
         "typecheck": "tsc -p tsconfig.preload.json --noEmit && tsc -p tsconfig.renderer.json --noEmit"
     },
     "dependencies": {
