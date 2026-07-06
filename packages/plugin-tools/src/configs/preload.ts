@@ -1,18 +1,18 @@
 import type { InlineConfig } from 'vite';
-import type { PluginConfig } from '../index';
+import type { PluginConfig } from '../index.ts';
 import { resolve } from 'node:path';
 import { mergeConfig } from 'vite';
+import { resolvePreload } from '../index.ts';
 
-/**
- * 创建 preload 构建的 vite 内联配置
- */
 export function createPreloadViteConfig(cwd: string, config: PluginConfig): InlineConfig {
+    const preloadEntry = resolvePreload(config);
+
     const baseConfig: InlineConfig = {
         configFile: false,
         build: {
             outDir: resolve(cwd, 'dist'),
             lib: {
-                entry: resolve(cwd, config.preload),
+                entry: resolve(cwd, preloadEntry),
                 formats: ['cjs'],
                 fileName: () => 'preload.js',
             },
@@ -22,10 +22,7 @@ export function createPreloadViteConfig(cwd: string, config: PluginConfig): Inli
         },
     };
 
-    // 扩展用户自定义 vite 配置
-    if (config.vite?.preload) {
-        return mergeConfig(baseConfig, config.vite.preload) as InlineConfig;
-    }
-
-    return baseConfig;
+    return config.vite?.preload
+        ? mergeConfig(baseConfig, config.vite.preload) as InlineConfig
+        : baseConfig;
 }

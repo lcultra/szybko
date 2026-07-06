@@ -88,8 +88,8 @@ export function Grid(props: GridProps) {
     if (draggable && items.length <= 1) {
         return (
             <div
-                className="grid gap-2"
-                style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '82px' }}
+                className="grid gap-1.5"
+                style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '76px' }}
             >
                 {items.map((item, i) => (
                     <GridTile
@@ -108,8 +108,8 @@ export function Grid(props: GridProps) {
 
     const grid = (
         <div
-            className="grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '82px' }}
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '76px' }}
         >
             {items.map((item, i) => {
                 const globalIdx = startIndex + i;

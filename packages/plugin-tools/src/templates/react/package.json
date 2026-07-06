@@ -1,5 +1,6 @@
 {
-    "name": "@szybko/plugin-test-react",
+    "name": "@szybko/plugin-{{name}}",
+    "type": "module",
     "version": "0.1.0",
     "private": true,
     "scripts": {

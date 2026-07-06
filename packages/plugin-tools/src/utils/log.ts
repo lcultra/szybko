@@ -20,7 +20,3 @@ export function error(msg: string): void {
 export function dimmed(msg: string): void {
     console.log(pc.dim(msg));
 }
-
-export function highlight(msg: string): void {
-    console.log(pc.blue(msg));
-}

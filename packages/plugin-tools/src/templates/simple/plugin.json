@@ -1,0 +1,8 @@
+{
+    "id": "{{name}}",
+    "main": "index.html",
+    "logo": "icon.svg",
+    "preload": "preload.js",
+    "pluginSetting": { "single": true },
+    "features": []
+}

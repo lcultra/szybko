@@ -45,7 +45,7 @@ export function SectionList({
         return null;
 
     return (
-        <div className="flex flex-col gap-1 px-2 pb-2">
+        <div className="flex flex-col gap-2.5 px-2.5 pt-1 pb-2.5">
             {sections.map((section) => {
                 const offset = sectionOffsets.find(o => o.sectionId === section.id)!;
                 const expanded = expandedSectionIds.has(section.id);
@@ -60,7 +60,7 @@ export function SectionList({
                 const isPinned = section.source === 'pinned';
 
                 return (
-                    <div key={section.id}>
+                    <div key={section.id} className="flex flex-col gap-0.5">
                         {section.source !== 'search' && (
                             <SectionHeader
                                 title={section.title}

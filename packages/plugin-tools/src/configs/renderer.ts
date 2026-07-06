@@ -1,24 +1,23 @@
 import type { InlineConfig } from 'vite';
-import type { PluginConfig } from '../index';
+import type { PluginConfig } from '../index.ts';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { mergeConfig } from 'vite';
-import { error } from '../utils/log';
+import { resolveRenderer } from '../index.ts';
+import { error } from '../utils/log.ts';
 
-/**
- * 创建 renderer 构建的 vite 内联配置
- */
 export function createRendererViteConfig(cwd: string, config: PluginConfig): InlineConfig {
-    if (!config.renderer) {
+    const rendererRoot = resolveRenderer(config);
+    if (!rendererRoot) {
         error('插件未配置 renderer');
         process.exit(1);
     }
 
-    const rendererRoot = resolve(cwd, config.renderer);
-    const htmlEntry = resolve(rendererRoot, 'index.html');
+    const rootDir = resolve(cwd, rendererRoot);
+    const htmlEntry = resolve(rootDir, 'index.html');
 
     if (!existsSync(htmlEntry)) {
         error(`renderer 入口文件不存在: ${htmlEntry}`);
@@ -27,7 +26,7 @@ export function createRendererViteConfig(cwd: string, config: PluginConfig): Inl
 
     const baseConfig: InlineConfig = {
         configFile: false,
-        root: rendererRoot,
+        root: rootDir,
         plugins: [react(), tailwindcss()],
         build: {
             outDir: resolve(cwd, 'dist'),
@@ -36,10 +35,7 @@ export function createRendererViteConfig(cwd: string, config: PluginConfig): Inl
         },
     };
 
-    // 扩展用户自定义 vite 配置
-    if (config.vite?.renderer) {
-        return mergeConfig(baseConfig, config.vite.renderer) as InlineConfig;
-    }
-
-    return baseConfig;
+    return config.vite?.renderer
+        ? mergeConfig(baseConfig, config.vite.renderer) as InlineConfig
+        : baseConfig;
 }

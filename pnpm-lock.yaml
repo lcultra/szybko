@@ -207,6 +207,21 @@ importers:
         specifier: ^6.0
         version: 6.0.3
 
+  plugins/built-in/e2e-test:
+    dependencies:
+      '@szybko/plugin-tools':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-tools
+      '@szybko/sdk':
+        specifier: workspace:*
+        version: link:../../../packages/sdk
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+
   plugins/built-in/launcher:
     dependencies:
       '@szybko/shared':
@@ -277,6 +292,27 @@ importers:
       '@szybko/plugin-tools':
         specifier: workspace:*
         version: link:../../../packages/plugin-tools
+
+  plugins/built-in/test-tpl:
+    dependencies:
+      '@szybko/plugin-tools':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-tools
+
+  plugins/built-in/test-tpl-react:
+    dependencies:
+      '@szybko/plugin-tools':
+        specifier: workspace:*
+        version: link:../../../packages/plugin-tools
+      '@szybko/sdk':
+        specifier: workspace:*
+        version: link:../../../packages/sdk
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
 
 packages:
 
