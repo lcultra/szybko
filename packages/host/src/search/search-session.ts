@@ -2,6 +2,7 @@ import type {
     InputContextSnapshot,
     LauncherItem,
     LauncherItemId,
+    ResultSection,
     SearchResponse,
     SearchResponseStatus,
 } from '@szybko/shared';
@@ -15,7 +16,7 @@ export type SearchResponseEmitter = (res: SearchResponse) => void;
  * SearchSession——搜索会话。
  *
  * 职责：
- * - 管理 search 生命周期（loading → partial → final）
+ * - 管理 search 生命周期（partial → final）
  * - 维护 itemsById registry（所有 section 共享）
  * - 并行调用 SearchProvider
  * - 去重、排序、组装 sections
@@ -24,6 +25,16 @@ export type SearchResponseEmitter = (res: SearchResponse) => void;
 export class SearchSession {
     readonly queryId: string;
     readonly sessionId: string;
+
+    #cancelled = false;
+
+    cancel(): void {
+        this.#cancelled = true;
+    }
+
+    get isCancelled(): boolean {
+        return this.#cancelled;
+    }
 
     private itemsById = new Map<LauncherItemId, LauncherItem>();
     private providers: SearchProvider[];
@@ -40,10 +51,10 @@ export class SearchSession {
         this.emitter = emitter;
     }
 
-    /** 执行一次完整搜索，按状态机发射多次 SearchResponse */
+    /** 执行一次完整搜索，按结果类型组装 sections */
     async search(snapshot: InputContextSnapshot): Promise<void> {
         this.itemsById.clear();
-        this.emit('loading', []);
+        if (this.#cancelled) return;
 
         // 并行调用所有 provider
         const results = await Promise.all(
@@ -53,53 +64,122 @@ export class SearchSession {
                 }
                 catch (err) {
                     console.error(`[SearchSession] provider ${p.id} error:`, err);
-                    return { providerId: p.id, result: { items: [], section: null as any } };
+                    return { providerId: p.id, result: { items: [], section: null } };
                 }
             }),
         );
 
-        // 注册 items 到 registry（去重：同名 id 取高 score）
-        const sectionData: Array<{ section: any; items: LauncherItem[] }> = [];
-        for (const { result } of results) {
-            if (!result.section)
-                continue;
+        if (this.#cancelled) return;
+
+        // Build itemsById registry (dedup: same id → higher score wins)
+        // Also categorize sections by source
+        const pluginItems: LauncherItem[] = [];
+        const recentSectionData: Array<{ section: any; items: LauncherItem[] }> = [];
+        const pinnedSectionData: Array<{ section: any; items: LauncherItem[] }> = [];
+
+        for (const { providerId, result } of results) {
+            if (!result.section) continue;
+
+            const section = result.section;
             const dedupedItems: LauncherItem[] = [];
+
             for (const item of result.items) {
                 const existing = this.itemsById.get(item.id);
                 if (!existing || item.score > existing.score) {
                     this.itemsById.set(item.id, item);
-                }
-                // 添加到 section（所有 item，除了已经在 registry 被更高分覆盖的）
-                if (!existing || item.score > existing.score) {
                     dedupedItems.push(item);
                 }
             }
-            if (dedupedItems.length > 0 || !sectionData.some(s => s.section.id === result.section.id)) {
-                sectionData.push({ section: result.section, items: dedupedItems });
+
+            if (providerId === 'plugin') {
+                pluginItems.push(...dedupedItems);
+            }
+            else if (providerId === 'recent') {
+                recentSectionData.push({ section, items: dedupedItems });
+            }
+            else if (providerId === 'pinned') {
+                pinnedSectionData.push({ section, items: dedupedItems });
             }
         }
 
-        // 组装 sections（按 provider priority + section priority 排序）
-        const sections = sectionData
-            .filter(s => s.items.length > 0)
-            .sort((a, b) => {
-                const pa = this.providers.find(p => p.id === a.section.source)?.priority ?? 99;
-                const pb = this.providers.find(p => p.id === b.section.source)?.priority ?? 99;
-                return pa - pb || (a.section.priority ?? 0) - (b.section.priority ?? 0);
-            })
-            .map(({ section, items }) => ({
-                id: section.id,
-                title: section.title,
-                source: section.source as 'pinned' | 'recent' | 'search',
-                layout: section.layout as 'grid' | 'list' | 'compact',
-                itemIds: items.map(i => i.id),
-                totalCount: items.length,
-                hasMore: false,
-                priority: section.priority ?? 0,
-            }));
+        const isEmptyQuery = !snapshot.query;
+        const hasPluginHits = pluginItems.length > 0;
+
+        let sections: ResultSection[];
+
+        if (isEmptyQuery) {
+            // Empty query → default content: recent, then pinned
+            sections = this.buildDefaultSections(recentSectionData, pinnedSectionData);
+        }
+        else if (hasPluginHits) {
+            // Non-empty query with hits → only "best" section
+            sections = this.buildSearchSection(pluginItems);
+        }
+        else {
+            // Non-empty query without hits → fallback to default content
+            sections = this.buildDefaultSections(recentSectionData, pinnedSectionData);
+        }
+
+        if (this.#cancelled) return;
 
         this.emit('partial', sections);
         this.emit('final', sections);
+    }
+
+    private buildSearchSection(items: LauncherItem[]): ResultSection[] {
+        return [{
+            id: 'best',
+            title: '最佳匹配结果',
+            source: 'search',
+            layout: 'grid',
+            itemIds: items.map(i => i.id),
+            totalCount: items.length,
+            hasMore: false,
+            priority: 0,
+        }];
+    }
+
+    private buildDefaultSections(
+        recentData: Array<{ section: any; items: LauncherItem[] }>,
+        pinnedData: Array<{ section: any; items: LauncherItem[] }>,
+    ): ResultSection[] {
+        const sections: ResultSection[] = [];
+
+        // Recent section (first)
+        if (recentData.length > 0) {
+            const items = recentData.flatMap(d => d.items);
+            if (items.length > 0) {
+                sections.push({
+                    id: 'recent',
+                    title: '最近使用',
+                    source: 'recent',
+                    layout: 'grid',
+                    itemIds: items.map(i => i.id),
+                    totalCount: items.length,
+                    hasMore: false,
+                    priority: 0,
+                });
+            }
+        }
+
+        // Pinned section (second)
+        if (pinnedData.length > 0) {
+            const items = pinnedData.flatMap(d => d.items);
+            if (items.length > 0) {
+                sections.push({
+                    id: 'pinned',
+                    title: '固定',
+                    source: 'pinned',
+                    layout: 'grid',
+                    itemIds: items.map(i => i.id),
+                    totalCount: items.length,
+                    hasMore: false,
+                    priority: 10,
+                });
+            }
+        }
+
+        return sections;
     }
 
     /** 从 registry 获取 item */
