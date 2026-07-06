@@ -40,10 +40,6 @@ export function GridTile({
     onPinToggle(item.id);
   }, [onPinToggle, item.id]);
 
-  const handleContextMenuEvent = useCallback((e: React.MouseEvent) => {
-    onContextMenu(e);
-  }, [onContextMenu]);
-
   return (
     <div
       role="button"
@@ -55,7 +51,7 @@ export function GridTile({
       }`}
       data-interactive
       onClick={handleClick}
-      onContextMenu={handleContextMenuEvent}
+      onContextMenu={onContextMenu}
       onMouseEnter={onSelect}
       onKeyDown={handleKeyDown}
     >

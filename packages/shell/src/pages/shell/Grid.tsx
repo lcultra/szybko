@@ -69,24 +69,39 @@ export function Grid(props: GridProps) {
     onReorder(sourceId, newIndex);
   }, [onReorder, itemIds]);
 
-  const handleSelect = useCallback((globalIndex: number) => {
-    onSelect(globalIndex);
-  }, [onSelect]);
-
   const handleExecute = useCallback((itemId: LauncherItemId) => {
     if (suppressClickId === itemId) return;
     onExecute(itemId);
   }, [suppressClickId, onExecute]);
-
-  const handlePinToggle = useCallback((itemId: LauncherItemId) => {
-    onPinToggle(itemId);
-  }, [onPinToggle]);
 
   const handleContextMenu = useCallback((itemId: LauncherItemId, e: React.MouseEvent) => {
     onContextMenu(itemId, e);
   }, [onContextMenu]);
 
   if (items.length === 0) return null;
+
+  // For draggable grids with 0 or 1 items, skip DndContext overhead
+  if (draggable && items.length <= 1) {
+    return (
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: '82px' }}
+      >
+        {items.map((item, i) => (
+          <GridTile
+            key={item.id}
+            item={item}
+            selected={startIndex + i === selectedIndex}
+            suppressClick={false}
+            onSelect={() => onSelect(startIndex + i)}
+            onExecute={onExecute}
+            onPinToggle={onPinToggle}
+            onContextMenu={(e) => onContextMenu(item.id, e)}
+          />
+        ))}
+      </div>
+    );
+  }
 
   const grid = (
     <div
@@ -104,9 +119,9 @@ export function Grid(props: GridProps) {
             item={item}
             selected={selected}
             suppressClick={suppressClickId === item.id}
-            onSelect={() => handleSelect(globalIdx)}
+            onSelect={() => onSelect(globalIdx)}
             onExecute={handleExecute}
-            onPinToggle={handlePinToggle}
+            onPinToggle={onPinToggle}
             onContextMenu={(e) => handleContextMenu(item.id, e)}
           />
         );
