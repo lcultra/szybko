@@ -11,6 +11,7 @@ export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { InstallationSynchronizer } from './plugins/installation-synchronizer';
 export { PluginCatalog } from './plugins/plugin-catalog';
 export { PluginDiscovery } from './plugins/plugin-discovery';
+export { registerPluginAssetHandler } from './plugins/plugin-asset-handler';
 export { PluginLoader } from './plugins/plugin-loader';
 export { initAssetProtocol, registerAssetHandler, type AssetResolver } from './protocol/asset-protocol';
 export { RuntimeCoordinator } from './runtime/runtime-coordinator';
