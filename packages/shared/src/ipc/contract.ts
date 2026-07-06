@@ -1,17 +1,44 @@
 import type { EntryIntent } from '../input/types';
 import type { PluginFeature } from '../plugin/types';
-import type { ActionDescriptor, SearchBatch, SearchRequest } from '../search/types';
+import type {
+    ActionDescriptor,
+    LauncherItemId,
+    SearchBatch,
+    SearchRequest,
+    SearchResponse,
+} from '../search/types';
 import type { IPC } from './channels';
 
+// ── Invoke 合约（renderer → main） ─────────────────────────────
+
 export interface IpcInvokeContract {
+    // ── 搜索（新） ──
     [IPC.SEARCH_QUERY]: {
         request: SearchRequest;
-        response: { ok: boolean };
+        response: { ok: boolean; sessionId?: string };
     };
     [IPC.SEARCH_CANCEL]: {
         request: string;
         response: { ok: boolean };
     };
+    [IPC.ITEM_PIN]: {
+        request: { itemId: LauncherItemId; pin: boolean };
+        response: { ok: boolean };
+    };
+    [IPC.ITEM_REORDER]: {
+        request: { itemId: LauncherItemId; toIndex: number };
+        response: { ok: boolean };
+    };
+    [IPC.ITEM_CONTEXT_MENU]: {
+        request: { itemId: LauncherItemId; screenX: number; screenY: number };
+        response: { ok: boolean };
+    };
+    [IPC.ITEM_EXECUTE]: {
+        request: { sessionId: string; queryId: string; itemId: LauncherItemId };
+        response: { ok: boolean; error?: string };
+    };
+
+    // ── 窗口 ──
     [IPC.WINDOW_RESIZE]: {
         request: { height: number };
         response: { ok: boolean };
@@ -20,6 +47,12 @@ export interface IpcInvokeContract {
         request: void;
         response: { ok: boolean };
     };
+    [IPC.THEME_GET]: {
+        request: void;
+        response: { isDark: boolean };
+    };
+
+    // ── 插件运行时 ──
     [IPC.PLUGIN_EXEC]: {
         request: { action: ActionDescriptor };
         response: { ok: boolean; result?: unknown; error?: string };
@@ -58,6 +91,8 @@ export interface IpcInvokeContract {
     };
 }
 
+// ── Payload 类型 ──────────────────────────────────────────────
+
 export interface RuntimeStatePayload {
     runtimeId: string;
     pluginId: string;
@@ -71,17 +106,11 @@ export interface RuntimeStatePayload {
 export interface PluginEnterPayload {
     pluginId: string;
     featureExplain?: string;
-    /** The feature code for the plugin's enter dispatch */
     code: string;
-    /** Matcher trigger type (text/regex/over/files/img/window) */
     type: 'text' | 'regex' | 'over' | 'file' | 'img' | 'window';
-    /** The matched input data that triggered this plugin entry */
     payload: unknown;
-    /** User-selected entry option (for mainPush features offering multiple actions) */
     option?: string;
-    /** Entry intent (main/panel/hotkey/redirect) */
     from: EntryIntent;
-    /** MatchSession ID for the originating context, if available */
     matchId?: string;
 }
 
@@ -102,13 +131,19 @@ export interface MoveToHostResponse {
     error?: string;
 }
 
+// ── Main → Renderer 事件合约 ─────────────────────────────────
+
 export interface IpcMainToRendererEventContract {
-    [IPC.SEARCH_BATCH]: SearchBatch;
+    [IPC.SEARCH_RESPONSE]: SearchResponse;
     [IPC.WINDOW_SHOW]: void;
     [IPC.THEME_CHANGED]: { isDark: boolean };
     [IPC.PLUGIN_RUNTIME_STATE]: RuntimeStatePayload;
     [IPC.PLUGIN_ENTER]: PluginEnterPayload;
     [IPC.PLUGIN_OUT]: PluginOutPayload;
+
+    // ── 旧（废弃） ──
+    /** @deprecated 使用 SEARCH_RESPONSE */
+    [IPC.SEARCH_BATCH]: SearchBatch;
 }
 
 export interface IpcRendererToMainEventContract {

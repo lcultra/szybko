@@ -1,48 +1,147 @@
-import type { SearchBatch } from '@szybko/shared';
+import type { LauncherItem, LauncherItemId, ResultSection, SearchResponse, SearchResponseStatus } from '@szybko/shared';
 import { SEARCH_DEBOUNCE_MS } from '@szybko/shared';
-import { useCallback, useEffect, useRef } from 'react';
-import { useAppStore } from '../stores/app-store';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function generateId(): string {
     return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+export interface SearchState {
+    query: string;
+    sections: ResultSection[];
+    itemsById: Record<LauncherItemId, LauncherItem>;
+    status: SearchResponseStatus | 'idle';
+    currentQueryId: string | null;
+    sessionId: string | null;
+    selectedIndex: number;
+    expandedSectionIds: Set<string>;
+}
+
 /**
- * 搜索 hook — 薄层，读写通过 app-store。
- * 去除了独立的 local state，app-store 是唯一事实源。
+ * 搜索 hook — 接收 SearchResponse 快照替换 SearchBatch 累加。
  */
 export function useSearch() {
-    const query = useAppStore(s => s.query);
-    const results = useAppStore(s => s.results);
-    const selectedIndex = useAppStore(s => s.selectedIndex);
-    const setQuery = useAppStore(s => s.setQuery);
-    const setResults = useAppStore(s => s.setResults);
-    const setSelectedIndex = useAppStore(s => s.setSelectedIndex);
+    const [state, setState] = useState<SearchState>({
+        query: '',
+        sections: [],
+        itemsById: {},
+        status: 'idle',
+        currentQueryId: null,
+        sessionId: null,
+        selectedIndex: 0,
+        expandedSectionIds: new Set(),
+    });
+
     const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const resultsRef = useRef(results);
-    resultsRef.current = results;
+    const queryIdRef = useRef<string | null>(null);
+    const stateRef = useRef(state);
+    stateRef.current = state;
+
+    const setPartial = useCallback((partial: Partial<SearchState>) => {
+        setState((prev) => {
+            const next = { ...prev, ...partial };
+            stateRef.current = next;
+            return next;
+        });
+    }, []);
+
+    const doSearch = useCallback((value: string) => {
+        const queryId = generateId();
+        queryIdRef.current = queryId;
+        window.szybkoInternal?.search({ queryId, query: value, timestamp: Date.now() }).then((res) => {
+            if (res?.sessionId && queryIdRef.current === queryId) {
+                setPartial({ currentQueryId: queryId, sessionId: res.sessionId });
+            }
+        });
+    }, [setPartial]);
 
     const handleQueryChange = useCallback((value: string) => {
-        setQuery(value);
+        setPartial({ query: value, status: value ? 'loading' : 'loading', selectedIndex: 0 });
+
+        clearTimeout(timerRef.current);
+
         if (!value) {
-            setResults([]);
+            // 空查询：立即搜索（走 PinnedProvider + RecentProvider）
+            doSearch('');
             return;
         }
 
-        clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
-            const queryId = generateId();
-            window.szybkoInternal?.search({ queryId, query: value, timestamp: Date.now() });
+            doSearch(value);
         }, SEARCH_DEBOUNCE_MS);
-    }, [setQuery, setResults]);
+    }, [setPartial, doSearch]);
 
+    // 挂载时触发空查询默认页
     useEffect(() => {
-        const cleanup = window.szybkoInternal?.onSearchBatch((batch: SearchBatch) => {
-            setResults([...resultsRef.current, ...batch.results]);
-            setSelectedIndex(0);
-        });
-        return () => cleanup?.();
-    }, [setResults, setSelectedIndex]);
+        doSearch('');
+    }, [doSearch]);
 
-    return { query, setQuery: handleQueryChange, results, selectedIndex, setSelectedIndex };
+    // 订阅 SearchResponse
+    useEffect(() => {
+        const subscribe = window.szybkoInternal?.onSearchResponse;
+        if (!subscribe)
+            return;
+
+        const cleanup = subscribe((res: SearchResponse) => {
+            // 丢弃过期响应
+            if (res.queryId !== queryIdRef.current)
+                return;
+
+            setPartial({
+                sections: res.sections,
+                itemsById: res.itemsById,
+                status: res.status,
+            });
+        });
+
+        return () => cleanup();
+    }, [setPartial]);
+
+    const toggleExpand = useCallback((sectionId: string) => {
+        setPartial({
+            expandedSectionIds: new Set(stateRef.current.expandedSectionIds.has(sectionId)
+                ? [...stateRef.current.expandedSectionIds].filter(id => id !== sectionId)
+                : [...stateRef.current.expandedSectionIds, sectionId]),
+        });
+    }, [setPartial]);
+
+    const executeSelected = useCallback(() => {
+        const { sections, itemsById, selectedIndex, currentQueryId, sessionId } = stateRef.current;
+        if (!currentQueryId || !sessionId)
+            return;
+
+        // 展平所有 visible items 找到选中的 itemId
+        const flatIds = sections.flatMap(s => s.itemIds.slice(0, 18)); // 展开逻辑同 SectionList
+        const itemId = flatIds[selectedIndex];
+        if (!itemId)
+            return;
+
+        const item = itemsById[itemId];
+        if (!item)
+            return;
+
+        setPartial({ query: '', sections: [], itemsById: {}, status: 'idle', currentQueryId: null, selectedIndex: 0 });
+        window.szybkoInternal?.execute({ sessionId, queryId: currentQueryId, itemId });
+    }, [setPartial]);
+
+    // 计算当前可见 items（展开/收起影响）
+    const visibleItemIds = (() => {
+        const { sections, expandedSectionIds } = stateRef.current;
+        return sections.flatMap(s =>
+            expandedSectionIds.has(s.id) ? s.itemIds : s.itemIds.slice(0, 18),
+        );
+    })();
+
+    const setSelectedIndex = useCallback((index: number) => {
+        setPartial({ selectedIndex: index });
+    }, [setPartial]);
+
+    return {
+        ...state,
+        setQuery: handleQueryChange,
+        setSelectedIndex,
+        toggleExpand,
+        executeSelected,
+        visibleItemIds,
+    };
 }

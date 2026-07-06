@@ -130,3 +130,20 @@ export const usageHistory = sqliteTable('usage_history', {
     pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
     lookupIdx: index('idx_uh_lookup').on(table.pluginId, table.featureCode, table.cmdKey, desc(table.selectedAt)),
 }));
+
+// ── 通用 item 表（替换 pinned_trigger / usage_history，不绑定 plugin 结构） ──
+
+export const pinnedItem = sqliteTable('pinned_item', {
+    itemId: text('item_id').primaryKey(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    pinnedAt: integer('pinned_at').notNull(),
+});
+
+export const usageEvent = sqliteTable('usage_event', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    itemId: text('item_id').notNull(),
+    query: text('query'),
+    selectedAt: integer('selected_at').notNull(),
+}, table => ({
+    lookupIdx: index('idx_usage_event_lookup').on(table.itemId, desc(table.selectedAt)),
+}));

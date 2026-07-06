@@ -1,7 +1,16 @@
 export const IPC = {
+    // ── 搜索（新） ──
     SEARCH_QUERY: 'search:query',
-    SEARCH_BATCH: 'search:batch',
     SEARCH_CANCEL: 'search:cancel',
+    SEARCH_RESPONSE: 'search:response',
+
+    // ── Item 交互（新） ──
+    ITEM_PIN: 'item:pin',
+    ITEM_REORDER: 'item:reorder',
+    ITEM_CONTEXT_MENU: 'item:context-menu',
+    ITEM_EXECUTE: 'item:execute',
+
+    // ── 插件运行时 ──
     PLUGIN_EXEC: 'plugin:exec',
     PLUGIN_RUNTIME_STATE: 'plugin:runtime-state',
     HOST_SWITCH: 'host:switch',
@@ -21,4 +30,8 @@ export const IPC = {
     FEATURE_SET: 'feature:set',
     FEATURE_GET: 'feature:get',
     FEATURE_REMOVE: 'feature:remove',
+
+    // ── 旧（废弃） ──
+    /** @deprecated 使用 SEARCH_RESPONSE */
+    SEARCH_BATCH: 'search:batch',
 } as const;

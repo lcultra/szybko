@@ -1,23 +1,27 @@
-import type {
-    IpcInvokeContract,
-    SearchResult,
-} from '@szybko/shared';
+import type { IpcInvokeContract } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
-import { SearchService } from '../input/search-service';
 import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
+import { PinnedItemRepository } from '../persistence/sqlite/repositories/pinned-item-repository';
+import { UsageEventRepository } from '../persistence/sqlite/repositories/usage-event-repository';
+import {
+    PinnedSectionProvider,
+    PluginProvider,
+    RecentSectionProvider,
+    SearchSession,
+} from '../search';
 import { createExecutor } from './execute-action';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
 
-// ── Register all IPC handlers ─────────────────────────────────────
+let currentSession: SearchSession | null = null;
 
 export function registerIpcHandlers(
     windowManager: WindowManager,
@@ -28,79 +32,169 @@ export function registerIpcHandlers(
     const sessionManager = new MatchSessionManager();
     const executor = createExecutor(new ElectronNativeCapabilityService());
 
+    // ── Providers ──────────────────────────────────────────────────
+
+    const pluginProvider = platformDb
+        ? new PluginProvider(platformDb.drizzle(), coordinator, sessionManager)
+        : null;
+
+    const pinnedProvider = platformDb
+        ? new PinnedSectionProvider(platformDb.drizzle(), async (itemId) => {
+                // resolve 通过 session 缓存或 pluginProvider
+                return currentSession?.resolveItem(itemId) ?? null;
+            })
+        : null;
+
+    const recentProvider = platformDb
+        ? new RecentSectionProvider(platformDb.drizzle(), async (itemId) => {
+                return currentSession?.resolveItem(itemId) ?? null;
+            })
+        : null;
+
+    const pinnedRepo = platformDb ? new PinnedItemRepository(platformDb.drizzle()) : null;
+    const usageRepo = platformDb ? new UsageEventRepository(platformDb.drizzle()) : null;
+
     // ── Search ─────────────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.SEARCH_QUERY,
-        (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): IpcResponse<typeof IPC.SEARCH_QUERY> => {
+        async (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): Promise<IpcResponse<typeof IPC.SEARCH_QUERY>> => {
             if (!platformDb)
                 return { ok: false };
+            if (!pluginProvider || !pinnedProvider || !recentProvider)
+                return { ok: false };
 
-            const searchService = new SearchService(platformDb.drizzle());
+            // 取消上一个仍在进行的会话
+            currentSession = null;
+
             const snapshot = collectFromSearch(req);
-            const allMatches = searchService.search(snapshot, req.query);
-
-            const results: SearchResult[] = [];
-            if (allMatches.length > 0) {
-                const session = sessionManager.create(snapshot);
-                sessionManager.addMatches(session.sessionId, allMatches);
-
-                for (const m of allMatches) {
-                    results.push({
-                        id: m.matchId,
-                        title: m.label || m.featureCode,
-                        subtitle: `打开 ${m.pluginId}`,
-                        icon: '🧩',
-                        group: '插件',
-                        score: m.score,
-                        action: {
-                            type: 'plugin.open' as const,
-                            payload: {
-                                pluginId: m.pluginId,
-                                featureCode: m.featureCode,
-                                matchId: m.matchId,
-                            },
-                        },
-                    });
-                }
-            }
-
-            results.sort((a, b) => b.score - a.score);
             const win = windowManager.getWindow();
+            if (!win || win.isDestroyed())
+                return { ok: false };
 
-            if (results.length > 0 && win && !win.isDestroyed()) {
-                win.webContents.send(IPC.SEARCH_BATCH, {
-                    queryId: req.queryId,
-                    batchSeq: 0,
-                    source: 'builtin',
-                    results,
-                    isFinal: false,
-                });
-            }
+            // 所有 provider 都在 session 中注册（用于 execute），但只调用有结果的 provider search
+            const providers = [pinnedProvider, recentProvider, pluginProvider].filter(Boolean) as import('../search').SearchProvider[];
 
-            // Final batch (empty, signals end of built-in results)
-            if (win && !win.isDestroyed()) {
-                win.webContents.send(IPC.SEARCH_BATCH, {
-                    queryId: req.queryId,
-                    batchSeq: 1,
-                    source: 'builtin',
-                    results: [],
-                    isFinal: true,
-                });
-            }
+            const session = new SearchSession(req.queryId, providers, (res) => {
+                if (!win.isDestroyed()) {
+                    win.webContents.send(IPC.SEARCH_RESPONSE, res);
+                }
+            });
 
-            return { ok: true };
+            currentSession = session;
+
+            // 异步执行搜索，不阻塞 IPC 返回
+            session.search(snapshot).catch((err) => {
+                console.error('[IPC] SearchSession error:', err);
+            });
+
+            return { ok: true, sessionId: session.sessionId };
         },
     );
-
-    // ── Window control ─────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.SEARCH_CANCEL,
         (): IpcResponse<typeof IPC.SEARCH_CANCEL> => {
+            currentSession = null;
             return { ok: true };
         },
     );
+
+    // ── Item pin ───────────────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.ITEM_PIN,
+        (_event, { itemId, pin }: IpcRequest<typeof IPC.ITEM_PIN>): IpcResponse<typeof IPC.ITEM_PIN> => {
+            if (!pinnedRepo)
+                return { ok: false };
+            if (pin) {
+                pinnedRepo.add(itemId, Date.now());
+            }
+            else {
+                pinnedRepo.remove(itemId);
+            }
+            return { ok: true };
+        },
+    );
+
+    ipcMain.handle(
+        IPC.ITEM_REORDER,
+        (_event, { itemId, toIndex }: IpcRequest<typeof IPC.ITEM_REORDER>): IpcResponse<typeof IPC.ITEM_REORDER> => {
+            if (!pinnedRepo)
+                return { ok: false };
+            pinnedRepo.reorder(itemId, toIndex);
+            return { ok: true };
+        },
+    );
+
+    // ── Item context menu ──────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.ITEM_CONTEXT_MENU,
+        (_event, req: IpcRequest<typeof IPC.ITEM_CONTEXT_MENU>): IpcResponse<typeof IPC.ITEM_CONTEXT_MENU> => {
+            const { itemId, screenX, screenY } = req;
+            const item = currentSession?.resolveItem(itemId);
+            if (!item)
+                return { ok: false };
+
+            const menuBuilder: Electron.MenuItemConstructorOptions[] = [];
+
+            if (item.capabilities.pin) {
+                menuBuilder.push({
+                    label: item.state.pinned ? '取消固定' : '固定到搜索栏',
+                    click: () => {
+                        pinnedRepo?.add(itemId, item.state.pinned ? 0 : Date.now());
+                    },
+                });
+            }
+            if (item.capabilities.reveal) {
+                menuBuilder.push({
+                    label: '在访达中显示',
+                    click: () => {
+                        if (itemId.startsWith('file://')) {
+                            new ElectronNativeCapabilityService().openPath(itemId.replace('file://', ''));
+                        }
+                    },
+                });
+            }
+
+            const win = BrowserWindow.getFocusedWindow();
+            if (win && menuBuilder.length > 0) {
+                const { Menu } = require('electron');
+                const built = Menu.buildFromTemplate(menuBuilder);
+                built.popup({ window: win, x: screenX, y: screenY });
+            }
+
+            return { ok: true };
+        },
+    );
+
+    // ── Item execute ───────────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.ITEM_EXECUTE,
+        async (
+            _event,
+            req: IpcRequest<typeof IPC.ITEM_EXECUTE>,
+        ): Promise<IpcResponse<typeof IPC.ITEM_EXECUTE>> => {
+            const { sessionId, queryId, itemId } = req;
+
+            if (!currentSession || currentSession.sessionId !== sessionId) {
+                return { ok: false, error: 'Session expired' };
+            }
+
+            // 记录使用
+            usageRepo?.record(itemId);
+
+            const result = await currentSession.executeItem(itemId, {
+                queryId,
+                sessionId,
+            });
+            return result;
+        },
+    );
+
+    // ── Window control ─────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.WINDOW_RESIZE,
@@ -118,14 +212,12 @@ export function registerIpcHandlers(
         },
     );
 
-    // ── Execute ────────────────────────────────────────────────────
+    // ── Plugin execute ─────────────────────────────────────────────
 
     ipcMain.handle(
         IPC.PLUGIN_EXEC,
         async (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): Promise<IpcResponse<typeof IPC.PLUGIN_EXEC>> => {
-            // plugin.open 需要激活 Runtime，不走 executeAction 纯函数
             if (action.type === 'plugin.open') {
-                // Resolve match context from session manager if matchId is present
                 if (action.payload.matchId) {
                     const resolved = sessionManager.resolve(action.payload.matchId);
                     if (resolved) {
@@ -143,9 +235,8 @@ export function registerIpcHandlers(
                         );
                         return { ok: true };
                     }
-                    console.warn(`[IPC] matchId ${action.payload.matchId} not resolved (session expired or invalid)`);
+                    console.warn(`[IPC] matchId ${action.payload.matchId} not resolved`);
                 }
-                // Fall back to simple activation without match context
                 coordinator.activatePlugin(action.payload.pluginId, action.payload.featureCode);
                 return { ok: true };
             }
@@ -162,9 +253,7 @@ export function registerIpcHandlers(
                 const runtime = coordinator.getRuntime(runtimeId);
                 if (!runtime)
                     return { ok: false, error: 'Runtime not found' };
-
                 coordinator.moveToHost(runtimeId, targetHost);
-
                 const hostId = coordinator.getHostFor(runtimeId)?.id;
                 return { ok: true, hostId };
             }
@@ -202,7 +291,7 @@ export function registerIpcHandlers(
         },
     );
 
-    // ── Plugin pin ────────────────────────────────────────────
+    // ── Plugin pin (runtime-level) ────────────────────────────────
 
     ipcMain.handle(
         IPC.PLUGIN_PIN,

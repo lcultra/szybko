@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { PluginView } from '../../components/plugin/PluginView';
 import { SurfaceFrame } from '../../components/SurfaceFrame';
 import { usePluginRuntime } from '../../hooks/usePluginRuntime';
@@ -6,10 +6,15 @@ import { useSearch } from '../../hooks/useSearch';
 import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useAppStore } from '../../stores/app-store';
 import { useRuntimeStore } from '../../stores/runtime-store';
+import { buildNavigationMap } from './hooks/navigation';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useWindowHeight } from './hooks/useWindowHeight';
-import { ResultList } from './ResultList';
 import { SearchBar } from './SearchBar';
+import { SectionList } from './SectionList';
+
+const DEFAULT_COLUMNS = 9;
+const DEFAULT_ROWS = 2;
+const MAX_VISIBLE = DEFAULT_ROWS * DEFAULT_COLUMNS;
 
 export default function App() {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -17,43 +22,94 @@ export default function App() {
     const setState = useAppStore(s => s.setState);
     const runtimeId = useRuntimeStore(s => s.slot.runtimeId);
     const clearSlot = useRuntimeStore(s => s.clearSlot);
-    const { query, setQuery, results, selectedIndex, setSelectedIndex } = useSearch();
+
+    const {
+        query,
+        setQuery,
+        sections,
+        itemsById,
+        status,
+        sessionId,
+        currentQueryId,
+        selectedIndex,
+        setSelectedIndex,
+        expandedSectionIds,
+        toggleExpand,
+    } = useSearch();
 
     useWindowHeight(rootRef);
     usePluginRuntime();
 
+    // 构建 NavigationMap
+    const navigationMap = useMemo(() => {
+        const counts = sections.map(s => ({
+            sectionId: s.id,
+            count: expandedSectionIds.has(s.id)
+                ? s.itemIds.length
+                : Math.min(s.itemIds.length, MAX_VISIBLE),
+        }));
+        return buildNavigationMap(counts, DEFAULT_COLUMNS, selectedIndex);
+    }, [sections, expandedSectionIds, selectedIndex]);
+
+    const onExecuteItem = (itemId: string) => {
+        if (!sessionId || !currentQueryId)
+            return;
+        setQuery('');
+        window.szybkoInternal?.execute({ sessionId, queryId: currentQueryId, itemId: itemId as any });
+    };
+
+    const onEscape = () => {
+        if (state === 'plugin') {
+            if (runtimeId) {
+                PluginRuntimeService.hide(runtimeId);
+            }
+            clearSlot();
+            setState('idle');
+            setQuery('');
+        }
+        else if (query) {
+            setQuery('');
+        }
+        else {
+            window.szybkoInternal?.hideWindow();
+        }
+    };
+
     useKeyboard({
-        selectedIndex,
-        totalItems: results.length,
-        onSelectUp: () => setSelectedIndex(Math.max(0, selectedIndex - 1)),
-        onSelectDown: () => setSelectedIndex(Math.min(results.length - 1, selectedIndex + 1)),
+        navigationMap,
+        onSelect: setSelectedIndex,
         onExecute: () => {
-            if (results[selectedIndex]) {
-                const action = results[selectedIndex].action;
-                setQuery('');
-                setSelectedIndex(0);
-                window.szybkoInternal?.execute(action);
-            }
-        },
-        onEscape: () => {
-            if (state === 'plugin') {
-                if (runtimeId) {
-                    PluginRuntimeService.hide(runtimeId);
+            let idx = 0;
+            for (const section of sections) {
+                const expanded = expandedSectionIds.has(section.id);
+                const visible = expanded ? section.itemIds.length : Math.min(section.itemIds.length, MAX_VISIBLE);
+                if (selectedIndex < idx + visible) {
+                    const itemId = section.itemIds[selectedIndex - idx];
+                    if (itemId)
+                        onExecuteItem(itemId);
+                    return;
                 }
-                clearSlot();
-                setState('idle');
-                setQuery('');
-                setSelectedIndex(0);
-            }
-            else if (query) {
-                setQuery('');
-                setSelectedIndex(0);
-            }
-            else {
-                window.szybkoInternal?.hideWindow();
+                idx += visible;
             }
         },
+        onEscape,
     });
+
+    const onPinToggle = (itemId: string) => {
+        const item = itemsById[itemId as any];
+        if (!item)
+            return;
+        window.szybkoInternal?.pinItem({ itemId: itemId as any, pin: !item.state.pinned });
+    };
+
+    const onReorder = (itemId: string, toIndex: number) => {
+        window.szybkoInternal?.reorderItem({ itemId: itemId as any, toIndex });
+    };
+
+    const onContextMenu = (itemId: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        window.szybkoInternal?.openContextMenu({ itemId: itemId as any, screenX: e.clientX, screenY: e.clientY });
+    };
 
     return (
         <div ref={rootRef}>
@@ -63,19 +119,30 @@ export default function App() {
                         ? <PluginView />
                         : <SearchBar value={query} onChange={setQuery} />}
                     {state !== 'plugin' && (
-                        <ResultList
-                            results={results}
-                            selectedIndex={selectedIndex}
-                            onSelect={setSelectedIndex}
-                            onExecute={(i) => {
-                                if (results[i]) {
-                                    const action = results[i].action;
-                                    setQuery('');
-                                    setSelectedIndex(0);
-                                    window.szybkoInternal?.execute(action);
-                                }
-                            }}
-                        />
+                        <div className="max-h-[424px] min-h-0 overflow-y-auto overscroll-contain ">
+                            {sections.length > 0
+                                ? (
+                                        <SectionList
+                                            sections={sections}
+                                            itemsById={itemsById}
+                                            selectedIndex={selectedIndex}
+                                            expandedSectionIds={expandedSectionIds}
+                                            onSelect={setSelectedIndex}
+                                            onExecute={onExecuteItem}
+                                            onPinToggle={onPinToggle}
+                                            onToggleExpand={toggleExpand}
+                                            onReorder={onReorder}
+                                            onContextMenu={onContextMenu}
+                                        />
+                                    )
+                                : status === 'final' && query
+                                    ? (
+                                            <div className="flex items-center justify-center py-8 text-sm text-text-muted">
+                                                没有找到匹配结果
+                                            </div>
+                                        )
+                                    : null}
+                        </div>
                     )}
                 </div>
             </SurfaceFrame>

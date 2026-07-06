@@ -38,6 +38,19 @@ export class MatchSessionManager {
         return null;
     }
 
+    /** 按 pluginId + featureCode 查找 match（供 PluginProvider.execute 使用） */
+    resolveByPluginKey(pluginId: string, featureCode: string): { match: TriggerMatch; session: MatchSession } | null {
+        this.evictExpired();
+        for (const session of this.sessions.values()) {
+            for (const match of session.triggerMatches) {
+                if (match.pluginId === pluginId && match.featureCode === featureCode) {
+                    return { match, session };
+                }
+            }
+        }
+        return null;
+    }
+
     private evictExpired(): void {
         const now = Date.now();
         for (const [id, session] of this.sessions) {

@@ -1,32 +1,47 @@
+import type { NavigationMap } from './navigation';
 import { useCallback, useEffect } from 'react';
 
 interface UseKeyboardOptions {
-    selectedIndex: number;
-    totalItems: number;
-    onSelectUp: () => void;
-    onSelectDown: () => void;
+    navigationMap: NavigationMap;
+    onSelect: (index: number) => void;
     onExecute: () => void;
     onEscape: () => void;
 }
 
+/**
+ * 键盘导航 hook——消费 NavigationMap，不做索引算术。
+ * 所有方向键导航由 NavigationMap 的 up/down/left/right 指针决定。
+ */
 export function useKeyboard({
-    selectedIndex: _selectedIndex,
-    totalItems: _totalItems,
-    onSelectUp,
-    onSelectDown,
+    navigationMap,
+    onSelect,
     onExecute,
     onEscape,
 }: UseKeyboardOptions) {
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
+            const map = navigationMap;
+
             switch (e.key) {
                 case 'ArrowUp':
                     e.preventDefault();
-                    onSelectUp();
+                    if (map.up !== null)
+                        onSelect(map.up);
                     break;
                 case 'ArrowDown':
                     e.preventDefault();
-                    onSelectDown();
+                    if (map.down !== null)
+                        onSelect(map.down);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (map.left !== null)
+                        onSelect(map.left);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (map.right !== null)
+                        onSelect(map.right);
                     break;
                 case 'Enter':
                     e.preventDefault();
@@ -38,7 +53,7 @@ export function useKeyboard({
                     break;
             }
         },
-        [onSelectUp, onSelectDown, onExecute, onEscape],
+        [navigationMap, onSelect, onExecute, onEscape],
     );
 
     useEffect(() => {
