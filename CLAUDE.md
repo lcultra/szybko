@@ -16,7 +16,7 @@
 
 - `pnpm dev` — Electron 开发模式
 - `pnpm build` — 构建 TS 包
-- `pnpm --filter @szybko/core-rust build` — 构建 Rust 核心
+- `pnpm --filter @szybko/native build` — 构建 Rust 核心
 
 ## 设计原则
 
@@ -32,6 +32,6 @@
 
 ## 工具链
 
-- **electron-vite** 负责 main + preload 的 esbuild 打包，renderer 指向 `packages/shell`，preload 分 host.ts（宿主窗口）和 plugin.ts（插件运行时）
+- **electron-vite** 负责 main + preload 的 esbuild 打包，renderer 源码位于 `apps/desktop/src/renderer`，preload 分 host.ts（宿主窗口）和 plugin.ts（插件运行时）
 - `electron` 模块通过 esbuild 的 `external` 处理，避免 pnpm symlink 问题
 - 独立的 tsc 编译仅用于 typecheck
