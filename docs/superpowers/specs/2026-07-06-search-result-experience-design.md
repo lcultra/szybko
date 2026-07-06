@@ -239,15 +239,9 @@ status === 'final' && query && sections.length === 0 -> 没有找到匹配结果
 - `pnpm lint`
 - `pnpm check`
 
-### 单元测试建议
+### 不新增测试代码
 
-实现计划应优先补充以下 focused tests；如果继续没有测试框架，则用最小测试脚本或模块级测试覆盖同等行为：
-
-- `SearchSession` 在 query 无命中时 fallback 到 pinned/recent。
-- cancelled session 不 emit final response。
-- `ITEM_EXECUTE` 同时校验 sessionId 和 queryId。
-- PluginProvider 通过当前 item/match 映射执行正确 payload。
-- PinnedItemRepository reorder 写回连续 sortOrder。
+本轮不新增测试框架、单元测试文件或一次性测试脚本。验证以现有类型检查、构建、lint 和手动验收为准。实现时需要在改动说明中明确列出人工验证过的场景，避免把未覆盖的链路误认为已验证。
 
 ### 手动验收
 
@@ -280,3 +274,4 @@ status === 'final' && query && sections.length === 0 -> 没有找到匹配结果
 - pin/unpin/reorder 后 UI 与数据库状态一致。
 - 前端样式和交互走查通过。
 - `pnpm typecheck`、`pnpm --filter @szybko/desktop build`、`pnpm check` 通过。
+- 不新增测试代码。
