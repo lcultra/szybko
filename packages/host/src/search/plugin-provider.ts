@@ -20,6 +20,7 @@ export class PluginProvider implements SearchProvider {
 
     private searchService: SearchService;
     private sessionManager: MatchSessionManager;
+    private itemMatchMap = new Map<LauncherItemId, string>();
 
     constructor(
         db: PlatformDrizzleDatabase,
@@ -31,6 +32,8 @@ export class PluginProvider implements SearchProvider {
     }
 
     async search(snapshot: InputContextSnapshot, _signal?: AbortSignal): Promise<SearchProviderResult> {
+        this.itemMatchMap.clear(); // Clear previous session's mapping
+
         const query = snapshot.query.trim();
         // 空查询时 plugin provider 不返回结果（避免非 text matcher 误匹配）
         if (!query) {
@@ -45,17 +48,21 @@ export class PluginProvider implements SearchProvider {
         const session = this.sessionManager.create(snapshot);
         this.sessionManager.addMatches(session.sessionId, matches);
 
-        const items: LauncherItem[] = matches.map(m => ({
-            id: `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId,
-            ownerProvider: 'plugin',
-            title: m.label || m.featureCode,
-            subtitle: `打开 ${m.pluginId}`,
-            icon: { type: 'emoji', value: '🧩' },
-            score: m.score,
-            capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
-            state: { pinned: false },
-            matchLevel: m.score > 95 ? 3 : m.score > 50 ? 2 : 1,
-        }));
+        const items: LauncherItem[] = matches.map(m => {
+            const itemId = `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId;
+            this.itemMatchMap.set(itemId, m.matchId);
+            return {
+                id: itemId,
+                ownerProvider: 'plugin',
+                title: m.label || m.featureCode,
+                subtitle: `打开 ${m.pluginId}`,
+                icon: { type: 'emoji', value: '🧩' },
+                score: m.score,
+                capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
+                state: { pinned: false },
+                matchLevel: m.score > 95 ? 3 : m.score > 50 ? 2 : 1,
+            };
+        });
 
         return {
             items,
@@ -77,7 +84,24 @@ export class PluginProvider implements SearchProvider {
             return { ok: false, error: `Invalid plugin itemId: ${itemId}` };
         const [pluginId, featureCode] = parts;
 
-        // 通过 MatchSessionManager 找回 match context
+        // Prefer precise matchId from search result
+        const matchId = this.itemMatchMap.get(itemId);
+        if (matchId) {
+            const resolved = this.sessionManager.resolve(matchId);
+            if (resolved) {
+                this.coordinator.activatePlugin(pluginId, featureCode, {
+                    code: resolved.match.featureCode,
+                    type: resolved.match.enterType,
+                    payload: resolved.match.payload,
+                    option: resolved.match.option ?? undefined,
+                    from: resolved.match.from,
+                    matchId: resolved.match.matchId,
+                });
+                return { ok: true };
+            }
+        }
+
+        // Fallback: try by plugin key
         const resolved = this.sessionManager.resolveByPluginKey(pluginId, featureCode);
         if (resolved) {
             this.coordinator.activatePlugin(pluginId, featureCode, {
