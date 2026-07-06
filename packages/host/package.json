@@ -15,7 +15,7 @@
         "electron": "^43.0"
     },
     "dependencies": {
-        "@szybko/core-rust": "workspace:*",
+        "@szybko/native": "workspace:*",
         "@szybko/shared": "workspace:*",
         "drizzle-orm": "1.0.0-rc.4-5d5b77c",
         "pinyin-pro": "^3.28.1"
