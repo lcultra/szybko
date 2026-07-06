@@ -39,7 +39,7 @@ export function GridTile({
             tabIndex={-1}
             className={`group relative grid size-full cursor-pointer grid-rows-[1fr_auto] place-items-center gap-1 rounded-xl p-1.5 text-center transition-[background-color,box-shadow] duration-100 outline-none ${
                 selected
-                    ? 'bg-accent/12 ring-1 ring-accent/30 ring-inset dark:bg-accent/15'
+                    ? 'bg-accent/12 ring-accent/30 dark:bg-accent/15 ring-1 ring-inset'
                     : 'bg-transparent hover:bg-surface-hover/60 focus-visible:bg-surface-hover/60'
             }`}
             data-interactive

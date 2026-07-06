@@ -1,5 +1,5 @@
 {
-    "name": "@szybko/plugin-{{name}}",
+    "name": "@szybko/plugin-settings",
     "type": "module",
     "version": "0.1.0",
     "private": true,

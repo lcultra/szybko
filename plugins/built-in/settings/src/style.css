@@ -1,0 +1,5 @@
+/* 插件样式 */
+@import 'tailwindcss';
+@import '@szybko/ui-kit/index.css';
+
+@source '../../../../packages';

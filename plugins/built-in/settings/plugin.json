@@ -1,0 +1,16 @@
+{
+    "id": "settings",
+    "main": "index.html",
+    "logo": "icon.svg",
+    "preload": "preload.js",
+    "pluginSetting": { "single": true },
+    "features": [
+        {
+            "code": "settings",
+            "explain": "首选项",
+            "cmds": [
+                "设置"
+            ]
+        }
+    ]
+}

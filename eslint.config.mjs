@@ -1,5 +1,4 @@
 import antfu from '@antfu/eslint-config';
-import tailwindcss from 'eslint-plugin-tailwindcss';
 
 export default antfu(
     {
@@ -24,6 +23,7 @@ export default antfu(
             '.claude',
             '.superpowers',
             '**/docs/**',
+            'packages/plugin-tools/src/templates',
         ],
         rules: {
             // no-unsafe-as
@@ -31,14 +31,6 @@ export default antfu(
             // 不强制 .js 扩展名
             'import-x/extensions': 'off',
             'ts/consistent-type-imports': 'off',
-        },
-    },
-    {
-        extends: [tailwindcss.configs.recommended],
-        settings: {
-            tailwindcss: {
-                cssConfigPath: '/Users/pengcheng17/Documents/workspace/ai/szybko/packages/ui-kit/src/index.css',
-            },
         },
     },
 );

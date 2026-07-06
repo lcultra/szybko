@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 interface PluginManifest {
     id: string;
@@ -24,5 +24,7 @@ export function writePluginManifest(cwd: string, devUrl?: string): void {
         delete manifest.development;
     }
 
-    writeFileSync(resolve(cwd, 'dist', 'plugin.json'), `${JSON.stringify(manifest, null, 4)}\n`);
+    const distPath = resolve(cwd, 'dist', 'plugin.json');
+    mkdirSync(dirname(distPath), { recursive: true });
+    writeFileSync(distPath, `${JSON.stringify(manifest, null, 4)}\n`);
 }

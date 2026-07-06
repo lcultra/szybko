@@ -7,12 +7,12 @@ import type { LauncherItem, LauncherItemId } from '@szybko/shared';
 export function fallbackItemFromId(itemId: LauncherItemId): LauncherItem | null {
     if (itemId.startsWith('plugin://')) {
         const parts = itemId.replace('plugin://', '').split('/');
-        const cmdKey = parts[parts.length - 1] ?? '未知命令';
         const pluginId = parts[0] ?? '未知插件';
+        const featureCode = parts[1] ?? '未知命令';
         return {
             id: itemId,
             ownerProvider: 'plugin',
-            title: cmdKey,
+            title: featureCode,
             subtitle: pluginId,
             score: 0,
             capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },

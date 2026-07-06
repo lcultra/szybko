@@ -84,15 +84,21 @@ export class SearchSession {
                 continue;
 
             const section = result.section;
-            const dedupedItems: LauncherItem[] = [];
+            const sectionItemsById = new Map<LauncherItemId, LauncherItem>();
 
             for (const item of result.items) {
+                const sectionExisting = sectionItemsById.get(item.id);
+                if (!sectionExisting || item.score > sectionExisting.score) {
+                    sectionItemsById.set(item.id, item);
+                }
+
                 const existing = this.itemsById.get(item.id);
                 if (!existing || item.score > existing.score) {
                     this.itemsById.set(item.id, item);
-                    dedupedItems.push(item);
                 }
             }
+
+            const dedupedItems = [...sectionItemsById.values()];
 
             if (providerId === 'plugin') {
                 pluginItems.push(...dedupedItems);

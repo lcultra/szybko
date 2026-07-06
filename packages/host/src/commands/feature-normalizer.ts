@@ -157,6 +157,7 @@ export function normalizeCommand(cmd: string | MatchCommand, triggerIndex = 0): 
             cmdKey: hashStable(`text:${normalizedKey}`),
             triggerIndex,
             type: 'text',
+            label: cmd.trim(),
             matcher,
             matcherJson,
             normalizedKey,

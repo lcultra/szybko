@@ -17,7 +17,7 @@ function isContainedIn(base: string, target: string): boolean {
 export function registerPluginAssetHandler(catalog: PluginCatalog): void {
     registerAssetHandler('plugin', async (pathname: string) => {
         // pathname = "/<pluginId>/<encoded-relative-path>"
-        const [, pluginId, ...rest] = pathname.split('/').filter(Boolean);
+        const [pluginId, ...rest] = pathname.split('/').filter(Boolean);
         if (!pluginId || rest.length === 0) {
             return null;
         }

@@ -103,7 +103,7 @@ export class PluginProvider implements SearchProvider {
             return {
                 id: itemId,
                 ownerProvider: 'plugin',
-                title: trigger.label || cmdKey,
+                title: trigger.label || featureCode,
                 subtitle: `打开 ${pluginId}`,
                 icon: (() => {
                     const plugin = this.catalog.get(pluginId);

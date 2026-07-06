@@ -24,6 +24,9 @@ importers:
       '@eslint-react/eslint-plugin':
         specifier: ^5.9
         version: 5.10.0(eslint@10.6.0(jiti@2.7.0))(typescript@6.0.3)
+      '@szybko/plugin-tools':
+        specifier: workspace:*
+        version: link:packages/plugin-tools
       '@tailwindcss/vite':
         specifier: ^4.3.2
         version: 4.3.2(vite@8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.5)(yaml@2.9.0))
@@ -207,21 +210,6 @@ importers:
         specifier: ^6.0
         version: 6.0.3
 
-  plugins/built-in/e2e-test:
-    dependencies:
-      '@szybko/plugin-tools':
-        specifier: workspace:*
-        version: link:../../../packages/plugin-tools
-      '@szybko/sdk':
-        specifier: workspace:*
-        version: link:../../../packages/sdk
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-
   plugins/built-in/launcher:
     dependencies:
       '@szybko/shared':
@@ -272,7 +260,7 @@ importers:
         specifier: ^8.1.2
         version: 8.1.2(@types/node@26.1.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.5)(yaml@2.9.0)
 
-  plugins/built-in/test-react:
+  plugins/built-in/settings:
     dependencies:
       '@szybko/plugin-tools':
         specifier: workspace:*
@@ -280,33 +268,9 @@ importers:
       '@szybko/sdk':
         specifier: workspace:*
         version: link:../../../packages/sdk
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-
-  plugins/built-in/test-simple:
-    dependencies:
-      '@szybko/plugin-tools':
+      '@szybko/ui-kit':
         specifier: workspace:*
-        version: link:../../../packages/plugin-tools
-
-  plugins/built-in/test-tpl:
-    dependencies:
-      '@szybko/plugin-tools':
-        specifier: workspace:*
-        version: link:../../../packages/plugin-tools
-
-  plugins/built-in/test-tpl-react:
-    dependencies:
-      '@szybko/plugin-tools':
-        specifier: workspace:*
-        version: link:../../../packages/plugin-tools
-      '@szybko/sdk':
-        specifier: workspace:*
-        version: link:../../../packages/sdk
+        version: link:../../../packages/ui-kit
       react:
         specifier: ^19.2.7
         version: 19.2.7

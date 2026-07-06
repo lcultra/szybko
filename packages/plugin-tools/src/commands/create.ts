@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -7,7 +7,7 @@ import { info, error as logError, success } from '../utils/log.ts';
 export interface CreateOptions {
     name: string;
     renderer: boolean;
-    root: string;
+    cwd: string;
 }
 
 const __dirname = resolve(fileURLToPath(import.meta.url), '..');
@@ -21,9 +21,16 @@ function render(template: string, vars: Record<string, string>): string {
     return template.replaceAll(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? '');
 }
 
+function randomColor(): string {
+    const hue = Math.floor(Math.random() * 360);
+    const sat = 55 + Math.floor(Math.random() * 20); // 55-75
+    const lig = 55 + Math.floor(Math.random() * 15); // 55-70
+    return `hsl(${hue}, ${sat}%, ${lig}%)`;
+}
+
 export async function createPlugin(options: CreateOptions): Promise<void> {
-    const { name, renderer, root } = options;
-    const pluginDir = resolve(root, 'plugins', 'built-in', name);
+    const { name, renderer, cwd } = options;
+    const pluginDir = resolve(cwd, name);
     const type = renderer ? 'react' : 'simple';
 
     try {
@@ -52,18 +59,15 @@ export async function createPlugin(options: CreateOptions): Promise<void> {
         files['index.html'] = readTemplate(type, 'index.html');
     }
 
+    // logo 随机颜色
+    files['public/icon.svg'] = render(readTemplate(type, 'public/icon.svg'), { color: randomColor() });
+
     for (const [filePath, content] of Object.entries(files)) {
         const fullPath = resolve(pluginDir, filePath);
         mkdirSync(resolve(fullPath, '..'), { recursive: true });
         writeFileSync(fullPath, content, 'utf-8');
     }
 
-    // 拷贝 public/ 目录（vite 拍平到 dist/，logo 等资源放这里）
-    const templatePublic = resolve(TEMPLATES_DIR, type, 'public');
-    if (existsSync(templatePublic)) {
-        cpSync(templatePublic, resolve(pluginDir, 'public'), { recursive: true });
-    }
-
     success(`插件 "${name}" 已创建: ${pluginDir}`);
-    info('运行 pnpm install 安装依赖后即可使用');
+    info(`运行 cd ${name} && pnpm install 安装依赖后即可使用`);
 }
