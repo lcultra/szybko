@@ -13,7 +13,6 @@ interface SectionListProps {
     expandedSectionIds: Set<string>;
     onSelect: (globalIndex: number) => void;
     onExecute: (itemId: LauncherItemId) => void;
-    onPinToggle: (itemId: LauncherItemId) => void;
     onToggleExpand: (sectionId: string) => void;
     onReorder: (itemId: LauncherItemId, toIndex: number) => void;
     onContextMenu: (itemId: LauncherItemId, e: React.MouseEvent) => void;
@@ -26,7 +25,6 @@ export function SectionList({
     expandedSectionIds,
     onSelect,
     onExecute,
-    onPinToggle,
     onToggleExpand,
     onReorder,
     onContextMenu,
@@ -83,7 +81,6 @@ export function SectionList({
                             onReorder={isPinned ? onReorder : undefined}
                             onSelect={onSelect}
                             onExecute={onExecute}
-                            onPinToggle={onPinToggle}
                             onContextMenu={onContextMenu}
                         />
                     </div>

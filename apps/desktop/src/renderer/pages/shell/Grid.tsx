@@ -15,14 +15,13 @@ interface GridProps {
     onReorder?: (itemId: LauncherItemId, toIndex: number) => void;
     onSelect: (globalIndex: number) => void;
     onExecute: (itemId: LauncherItemId) => void;
-    onPinToggle: (itemId: LauncherItemId) => void;
     onContextMenu: (itemId: LauncherItemId, e: React.MouseEvent) => void;
 }
 
 const SUPPRESS_DURATION_MS = 250;
 
 export function Grid(props: GridProps) {
-    const { items, startIndex, selectedIndex, columns, onSelect, onExecute, onPinToggle, onContextMenu } = props;
+    const { items, startIndex, selectedIndex, columns, onSelect, onExecute, onContextMenu } = props;
     const draggable = props.draggable;
     // discriminated: onReorder only available when draggable is true
     const onReorder = props.draggable ? props.onReorder : undefined;
@@ -100,7 +99,6 @@ export function Grid(props: GridProps) {
                         suppressClick={false}
                         onSelect={() => onSelect(startIndex + i)}
                         onExecute={onExecute}
-                        onPinToggle={onPinToggle}
                         onContextMenu={e => onContextMenu(item.id, e)}
                     />
                 ))}
@@ -126,7 +124,6 @@ export function Grid(props: GridProps) {
                         suppressClick={suppressClickId === item.id}
                         onSelect={() => onSelect(globalIdx)}
                         onExecute={handleExecute}
-                        onPinToggle={onPinToggle}
                         onContextMenu={e => handleContextMenu(item.id, e)}
                     />
                 );

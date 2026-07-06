@@ -104,13 +104,6 @@ export default function App() {
         onEscape,
     });
 
-    const onPinToggle = (itemId: string) => {
-        const item = itemsById[itemId as any];
-        if (!item)
-            return;
-        window.szybkoInternal?.pinItem({ itemId: itemId as any, pin: !item.state.pinned });
-    };
-
     const onReorder = (itemId: string, toIndex: number) => {
         window.szybkoInternal?.reorderItem({ itemId: itemId as any, toIndex });
     };
@@ -157,7 +150,6 @@ export default function App() {
                                             expandedSectionIds={expandedSectionIds}
                                             onSelect={setSelectedIndex}
                                             onExecute={onExecuteItem}
-                                            onPinToggle={onPinToggle}
                                             onToggleExpand={toggleExpand}
                                             onReorder={onReorder}
                                             onContextMenu={onContextMenu}

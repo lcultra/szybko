@@ -1,5 +1,4 @@
 import type { LauncherItem, LauncherItemId } from '@szybko/shared';
-import { Pin, PinOff } from 'lucide-react';
 import { useCallback } from 'react';
 import { HighlightedText } from './HighlightedText';
 import { ResultIcon } from './ResultIcon';
@@ -10,7 +9,6 @@ export interface GridTileProps {
     suppressClick: boolean;
     onSelect: () => void;
     onExecute: (itemId: LauncherItemId) => void;
-    onPinToggle: (itemId: LauncherItemId) => void;
     onContextMenu: (e: React.MouseEvent) => void;
 }
 
@@ -20,7 +18,6 @@ export function GridTile({
     suppressClick,
     onSelect,
     onExecute,
-    onPinToggle,
     onContextMenu,
 }: GridTileProps) {
     const handleClick = useCallback(() => {
@@ -35,11 +32,6 @@ export function GridTile({
             handleClick();
         }
     }, [handleClick]);
-
-    const handlePinClick = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        onPinToggle(item.id);
-    }, [onPinToggle, item.id]);
 
     return (
         <div
@@ -57,20 +49,9 @@ export function GridTile({
             onKeyDown={handleKeyDown}
         >
             <ResultIcon icon={item.icon} title={item.title} />
-            <HighlightedText text={item.title} ranges={item.matches?.title} />
-            {item.capabilities.pin && (
-                <button
-                    tabIndex={-1}
-                    type="button"
-                    className={`absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded text-[11px] transition-colors hover:bg-surface-hover ${
-                        item.state.pinned ? 'text-primary' : 'text-text-muted/40 hover:text-text-muted'
-                    }`}
-                    onClick={handlePinClick}
-                    title={item.state.pinned ? '取消固定' : '固定'}
-                >
-                    {item.state.pinned ? <Pin size={12} /> : <PinOff size={12} />}
-                </button>
-            )}
+            <div className="w-full truncate px-1 text-center">
+                <HighlightedText text={item.title} ranges={item.matches?.title} />
+            </div>
         </div>
     );
 }
