@@ -1,0 +1,39 @@
+import { useState } from 'react';
+import type { IconDescriptor } from '@szybko/shared';
+
+interface ResultIconProps {
+  icon?: IconDescriptor;
+  title: string;
+}
+
+function firstChar(title: string): string {
+  return Array.from(title)[0] ?? '?';
+}
+
+export function ResultIcon({ icon, title }: ResultIconProps) {
+  const [failed, setFailed] = useState(false);
+
+  if (!icon) {
+    return <span className="grid size-10 place-items-center overflow-hidden text-sm font-semibold text-text-muted">{firstChar(title)}</span>;
+  }
+
+  if (icon.type === 'emoji') {
+    return <span className="grid size-10 place-items-center overflow-hidden text-sm font-semibold text-text-muted">{icon.value}</span>;
+  }
+
+  if (failed) {
+    return <span className="grid size-10 place-items-center overflow-hidden text-sm font-semibold text-text-muted">{firstChar(title)}</span>;
+  }
+
+  return (
+    <span className="grid size-10 place-items-center overflow-hidden text-sm font-semibold text-text-muted">
+      <img
+        alt=""
+        className="size-10 object-contain"
+        draggable={false}
+        onError={() => setFailed(true)}
+        src={icon.value}
+      />
+    </span>
+  );
+}
