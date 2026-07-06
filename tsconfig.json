@@ -4,7 +4,7 @@
         { "path": "./packages/host" },
         { "path": "./packages/shell" },
         { "path": "./packages/design-system" },
-        { "path": "./packages/plugin-sdk" },
+        { "path": "./packages/sdk" },
         { "path": "./apps/desktop" },
         { "path": "./apps/desktop/tsconfig.web.json" },
         { "path": "./apps/desktop/tsconfig.node.json" }
