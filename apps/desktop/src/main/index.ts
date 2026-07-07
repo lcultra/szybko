@@ -89,6 +89,15 @@ void app.whenReady().then(async () => {
                 { id: 'win', key: 'd', modifiers: { ctrl: true }, platforms: ['win32', 'linux'] },
             ],
         },
+        {
+            actionId: 'plugin:detach',
+            scope: 'plugin-view',
+            description: '分离当前插件（插件焦点时）',
+            bindings: [
+                { id: 'mac', key: 'd', modifiers: { meta: true }, platforms: ['darwin'] },
+                { id: 'win', key: 'd', modifiers: { ctrl: true }, platforms: ['win32', 'linux'] },
+            ],
+        },
     ]);
 
     shortcutRegistry.onAction('window:toggle', () => {
