@@ -9,7 +9,9 @@
     "main": "./src/index.ts",
     "types": "./src/index.ts",
     "scripts": {
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
     },
     "peerDependencies": {
         "electron": "^43.0"
@@ -22,6 +24,7 @@
     },
     "devDependencies": {
         "electron": "^43.0",
-        "typescript": "^6.0"
+        "typescript": "^6.0",
+        "vitest": "^4.1.10"
     }
 }

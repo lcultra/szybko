@@ -23,6 +23,6 @@ export type { ActivationContext, PluginRuntime } from './runtime/types';
 export { FloatingRuntimeHost } from './window/hosts/floating-runtime-host';
 export { LauncherRuntimeHost } from './window/hosts/launcher-runtime-host';
 export { RuntimeHostRegistry } from './window/runtime-host-registry';
-export { ShortcutManager } from './window/shortcut-manager';
+export { ShortcutRegistry } from './window/shortcut-registry';
 export { ThemeManager } from './window/theme';
 export { WindowManager } from './window/window-manager';
