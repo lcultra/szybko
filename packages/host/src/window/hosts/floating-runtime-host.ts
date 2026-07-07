@@ -113,6 +113,18 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         this.window.on('maximize', this.relayout);
         this.window.on('unmaximize', this.relayout);
 
+        // 全屏时交通灯移到菜单栏 → 取消左侧间距
+        this.window.on('enter-full-screen', () => {
+            void this.window?.webContents.executeJavaScript(
+                'document.documentElement.dataset.fullscreen = "true"',
+            );
+        });
+        this.window.on('leave-full-screen', () => {
+            void this.window?.webContents.executeJavaScript(
+                'document.documentElement.dataset.fullscreen = "false"',
+            );
+        });
+
         // 页面加载完成时补发 pending slot（pool 复用场景）
         this.window.webContents.on('did-finish-load', () => {
             if (this.pendingSlot) {
