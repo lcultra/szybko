@@ -33,6 +33,15 @@ export function FloatingApp() {
         setAppState('plugin');
     }, [setAppState, setSlot]);
 
+    // 监听 IPC slot 更新（pool 复用窗口时切换插件信息）
+    useEffect(() => {
+        const unsubscribe = window.szybkoInternal?.onFloatingSlotUpdate?.((slot) => {
+            setSlot(slot);
+            // runtimeId 变化 → PluginHeader 的 pin state 自动重置
+        });
+        return () => unsubscribe?.();
+    }, [setSlot]);
+
     const handleClose = useCallback(() => {
         if (initialSlot.runtimeId)
             PluginRuntimeService.destroy(initialSlot.runtimeId);
