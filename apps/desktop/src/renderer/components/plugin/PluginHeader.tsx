@@ -51,7 +51,7 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     return (
         <header
             className={clsx(
-                'flex h-header shrink-0 items-center gap-2 border-b',
+                'flex h-header shrink-0 items-center gap-2',
                 isFloating ? 'pr-3 pl-19.5' : 'px-3',
             )}
         >

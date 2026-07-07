@@ -4,7 +4,7 @@ import type { Closable, Focusable, Pinnable } from './capabilities';
 import type { HostMeta, RuntimeHost } from './runtime-host';
 import { join } from 'node:path';
 import process from 'node:process';
-import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, FLOATING_WINDOW_DEFAULT_HEIGHT, HEADER_HEIGHT, IPC } from '@szybko/shared';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, FLOATING_WINDOW_DEFAULT_HEIGHT, HEADER_HEIGHT, IPC, TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
 
 export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Closable {
@@ -24,9 +24,10 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         this.currentMeta = meta;
 
         if (!this.window) {
-            this.createWindow(meta);       // 首次创建
-        } else {
-            this.pushSlotUpdate(meta);     // 池复用 → IPC 更新 slot
+            this.createWindow(meta); // 首次创建
+        }
+        else {
+            this.pushSlotUpdate(meta); // 池复用 → IPC 更新 slot
         }
 
         if (view) {
@@ -35,7 +36,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             this.relayout();
         }
 
-        this.window!.show();              // show:false 的窗口在此显示
+        this.window!.show(); // show:false 的窗口在此显示
     }
 
     detach(): void {
@@ -43,15 +44,18 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             this.window.contentView.removeChildView(this.view);
         }
         this.view = null;
-        this.setAlwaysOnTop(false);       // 重置置顶
-        this.pendingSlot = null;          // 清除 pending slot
+        this.setAlwaysOnTop(false); // 重置置顶
+        this.pendingSlot = null; // 清除 pending slot
         this.window?.hide();
     }
 
     /** 预创建窗口（pool 补充用）：BrowserWindow 先建好，保持隐藏 */
     preloadWindow(): void {
         const placeholderMeta: HostMeta = {
-            runtimeId: '', pluginId: '', featureExplain: '', cmdLabel: '',
+            runtimeId: '',
+            pluginId: '',
+            featureExplain: '',
+            cmdLabel: '',
         };
         this.createWindow(placeholderMeta);
     }
@@ -76,7 +80,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     dispose(): void {
         if (this.window) {
             this.window.removeAllListeners();
-            this.window.destroy();         // ← 不触发 beforeunload/close 事件
+            this.window.destroy(); // ← 不触发 beforeunload/close 事件
         }
         this.window = null;
         this.view = null;
@@ -93,7 +97,10 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             transparent: true,
             show: false,
             titleBarStyle: 'hidden',
-            trafficLightPosition: { x: 12, y: 26 },
+            trafficLightPosition: {
+                x: TRAFFIC_LIGHT_X,
+                y: TRAFFIC_LIGHT_Y,
+            },
             webPreferences: {
                 preload: this.hostPreloadPath,
                 contextIsolation: true,
@@ -152,6 +159,11 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             this.window.show();
             this.window.focus();
         }
+    }
+
+    /** 返回当前挂载的元信息（插件 ID、feature 等） */
+    getMeta(): HostMeta | null {
+        return this.currentMeta;
     }
 
     /** 切换窗口置顶 */

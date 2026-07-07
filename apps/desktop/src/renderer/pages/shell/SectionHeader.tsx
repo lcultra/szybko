@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 interface SectionHeaderProps {
     title: string;
     totalCount: number;
@@ -18,7 +20,9 @@ export function SectionHeader({
 }: SectionHeaderProps) {
     return (
         <div
-            className={`flex h-7 items-center justify-between px-2 hover:bg-surface-hover/60 ${canExpand ? 'cursor-pointer' : ''}`}
+            className={clsx('flex h-7 items-center justify-between px-2', {
+                'cursor-pointer hover:bg-surface-hover/60': canExpand,
+            })}
             onClick={canExpand ? onToggle : undefined}
         >
             <div className="flex items-baseline">

@@ -65,7 +65,7 @@ export function SectionList({
                 const offset = sectionOffsets.find(o => o.sectionId === section.id)!;
                 const expanded = expandedSectionIds.has(section.id);
                 const collapsedItemLimit = getCollapsedItemLimit(section.layout);
-                const canExpand = section.source === 'search' && section.totalCount > collapsedItemLimit;
+                const canExpand = section.source === 'search' && section.itemIds.length > collapsedItemLimit;
                 const visibleIds = expanded
                     ? section.itemIds
                     : section.itemIds.slice(0, collapsedItemLimit);
@@ -80,7 +80,7 @@ export function SectionList({
                     <div key={section.id} className="flex flex-col gap-1">
                         <SectionHeader
                             title={section.title}
-                            totalCount={section.totalCount}
+                            totalCount={section.itemIds.length}
                             expanded={expanded}
                             canExpand={canExpand}
                             onToggle={() => onToggleExpand(section.id)}

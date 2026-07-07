@@ -7,3 +7,8 @@ export const MIN_WINDOW_HEIGHT = HEADER_HEIGHT;
 export const SHELL_CONTENT_MAX_HEIGHT = 600;
 export const PLUGIN_CONTENT_MIN_HEIGHT = 400;
 export const FLOATING_WINDOW_DEFAULT_HEIGHT = 600;
+
+// macOS 交通灯按钮（关闭/最小化/最大化）在 frameless 窗口中的位置
+const TRAFFIC_LIGHT_BUTTON_SIZE = 12;
+export const TRAFFIC_LIGHT_X = 12;
+export const TRAFFIC_LIGHT_Y = Math.floor((HEADER_HEIGHT - TRAFFIC_LIGHT_BUTTON_SIZE) / 2);

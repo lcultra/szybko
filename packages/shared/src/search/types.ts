@@ -69,8 +69,6 @@ export interface ResultSection {
     source: SectionSource;
     layout: SectionLayout;
     itemIds: LauncherItemId[]; // 只引用 id，数据在 SearchResponse.itemsById
-    totalCount: number; // 该 section 结果总数（可能 > itemIds.length）
-    hasMore?: boolean; // 是否有更多可加载（用于分页/展开）
     priority: number; // 排序权重，越小越靠前
 }
 

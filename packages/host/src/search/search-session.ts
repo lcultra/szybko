@@ -143,8 +143,6 @@ export class SearchSession {
             source: 'search',
             layout: 'grid',
             itemIds: items.map(i => i.id),
-            totalCount: items.length,
-            hasMore: false,
             priority: 0,
         }];
     }
@@ -165,8 +163,6 @@ export class SearchSession {
                     source: 'recent',
                     layout: 'grid',
                     itemIds: items.map(i => i.id),
-                    totalCount: items.length,
-                    hasMore: false,
                     priority: 0,
                 });
             }
@@ -182,8 +178,6 @@ export class SearchSession {
                     source: 'pinned',
                     layout: 'grid',
                     itemIds: items.map(i => i.id),
-                    totalCount: items.length,
-                    hasMore: false,
                     priority: 10,
                 });
             }
