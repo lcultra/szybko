@@ -51,4 +51,8 @@ export interface SzybkoInternalApi {
         raw: Record<string, number>;
     };
 
+    // ── 插件安装管理 ──
+    setPluginEnabled: (pluginId: string, enabled: boolean) => Promise<{ ok: boolean }>;
+    uninstallPlugin: (pluginId: string) => Promise<{ ok: boolean; error?: string }>;
+
 }

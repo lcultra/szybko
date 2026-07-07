@@ -107,31 +107,7 @@ export const commandAlias = sqliteTable('command_alias', {
     lookupIdx: index('idx_ca_lookup').on(table.pluginId, table.featureCode),
 }));
 
-export const pinnedTrigger = sqliteTable('pinned_trigger', {
-    pluginId: text('plugin_id').notNull(),
-    featureCode: text('feature_code').notNull(),
-    cmdKey: text('cmd_key').notNull(),
-    sortOrder: integer('sort_order').notNull().default(0),
-    pinnedAt: integer('pinned_at').notNull(),
-}, table => ({
-    pk: primaryKey({ columns: [table.pluginId, table.featureCode, table.cmdKey] }),
-    pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
-}));
-
-export const usageHistory = sqliteTable('usage_history', {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    pluginId: text('plugin_id').notNull(),
-    featureCode: text('feature_code').notNull(),
-    cmdKey: text('cmd_key').notNull(),
-    query: text('query'),
-    matchLevel: integer('match_level'),
-    selectedAt: integer('selected_at').notNull(),
-}, table => ({
-    pluginFk: foreignKey({ columns: [table.pluginId], foreignColumns: [pluginInstallation.pluginId] }).onDelete('cascade'),
-    lookupIdx: index('idx_uh_lookup').on(table.pluginId, table.featureCode, table.cmdKey, desc(table.selectedAt)),
-}));
-
-// ── 通用 item 表（替换 pinned_trigger / usage_history，不绑定 plugin 结构） ──
+// ── 通用 item 表（不绑定 plugin 结构） ──
 
 export const pinnedItem = sqliteTable('pinned_item', {
     itemId: text('item_id').primaryKey(),

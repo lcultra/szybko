@@ -10,7 +10,10 @@ import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
 import { PinnedItemRepository } from '../persistence/sqlite/repositories/pinned-item-repository';
+import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 import { UsageEventRepository } from '../persistence/sqlite/repositories/usage-event-repository';
+import { commandTrigger, commandTriggerSearch, pinnedItem, pluginInstallation, usageEvent } from '../persistence/sqlite/schema';
+import { eq, sql } from 'drizzle-orm';
 import {
     PinnedSectionProvider,
     PluginProvider,
@@ -51,8 +54,16 @@ export function registerIpcHandlers(
         // 2. Try owner provider's resolve
         if (itemId.startsWith('plugin://') && pluginProvider) {
             const resolved = await pluginProvider.resolve(itemId);
-            if (resolved)
-                return resolved;
+            if (!resolved)
+                return null;
+
+            // 已禁用的插件不返回，让调用方跳过展示
+            const pluginId = itemId.replace('plugin://', '').split('/')[0];
+            const repo = new PluginInstallationRepository(platformDb!.drizzle());
+            if (!repo.isEnabled(pluginId))
+                return null;
+
+            return resolved;
         }
 
         // 3. Try independent providers as fallback (skip pinned/recent — their resolve()
@@ -401,6 +412,54 @@ export function registerIpcHandlers(
             if (!pluginId)
                 return { ok: false, error: 'Plugin runtime not found for sender' };
             return commandCatalog.removeFeature(pluginId, code);
+        },
+    );
+
+    // ── 插件安装管理 ────────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.PLUGIN_SET_ENABLED,
+        async (_event, { pluginId, enabled }: IpcRequest<typeof IPC.PLUGIN_SET_ENABLED>): Promise<IpcResponse<typeof IPC.PLUGIN_SET_ENABLED>> => {
+            if (!platformDb)
+                return { ok: false, error: 'No database' };
+            const repo = new PluginInstallationRepository(platformDb.drizzle());
+            repo.setEnabled(pluginId, enabled);
+            triggerRefresh();
+            return { ok: true };
+        },
+    );
+
+    function deleteItemRecordsByPlugin(pluginId: string): void {
+        if (!platformDb)
+            return;
+        const db = platformDb.drizzle();
+        const prefix = `plugin://${pluginId}/%`;
+
+        // 清理通用 item 记录（无 FK，手动删）
+        db.delete(pinnedItem).where(sql`item_id LIKE ${prefix}`).run();
+        db.delete(usageEvent).where(sql`item_id LIKE ${prefix}`).run();
+
+        // 清理 command 索引（无 FK，手动删）
+        db.delete(commandTriggerSearch).where(eq(commandTriggerSearch.pluginId, pluginId)).run();
+        db.delete(commandTrigger).where(eq(commandTrigger.pluginId, pluginId)).run();
+
+        // 清理 plugin 自身（有 cascade FK 的表会自动清理）
+        db.delete(pluginInstallation).where(eq(pluginInstallation.pluginId, pluginId)).run();
+    }
+
+    ipcMain.handle(
+        IPC.PLUGIN_UNINSTALL,
+        async (_event, { pluginId }: IpcRequest<typeof IPC.PLUGIN_UNINSTALL>): Promise<IpcResponse<typeof IPC.PLUGIN_UNINSTALL>> => {
+            if (!platformDb)
+                return { ok: false, error: 'No database' };
+            try {
+                deleteItemRecordsByPlugin(pluginId);
+                triggerRefresh();
+                return { ok: true };
+            }
+            catch (err) {
+                return { ok: false, error: String(err) };
+            }
         },
     );
 }

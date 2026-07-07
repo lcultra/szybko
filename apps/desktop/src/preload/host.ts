@@ -5,6 +5,7 @@ import { on } from './api/ipc';
 import { createItemApi } from './api/item';
 import { createLayoutApi } from './api/layout';
 import { createPluginLifecycleApi } from './api/plugin-lifecycle';
+import { createPluginManagementApi } from './api/plugin-management';
 import { createSearchApi } from './api/search';
 import { createThemeApi } from './api/theme';
 import { createWindowApi } from './api/window';
@@ -17,6 +18,7 @@ const internalApi = {
     ...createWindowApi(),
     ...createThemeApi(),
     ...createLayoutApi(),
+    ...createPluginManagementApi(),
     onRuntimeStateChanged,
     onFloatingSlotUpdate: on(IPC.FLOATING_SLOT_UPDATE),
 } satisfies SzybkoInternalApi;

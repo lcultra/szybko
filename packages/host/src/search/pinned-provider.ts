@@ -7,7 +7,6 @@ import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-dat
 import type { ContextMenuItem, SearchProvider } from './provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from './types';
 import { PinnedItemRepository } from '../persistence/sqlite/repositories/pinned-item-repository';
-import { fallbackItemFromId } from './resolve-fallback';
 
 /**
  * PinnedSectionProvider——返回被用户固定的结果。
@@ -37,11 +36,7 @@ export class PinnedSectionProvider implements SearchProvider {
         const items: LauncherItem[] = [];
         for (const row of rows) {
             const itemId = row.itemId as LauncherItemId;
-            let item = await this.resolveExternal(itemId);
-            if (!item) {
-                // session 中没有（空查询场景），从 itemId 推断基本信息
-                item = fallbackItemFromId(itemId);
-            }
+            const item = await this.resolveExternal(itemId);
             if (item) {
                 items.push({ ...item, state: { ...item.state, pinned: true } });
             }

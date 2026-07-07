@@ -35,4 +35,8 @@ export const IPC = {
     FEATURE_GET: 'feature:get',
     FEATURE_REMOVE: 'feature:remove',
 
+    // ── 插件安装管理 ──
+    PLUGIN_SET_ENABLED: 'plugin:set-enabled',
+    PLUGIN_UNINSTALL: 'plugin:uninstall',
+
 } as const;

@@ -96,28 +96,6 @@ CREATE TABLE command_alias (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ca_active_unique ON command_alias(plugin_id, feature_code, alias_normalized) WHERE state = 'active';
 CREATE INDEX IF NOT EXISTS idx_ca_lookup ON command_alias(plugin_id, feature_code);
 
-CREATE TABLE pinned_trigger (
-  plugin_id       TEXT NOT NULL,
-  feature_code    TEXT NOT NULL,
-  cmd_key         TEXT NOT NULL,
-  sort_order      INTEGER NOT NULL DEFAULT 0,
-  pinned_at       INTEGER NOT NULL,
-  PRIMARY KEY (plugin_id, feature_code, cmd_key),
-  FOREIGN KEY (plugin_id) REFERENCES plugin_installation(plugin_id) ON DELETE CASCADE
-);
-
-CREATE TABLE usage_history (
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  plugin_id       TEXT NOT NULL,
-  feature_code    TEXT NOT NULL,
-  cmd_key         TEXT NOT NULL,
-  query           TEXT,
-  match_level     INTEGER,
-  selected_at     INTEGER NOT NULL,
-  FOREIGN KEY (plugin_id) REFERENCES plugin_installation(plugin_id) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_uh_lookup ON usage_history(plugin_id, feature_code, cmd_key, selected_at DESC);
-
 CREATE TABLE command_projection_meta (
   plugin_id TEXT PRIMARY KEY,
   manifest_hash TEXT NOT NULL,

@@ -7,7 +7,6 @@ import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-dat
 import type { ContextMenuItem, SearchProvider } from './provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from './types';
 import { UsageEventRepository } from '../persistence/sqlite/repositories/usage-event-repository';
-import { fallbackItemFromId } from './resolve-fallback';
 
 /**
  * RecentSectionProvider——返回最近使用的结果。
@@ -37,10 +36,7 @@ export class RecentSectionProvider implements SearchProvider {
         const items: LauncherItem[] = [];
         for (const row of rows) {
             const itemId = row.itemId as LauncherItemId;
-            let item = await this.resolveExternal(itemId);
-            if (!item) {
-                item = fallbackItemFromId(itemId);
-            }
+            const item = await this.resolveExternal(itemId);
             if (item) {
                 // recent 区不显示 pin 操作
                 items.push({ ...item, capabilities: { ...item.capabilities, pin: false } });

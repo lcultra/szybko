@@ -89,6 +89,16 @@ export interface IpcInvokeContract {
         request: { code: string };
         response: { ok: boolean; error?: string };
     };
+
+    // ── 插件安装管理 ──
+    [IPC.PLUGIN_SET_ENABLED]: {
+        request: { pluginId: string; enabled: boolean };
+        response: { ok: boolean; error?: string };
+    };
+    [IPC.PLUGIN_UNINSTALL]: {
+        request: { pluginId: string };
+        response: { ok: boolean; error?: string };
+    };
 }
 
 // ── Payload 类型 ──────────────────────────────────────────────

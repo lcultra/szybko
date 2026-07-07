@@ -1,6 +1,6 @@
 @theme {
-    --spacing-header: var(--layout-header-height);
-    --spacing-shell-content: var(--layout-shell-content-max-height);
-    --spacing-plugin-content: var(--layout-plugin-content-min-height);
-    --spacing-traffic-left: var(--traffic-left);
+    --spacing-header: var(--layout-header-height, 60px);
+    --spacing-shell-content: var(--layout-shell-content-max-height, 600px);
+    --spacing-plugin-content: var(--layout-plugin-content-min-height, 400px);
+    --spacing-traffic-left: var(--traffic-left, 78px);
 }

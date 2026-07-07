@@ -26,7 +26,7 @@ export class UsageEventRepository {
         }).run();
     }
 
-    /** 按使用频率 + 最近使用排序，取 top N */
+    /** 按最近使用排序，取 top N */
     topUsed(limit = 20): UsageAggregation[] {
         return this.db.select({
             itemId: usageEvent.itemId,
@@ -35,7 +35,7 @@ export class UsageEventRepository {
         })
             .from(usageEvent)
             .groupBy(usageEvent.itemId)
-            .orderBy(desc(sql`freq`), desc(sql`last_used`))
+            .orderBy(desc(sql`last_used`))
             .limit(limit)
             .all();
     }
