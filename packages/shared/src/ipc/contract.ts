@@ -7,6 +7,7 @@ import type {
     SearchRequest,
     SearchResponse,
 } from '../search/types';
+import type { ShortcutActionDef, ShortcutScope } from '../shortcut/types';
 import type { IPC } from './channels';
 
 // ── Invoke 合约（renderer → main） ─────────────────────────────
@@ -98,6 +99,12 @@ export interface IpcInvokeContract {
     [IPC.PLUGIN_UNINSTALL]: {
         request: { pluginId: string };
         response: { ok: boolean; error?: string };
+    };
+
+    // ── 快捷键 ──
+    [IPC.SHORTCUT_GET_DEFS]: {
+        request: ShortcutScope;
+        response: ShortcutActionDef[];
     };
 }
 

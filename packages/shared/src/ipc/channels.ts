@@ -39,4 +39,7 @@ export const IPC = {
     PLUGIN_SET_ENABLED: 'plugin:set-enabled',
     PLUGIN_UNINSTALL: 'plugin:uninstall',
 
+    // ── 快捷键 ──
+    SHORTCUT_GET_DEFS: 'shortcut:get-defs',
+
 } as const;

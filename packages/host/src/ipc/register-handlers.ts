@@ -1,8 +1,9 @@
-import type { IpcInvokeContract, LauncherItem, LauncherItemId, SearchRequest } from '@szybko/shared';
+import type { IpcInvokeContract, LauncherItem, LauncherItemId, SearchRequest, ShortcutScope } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
+import type { ShortcutRegistry } from '../window/shortcut-registry';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
 import { BrowserWindow, ipcMain, Menu } from 'electron';
@@ -35,6 +36,7 @@ export function registerIpcHandlers(
     commandCatalog: CommandCatalog,
     platformDb?: PlatformDatabase,
     pluginCatalog?: PluginCatalog,
+    shortcutRegistry?: ShortcutRegistry,
 ) {
     const sessionManager = new MatchSessionManager();
     const executor = createExecutor(new ElectronNativeCapabilityService());
@@ -471,6 +473,15 @@ export function registerIpcHandlers(
             catch (err) {
                 return { ok: false, error: String(err) };
             }
+        },
+    );
+
+    // ── 快捷键定义 ─────────────────────────────────────────────
+
+    ipcMain.handle(
+        IPC.SHORTCUT_GET_DEFS,
+        async (_event, scope: ShortcutScope) => {
+            return shortcutRegistry?.getActions(scope) ?? [];
         },
     );
 }

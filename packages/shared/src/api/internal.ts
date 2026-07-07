@@ -5,6 +5,7 @@ import type {
     SearchRequest,
     SearchResponse,
 } from '../search/types';
+import type { ShortcutActionDef, ShortcutScope } from '../shortcut/types';
 
 /**
  * SzybkoInternalApi — renderer 通过 window.szybkoInternal 调用的主机侧 API。
@@ -54,5 +55,8 @@ export interface SzybkoInternalApi {
     // ── 插件安装管理 ──
     setPluginEnabled: (req: { pluginId: string; enabled: boolean }) => Promise<{ ok: boolean; error?: string }>;
     uninstallPlugin: (req: { pluginId: string }) => Promise<{ ok: boolean; error?: string }>;
+
+    // ── 快捷键 ──
+    getShortcutDefs: (scope: ShortcutScope) => Promise<ShortcutActionDef[]>;
 
 }

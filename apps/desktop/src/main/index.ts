@@ -68,7 +68,7 @@ void app.whenReady().then(async () => {
         void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
 
-    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager);
+    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager, shortcutRegistry);
 
     shortcutRegistry.define([
         {
@@ -97,6 +97,49 @@ void app.whenReady().then(async () => {
                 { id: 'mac', key: 'd', modifiers: { meta: true }, platforms: ['darwin'] },
                 { id: 'win', key: 'd', modifiers: { ctrl: true }, platforms: ['win32', 'linux'] },
             ],
+        },
+        // ── Renderer document shortcuts ──
+        {
+            actionId: 'shell:navigate-up',
+            scope: 'renderer-document',
+            description: '上移选择',
+            bindings: [{ id: 'default', key: 'ArrowUp', modifiers: {} }],
+        },
+        {
+            actionId: 'shell:navigate-down',
+            scope: 'renderer-document',
+            description: '下移选择',
+            bindings: [{ id: 'default', key: 'ArrowDown', modifiers: {} }],
+        },
+        {
+            actionId: 'shell:navigate-left',
+            scope: 'renderer-document',
+            description: '左移选择',
+            bindings: [
+                { id: 'default', key: 'ArrowLeft', modifiers: {} },
+                { id: 'tab-back', key: 'Tab', modifiers: { shift: true } },
+            ],
+        },
+        {
+            actionId: 'shell:navigate-right',
+            scope: 'renderer-document',
+            description: '右移选择',
+            bindings: [
+                { id: 'default', key: 'ArrowRight', modifiers: {} },
+                { id: 'tab', key: 'Tab', modifiers: {} },
+            ],
+        },
+        {
+            actionId: 'shell:execute',
+            scope: 'renderer-document',
+            description: '执行选中项',
+            bindings: [{ id: 'default', key: 'Enter', modifiers: {} }],
+        },
+        {
+            actionId: 'shell:escape',
+            scope: 'renderer-document',
+            description: '逐级关闭',
+            bindings: [{ id: 'default', key: 'Escape', modifiers: {} }],
         },
     ]);
 

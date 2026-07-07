@@ -1,5 +1,6 @@
 import type { NavigationMap } from './navigation';
-import { useCallback, useEffect } from 'react';
+import type { ShortcutActionDef } from '@szybko/shared';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseKeyboardOptions {
     navigationMap: NavigationMap;
@@ -8,8 +9,25 @@ interface UseKeyboardOptions {
     onEscape: () => void;
 }
 
+function matchDomEvent(def: ShortcutActionDef, e: KeyboardEvent): boolean {
+    for (const binding of def.bindings) {
+        if (e.key.toLowerCase() !== binding.key.toLowerCase())
+            continue;
+        if (e.ctrlKey !== (binding.modifiers.ctrl ?? false))
+            continue;
+        if (e.metaKey !== (binding.modifiers.meta ?? false))
+            continue;
+        if (e.altKey !== (binding.modifiers.alt ?? false))
+            continue;
+        if (e.shiftKey !== (binding.modifiers.shift ?? false))
+            continue;
+        return true;
+    }
+    return false;
+}
+
 /**
- * 键盘导航 hook——消费 NavigationMap，不做索引算术。
+ * 键盘导航 hook——消费 NavigationMap 和从后端获取的 ShortcutDefs。
  * 所有方向键导航由 NavigationMap 的 up/down/left/right 指针决定。
  */
 export function useKeyboard({
@@ -18,53 +36,52 @@ export function useKeyboard({
     onExecute,
     onEscape,
 }: UseKeyboardOptions) {
+    const [defs, setDefs] = useState<ShortcutActionDef[]>([]);
+
+    useEffect(() => {
+        window.szybkoInternal?.getShortcutDefs('renderer-document').then(setDefs);
+    }, []);
+
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
             const map = navigationMap;
 
-            switch (e.key) {
-                case 'ArrowUp':
+            for (const def of defs) {
+                if (!matchDomEvent(def, e))
+                    continue;
+
+                // Check preventDefault (default true for renderer-document)
+                const preventDefault = def.bindings.some(b => b.preventDefault ?? true);
+                if (preventDefault)
                     e.preventDefault();
-                    if (map.up !== null)
-                        onSelect(map.up);
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (map.down !== null)
-                        onSelect(map.down);
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    if (map.left !== null)
-                        onSelect(map.left);
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    if (map.right !== null)
-                        onSelect(map.right);
-                    break;
-                case 'Enter':
-                    e.preventDefault();
-                    onExecute();
-                    break;
-                case 'Tab':
-                    e.preventDefault();
-                    if (e.shiftKey) {
+
+                switch (def.actionId) {
+                    case 'shell:navigate-up':
+                        if (map.up !== null)
+                            onSelect(map.up);
+                        return;
+                    case 'shell:navigate-down':
+                        if (map.down !== null)
+                            onSelect(map.down);
+                        return;
+                    case 'shell:navigate-left':
                         if (map.left !== null)
                             onSelect(map.left);
-                    }
-                    else {
+                        return;
+                    case 'shell:navigate-right':
                         if (map.right !== null)
                             onSelect(map.right);
-                    }
-                    break;
-                case 'Escape':
-                    e.preventDefault();
-                    onEscape();
-                    break;
+                        return;
+                    case 'shell:execute':
+                        onExecute();
+                        return;
+                    case 'shell:escape':
+                        onEscape();
+                        return;
+                }
             }
         },
-        [navigationMap, onSelect, onExecute, onEscape],
+        [defs, navigationMap, onSelect, onExecute, onEscape],
     );
 
     useEffect(() => {
