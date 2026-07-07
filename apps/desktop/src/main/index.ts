@@ -66,19 +66,6 @@ void app.whenReady().then(async () => {
         void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
 
-    // Cmd/Ctrl+D — 主窗口有焦点时分离
-    win.webContents.on('before-input-event', (_event, input) => {
-        if ((input.control || input.meta) && input.key.toLowerCase() === 'd') {
-            for (const rt of runtimeManager.getAll()) {
-                const host = runtimeManager.getHostFor(rt.info.id);
-                if (host?.id === 'launcher-host') {
-                    coordinator.moveToHost(rt.info.id, 'floating');
-                    break;
-                }
-            }
-        }
-    });
-
     registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager);
 
     shortcutRegistry.define([
@@ -91,6 +78,15 @@ void app.whenReady().then(async () => {
                 { id: 'win', key: ' ', modifiers: { alt: true },  platforms: ['win32', 'linux'], accelerator: 'Alt+Space' },
             ],
         },
+        {
+            actionId: 'plugin:detach',
+            scope: 'main-window',
+            description: '分离当前插件（搜索框焦点时）',
+            bindings: [
+                { id: 'mac', key: 'd', modifiers: { meta: true }, platforms: ['darwin'] },
+                { id: 'win', key: 'd', modifiers: { ctrl: true }, platforms: ['win32', 'linux'] },
+            ],
+        },
     ]);
 
     shortcutRegistry.onAction('window:toggle', () => {
@@ -98,7 +94,20 @@ void app.whenReady().then(async () => {
         else windowManager.show();
     });
 
+    shortcutRegistry.onAction('plugin:detach', () => {
+        // MainWindow scope — 扫描 launcher-host
+        for (const rt of runtimeManager.getAll()) {
+            const host = runtimeManager.getHostFor(rt.info.id);
+            if (host?.id === 'launcher-host') {
+                coordinator.moveToHost(rt.info.id, 'floating');
+                return;
+            }
+        }
+    });
+
     shortcutRegistry.registerSystemGlobal();
+
+    shortcutRegistry.registerMainWindow(win.webContents);
 });
 
 app.on('window-all-closed', () => {
