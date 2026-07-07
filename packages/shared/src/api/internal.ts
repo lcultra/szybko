@@ -1,4 +1,5 @@
 import type { RuntimeStatePayload } from '../ipc/contract';
+import type { RuntimeSlot } from '../runtime/types';
 import type {
     LauncherItemId,
     SearchBatch,
@@ -39,6 +40,11 @@ export interface SzybkoInternalApi {
     showPluginMenu: (runtimeId: string, hostType?: 'launcher' | 'floating') => Promise<{ ok: boolean }>;
     pinPlugin: (runtimeId: string, pin: boolean) => Promise<{ ok: boolean }>;
     onRuntimeStateChanged: (cb: (state: RuntimeStatePayload) => void) => () => void;
+
+    /**
+     * 浮动窗口 slot 更新推送（pool 复用窗口时切换插件信息）
+     */
+    onFloatingSlotUpdate: (cb: (slot: RuntimeSlot) => void) => () => void;
 
     // ── 系统事件 ──
     onShowMainWindow: (cb: () => void) => () => void;

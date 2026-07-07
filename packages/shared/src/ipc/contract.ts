@@ -1,5 +1,6 @@
 import type { EntryIntent } from '../input/types';
 import type { PluginFeature } from '../plugin/types';
+import type { RuntimeSlot } from '../runtime/types';
 import type {
     ActionDescriptor,
     LauncherItemId,
@@ -140,6 +141,7 @@ export interface IpcMainToRendererEventContract {
     [IPC.PLUGIN_RUNTIME_STATE]: RuntimeStatePayload;
     [IPC.PLUGIN_ENTER]: PluginEnterPayload;
     [IPC.PLUGIN_OUT]: PluginOutPayload;
+    [IPC.FLOATING_SLOT_UPDATE]: RuntimeSlot;
 
     // ── 旧（废弃） ──
     /** @deprecated 使用 SEARCH_RESPONSE */
