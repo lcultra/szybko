@@ -47,6 +47,7 @@ export interface TriggerMatch {
     from: EntryIntent;
     option: string | null;
     score: number;
+    matchLevel?: number;
 }
 
 /** 搜索结果展示投影，同一次会话中与 InputContextSnapshot 绑定。 */

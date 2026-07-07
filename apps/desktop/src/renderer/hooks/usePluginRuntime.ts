@@ -20,8 +20,8 @@ export function usePluginRuntime() {
                 setSlot({
                     runtimeId: payload.runtimeId,
                     pluginId: payload.pluginId,
-                    pluginName: payload.pluginName ?? '',
                     featureExplain: payload.featureExplain ?? '',
+                    cmdLabel: payload.cmdLabel ?? '',
                     loadState: payload.loadState ?? 'loaded',
                     mountState: payload.mountState ?? 'attached',
                 });

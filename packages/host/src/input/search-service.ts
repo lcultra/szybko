@@ -1,6 +1,6 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
 import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
-import { doesCommandSearchTextMatch, normalizeTextKey } from '../commands/feature-normalizer';
+import { normalizeTextKey, rankCommandSearchTextMatch } from '../commands/feature-normalizer';
 import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
 import { dedupAndSort, runPipeline } from './matcher-pipeline';
 
@@ -26,14 +26,20 @@ export class SearchService {
             if (normalized) {
                 const repo = new CommandProjectionRepository(this.db);
                 const textMatches = repo.searchByText(normalized)
-                    .filter(m => doesCommandSearchTextMatch({
-                        searchText: m.searchText,
-                        sourceText: m.sourceText,
-                        matchLevel: m.matchLevel,
-                        query: normalized,
-                    }));
-                for (const m of textMatches) {
-                    const score = m.scoreBase + (m.matchLevel === 3 ? 10 : m.matchLevel === 2 ? 5 : 2);
+                    .map((match) => {
+                        const rank = rankCommandSearchTextMatch({
+                            searchText: match.searchText,
+                            sourceText: match.sourceText,
+                            matchLevel: match.matchLevel,
+                            query: normalized,
+                            scoreBase: match.scoreBase,
+                            featureOrder: match.featureOrder,
+                            triggerIndex: match.triggerIndex,
+                        });
+                        return rank ? { match, rank } : null;
+                    })
+                    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+                for (const { match: m, rank } of textMatches) {
                     allMatches.push({
                         matchId: `${m.source}:${m.pluginId}:${m.featureCode}:${m.cmdKey}`,
                         pluginId: m.pluginId,
@@ -46,7 +52,8 @@ export class SearchService {
                         payload: query,
                         from: snapshot.from,
                         option: null,
-                        score,
+                        score: rank.score,
+                        matchLevel: rank.matchLevel,
                     });
                 }
             }

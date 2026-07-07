@@ -8,8 +8,8 @@ interface PluginHeaderProps {
 }
 
 export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
-    const pluginName = useRuntimeStore(s => s.slot.pluginName);
     const featureExplain = useRuntimeStore(s => s.slot.featureExplain);
+    const cmdLabel = useRuntimeStore(s => s.slot.cmdLabel);
     const activeRuntimeId = useRuntimeStore(s => s.slot.runtimeId);
     const clearSlot = useRuntimeStore(s => s.clearSlot);
     const isFloating = hostType === 'floating';
@@ -48,11 +48,11 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
                 <div className="flex items-center gap-2 py-1.5 pr-2 pl-3 select-none">
-                    <span className="font-semibold text-text">{pluginName}</span>
-                    {featureExplain && (
+                    <span className="font-semibold text-text">{featureExplain}</span>
+                    {cmdLabel && (
                         <>
                             <span className="text-text-muted">/</span>
-                            <span className="text-text-muted">{featureExplain}</span>
+                            <span className="text-text-muted">{cmdLabel}</span>
                         </>
                     )}
                 </div>

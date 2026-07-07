@@ -15,6 +15,6 @@ export interface PluginRuntime {
     webContentsView: WebContentsView;
     webContents: WebContents;
     cache: Map<string, any>;
-    pluginName: string;
+    cmdLabel: string;
     currentActivation?: ActivationContext;
 }

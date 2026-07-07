@@ -13,6 +13,8 @@ export interface TextSearchMatch {
     cmdKey: string;
     searchText: string;
     sourceText: string | null;
+    featureOrder: number;
+    triggerIndex: number;
     type: 'text';
     label: string | null;
     matcherJson: string;
@@ -134,6 +136,8 @@ export class CommandProjectionRepository {
                 when ${commandTriggerSearch.source} = 'alias' then ${commandAlias.aliasNormalized}
                 else ${commandTrigger.label}
             end`,
+            featureOrder: effectiveFeature.featureOrder,
+            triggerIndex: commandTrigger.triggerIndex,
             type: sql<'text'>`'text'`,
             label: commandTrigger.label,
             matcherJson: commandTrigger.matcherJson,
@@ -148,6 +152,10 @@ export class CommandProjectionRepository {
                 eq(commandTrigger.featureCode, commandTriggerSearch.featureCode),
                 eq(commandTrigger.cmdKey, commandTriggerSearch.cmdKey),
             ))
+            .innerJoin(effectiveFeature, and(
+                eq(effectiveFeature.pluginId, commandTriggerSearch.pluginId),
+                eq(effectiveFeature.code, commandTriggerSearch.featureCode),
+            ))
             .innerJoin(pluginInstallation, eq(pluginInstallation.pluginId, commandTriggerSearch.pluginId))
             .leftJoin(commandAlias, eq(commandAlias.id, commandTriggerSearch.aliasId))
             .where(and(
@@ -158,6 +166,7 @@ export class CommandProjectionRepository {
                 matchPriority,
                 desc(commandTriggerSearch.matchLevel),
                 desc(commandTrigger.scoreBase),
+                asc(effectiveFeature.featureOrder),
                 asc(commandTrigger.triggerIndex),
             )
             .all();

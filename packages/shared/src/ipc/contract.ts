@@ -99,8 +99,8 @@ export interface RuntimeStatePayload {
     state: string;
     mountState?: 'attached' | 'detached';
     loadState?: 'loading' | 'loaded' | 'error';
-    pluginName?: string;
     featureExplain?: string;
+    cmdLabel?: string;
 }
 
 export interface PluginEnterPayload {

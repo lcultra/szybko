@@ -22,13 +22,13 @@ export function HighlightedText({ text, ranges }: HighlightedTextProps) {
         }
     }
 
-    const parts: Array<{ text: string; highlight: boolean }> = [];
-    let current: { text: string; highlight: boolean } | null = null;
+    const parts: Array<{ text: string; highlight: boolean; start: number }> = [];
+    let current: { text: string; highlight: boolean; start: number } | null = null;
 
     for (let i = 0; i < chars.length; i++) {
         const hl = isHighlighted[i];
         if (!current || current.highlight !== hl) {
-            current = { text: '', highlight: hl };
+            current = { text: '', highlight: hl, start: i };
             parts.push(current);
         }
         current.text += chars[i];
@@ -38,8 +38,21 @@ export function HighlightedText({ text, ranges }: HighlightedTextProps) {
         <>
             {parts.map(part =>
                 part.highlight
-                    ? <span key={part.text + (part.highlight ? 'hl' : '')} className="text-danger font-semibold">{part.text}</span>
-                    : <span key={part.text + (part.highlight ? 'hl' : '')}>{part.text}</span>,
+                    ? (
+                            <span
+                                key={`${part.start}-hl`}
+                                className="text-danger font-semibold"
+                            >
+                                {part.text}
+                            </span>
+                        )
+                    : (
+                            <span
+                                key={`${part.start}-text`}
+                            >
+                                {part.text}
+                            </span>
+                        ),
             )}
         </>
     );

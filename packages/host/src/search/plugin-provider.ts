@@ -36,13 +36,12 @@ export class PluginProvider implements SearchProvider {
     }
 
     async search(snapshot: InputContextSnapshot, _signal?: AbortSignal): Promise<SearchProviderResult> {
-        this.itemMatchMap.clear(); // Clear previous session's mapping
-
         const query = snapshot.query.trim();
         // 空查询时 plugin provider 不返回结果（避免非 text matcher 误匹配）
         if (!query) {
             return { items: [], section: { id: 'best', title: '最佳搜索结果', source: 'search', layout: 'grid' } };
         }
+        this.itemMatchMap.clear(); // Clear previous session's mapping
         const matches = this.searchService.search(snapshot, query);
 
         if (matches.length === 0) {
@@ -78,7 +77,7 @@ export class PluginProvider implements SearchProvider {
                 capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
                 state: { pinned: false },
                 matches: titleMatchRanges ? { title: titleMatchRanges } : undefined,
-                matchLevel: m.score > 95 ? 3 : m.score > 50 ? 2 : 1,
+                matchLevel: m.matchLevel,
             };
         });
 
@@ -145,7 +144,7 @@ export class PluginProvider implements SearchProvider {
                     code: resolved.match.featureCode,
                     type: resolved.match.enterType,
                     payload: resolved.match.payload,
-                    option: resolved.match.option ?? undefined,
+                    option: resolved.match.label ?? resolved.match.option ?? undefined,
                     from: resolved.match.from,
                     matchId: resolved.match.matchId,
                 });
@@ -160,7 +159,7 @@ export class PluginProvider implements SearchProvider {
                 code: resolved.match.featureCode,
                 type: resolved.match.enterType,
                 payload: resolved.match.payload,
-                option: resolved.match.option ?? undefined,
+                option: resolved.match.label ?? resolved.match.option ?? undefined,
                 from: resolved.match.from,
                 matchId: resolved.match.matchId,
             });

@@ -61,7 +61,7 @@ export class RuntimeManager {
             webContentsView: view,
             webContents: view.webContents,
             cache: new Map(),
-            pluginName: pluginId,
+            cmdLabel: pluginId,
         };
 
         this.entries.set(runtimeId, { runtime });
@@ -120,11 +120,19 @@ export class RuntimeManager {
         }
 
         const plugin = this.pluginManager.get(entry.runtime.info.pluginId);
+        const featureExplain = plugin?.manifest.features[0]?.explain ?? '';
+        // 只有在 execute 传入了 cmd label 时才更新 runtime 上的值
+        // 避免 execute→setQuery('') 的竞态导致 match 没找到、cmdLabel 回退到 pluginId
+        if (enterPayload?.option) {
+            entry.runtime.cmdLabel = enterPayload.option;
+        }
+        const cmdLabel = entry.runtime.cmdLabel;
+
         this.hostAttacher.attach(runtimeId, host, entry.runtime.webContentsView, {
             runtimeId: entry.runtime.info.id,
             pluginId: entry.runtime.info.pluginId,
-            pluginName: this.getPluginDisplayName(entry.runtime.info.pluginId),
-            featureExplain: plugin?.manifest.features[0]?.explain,
+            featureExplain,
+            cmdLabel,
         });
 
         entry.runtime.info.mountState = 'attached';
@@ -132,7 +140,7 @@ export class RuntimeManager {
 
         // 只有挂载到主窗口时才通知主窗口 UI 切换状态
         if (host.type === 'launcher') {
-            this.publishState(runtimeId, 'attached', entry.runtime.info.loadState);
+            this.publishState(runtimeId, 'attached', entry.runtime.info.loadState, cmdLabel);
         }
 
         // 通知插件进入
@@ -228,20 +236,10 @@ export class RuntimeManager {
         entry.runtime.info.loadState = target;
     }
 
-    private getPluginDisplayName(pluginId: string): string {
-        const plugin = this.pluginManager.get(pluginId);
-        if (plugin) {
-            const feature = plugin.manifest.features[0];
-            if (feature?.explain)
-                return feature.explain;
-        }
-        return pluginId;
-    }
-
-    private publishState(runtimeId: string, mountState: MountState, loadState: LoadState): void {
+    private publishState(runtimeId: string, mountState: MountState, loadState: LoadState, cmdLabel?: string): void {
         const entry = this.entries.get(runtimeId);
         if (!entry)
             return;
-        this.statePublisher.publish(runtimeId, entry.runtime.info.pluginId, mountState, loadState);
+        this.statePublisher.publish(runtimeId, entry.runtime.info.pluginId, mountState, loadState, cmdLabel);
     }
 }

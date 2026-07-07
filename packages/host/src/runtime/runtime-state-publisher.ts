@@ -12,21 +12,20 @@ export class RuntimeStatePublisher {
         private pluginManager: PluginCatalog,
     ) {}
 
-    publish(runtimeId: string, pluginId: string, mountState: MountState, loadState: LoadState): void {
+    publish(runtimeId: string, pluginId: string, mountState: MountState, loadState: LoadState, cmdLabel?: string): void {
         const win = this.windowManager.getWindow();
         if (!win || win.isDestroyed())
             return;
 
         const plugin = this.pluginManager.get(pluginId);
         const feature = plugin?.manifest.features[0];
-        const pluginName = feature?.explain || pluginId;
-        const featureExplain = feature?.explain || '';
+        const featureExplain = feature?.explain || pluginId;
 
         win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
             runtimeId,
             pluginId,
-            pluginName,
             featureExplain,
+            cmdLabel,
             state: mountState,
             mountState,
             loadState,

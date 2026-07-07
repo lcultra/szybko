@@ -11,8 +11,8 @@ const slotParam = params.get('slot');
 const fallbackSlot: RuntimeSlot = {
     runtimeId: null,
     pluginId: null,
-    pluginName: '',
     featureExplain: '',
+    cmdLabel: '',
     loadState: 'loading',
     mountState: 'detached',
 };
