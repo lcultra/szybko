@@ -47,7 +47,7 @@ void app.whenReady().then(async () => {
     }
 
     const runtimeManager = new RuntimeManager(pluginManager, windowManager, pluginPreloadPath);
-    const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginManager);
+    const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginManager, shortcutRegistry);
 
     // Inject pluginView shortcut handler BEFORE startAll
     runtimeManager.setPluginViewShortcutHandler((runtimeId, webContents) => {

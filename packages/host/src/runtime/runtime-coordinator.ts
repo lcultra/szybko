@@ -4,6 +4,7 @@ import type { PluginRuntime } from '../runtime/types';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { FloatingRuntimeHost } from '../window/hosts/floating-runtime-host';
 import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
+import type { ShortcutRegistry } from '../window/shortcut-registry';
 import type { RuntimeManager } from './runtime-manager';
 import { Menu } from 'electron';
 import { isClosable, isPinnable } from '../window/hosts/capabilities';
@@ -17,6 +18,7 @@ export class RuntimeCoordinator {
         private runtimeManager: RuntimeManager,
         private hostRegistry: RuntimeHostRegistry,
         private pluginCatalog: PluginCatalog,
+        private shortcutRegistry: ShortcutRegistry,
     ) {}
 
     // ── Business flow methods ────────────────────────────────────────
@@ -117,7 +119,7 @@ export class RuntimeCoordinator {
                     { label: '结束运行', click: () => { this.destroyRuntime(runtimeId); } },
                 ]
             : [
-                    { label: '分离为独立窗口', accelerator: 'CmdOrCtrl+D', click: () => { this.moveToHost(runtimeId, 'floating'); } },
+                    { label: '分离为独立窗口', accelerator: this.shortcutRegistry.getAccelerator('plugin:detach', { scope: 'main-window' }) ?? undefined, click: () => { this.moveToHost(runtimeId, 'floating'); } },
                     { type: 'separator' },
                     { label: '结束运行', click: () => { this.destroyRuntime(runtimeId); } },
                 ];
