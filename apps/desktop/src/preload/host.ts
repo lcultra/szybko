@@ -2,7 +2,6 @@ import type { SzybkoInternalApi } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
 import { contextBridge } from 'electron';
 import { on } from './api/ipc';
-import { createExecuteApi } from './api/execute';
 import { createItemApi } from './api/item';
 import { createLayoutApi } from './api/layout';
 import { createPluginLifecycleApi } from './api/plugin-lifecycle';
@@ -15,7 +14,6 @@ const { onRuntimeStateChanged } = createPluginLifecycleApi();
 const internalApi = {
     ...createSearchApi(),
     ...createItemApi(),
-    ...createExecuteApi(),
     ...createWindowApi(),
     ...createThemeApi(),
     ...createLayoutApi(),

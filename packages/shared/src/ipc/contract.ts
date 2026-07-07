@@ -4,7 +4,6 @@ import type { RuntimeSlot } from '../runtime/types';
 import type {
     ActionDescriptor,
     LauncherItemId,
-    SearchBatch,
     SearchRequest,
     SearchResponse,
 } from '../search/types';
@@ -143,9 +142,6 @@ export interface IpcMainToRendererEventContract {
     [IPC.PLUGIN_OUT]: PluginOutPayload;
     [IPC.FLOATING_SLOT_UPDATE]: RuntimeSlot;
 
-    // ── 旧（废弃） ──
-    /** @deprecated 使用 SEARCH_RESPONSE */
-    [IPC.SEARCH_BATCH]: SearchBatch;
 }
 
 export interface IpcRendererToMainEventContract {

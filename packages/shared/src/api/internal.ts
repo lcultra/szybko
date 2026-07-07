@@ -2,7 +2,6 @@ import type { RuntimeStatePayload } from '../ipc/contract';
 import type { RuntimeSlot } from '../runtime/types';
 import type {
     LauncherItemId,
-    SearchBatch,
     SearchRequest,
     SearchResponse,
 } from '../search/types';
@@ -25,10 +24,6 @@ export interface SzybkoInternalApi {
     reorderItem: (req: { itemId: LauncherItemId; toIndex: number }) => Promise<{ ok: boolean }>;
     openContextMenu: (req: { itemId: LauncherItemId; screenX: number; screenY: number }) => Promise<{ ok: boolean }>;
     execute: (req: { sessionId: string; queryId: string; itemId: LauncherItemId }) => Promise<{ ok: boolean; error?: string }>;
-
-    // ── Action 执行（旧，待 Shell 重写后移除） ──
-    /** @deprecated 待 Phase 2 替换为 execute(itemId) */
-    executeAction: (action: import('../search/types').ActionDescriptor) => Promise<{ ok: boolean; result?: unknown; error?: string }>;
 
     // ── 窗口 ──
     resizeWindow: (height: number) => Promise<{ ok: boolean }>;
@@ -56,7 +51,4 @@ export interface SzybkoInternalApi {
         raw: Record<string, number>;
     };
 
-    // ── 旧（废弃） ──
-    /** @deprecated 使用 onSearchResponse */
-    onSearchBatch?: (cb: (batch: SearchBatch) => void) => () => void;
 }

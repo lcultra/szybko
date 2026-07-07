@@ -35,7 +35,4 @@ export const IPC = {
     FEATURE_GET: 'feature:get',
     FEATURE_REMOVE: 'feature:remove',
 
-    // ── 旧（废弃） ──
-    /** @deprecated 使用 SEARCH_RESPONSE */
-    SEARCH_BATCH: 'search:batch',
 } as const;

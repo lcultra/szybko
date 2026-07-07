@@ -105,25 +105,3 @@ export type ActionDescriptor
         | { type: 'plugin.runCommand'; payload: { pluginId: string; command: string; args?: any[] } }
         | { type: 'text.paste'; payload: { text: string } }
         | { type: 'redirect'; payload: { label: string; payload?: any } };
-
-// ── 旧类型（废弃，等全量迁移后删除） ───────────────────────────────
-
-/** @deprecated 使用 LauncherItem + SearchResponse */
-export interface SearchResult {
-    id: string;
-    title: string;
-    subtitle?: string;
-    icon?: string;
-    group?: string;
-    score: number;
-    action: ActionDescriptor;
-}
-
-/** @deprecated 使用 SearchResponse */
-export interface SearchBatch {
-    queryId: string;
-    batchSeq: number;
-    source: string;
-    results: SearchResult[];
-    isFinal: boolean;
-}
