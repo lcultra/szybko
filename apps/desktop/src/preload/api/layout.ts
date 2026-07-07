@@ -2,6 +2,7 @@ import type { SzybkoInternalApi } from '@szybko/shared';
 import {
     BORDER_WIDTH,
     DEFAULT_WINDOW_WIDTH,
+    FLOATING_HEADER_PADDING_LEFT,
     FLOATING_WINDOW_DEFAULT_HEIGHT,
     HEADER_HEIGHT,
     MAX_WINDOW_HEIGHT,
@@ -22,6 +23,7 @@ export function createLayoutApi(): Pick<SzybkoInternalApi, 'getLayoutConstants'>
                 '--layout-plugin-content-min-height': `${PLUGIN_CONTENT_MIN_HEIGHT}px`,
                 '--layout-border-width': `${BORDER_WIDTH}px`,
                 '--layout-floating-window-default-height': `${FLOATING_WINDOW_DEFAULT_HEIGHT}px`,
+                '--traffic-left': `${FLOATING_HEADER_PADDING_LEFT}px`,
             },
             raw: {
                 HEADER_HEIGHT,

@@ -1,7 +1,3 @@
-:root {
-    --traffic-left: 19.5px;
-}
-
 @theme {
     --spacing-header: var(--layout-header-height);
     --spacing-shell-content: var(--layout-shell-content-max-height);
