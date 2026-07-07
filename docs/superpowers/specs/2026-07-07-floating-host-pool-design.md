@@ -21,26 +21,32 @@
 
 ```
 RuntimeHostRegistry
-├── hosts: Map<string, RuntimeHost>          ← 所有活跃 host
-├── floatingPool: FloatingRuntimeHost[]      ← 空闲池（max 3）
+├── hosts: Map<string, RuntimeHost>          ← 所有已知 host（leased + idle）
+├── floatingPool: FloatingRuntimeHost[]      ← 空闲池（最多 2）
+├── poolCounter = 0                          ← 递增 ID 生成
 │
 ├── acquireFloatingHost(): FloatingRuntimeHost
 ├── releaseFloatingHost(host): void
 └── scheduleReplenish(): void              ← 后台补充
 ```
 
-| 参数 | 值 | 理由 |
-|------|----|------|
-| 池目标大小 | 2 | 覆盖偶发并发分离前 2 次 |
-| 池上限 (maxSize) | 3 | 限制空闲窗口数，释放资源 |
+**池大小 = 2**，无 target/max 二元概念：
+
+| 动作 | 条件 | 行为 |
+|------|------|------|
+| acquire | 池非空 | pop 并返回，池 -1 |
+| acquire | 池空 | `new FloatingRuntimeHost()`（有延迟） |
+| release | 池 < 2 | push 并 hide，池 +1 |
+| release | 池 ≥ 2 | `host.dispose()` 销毁 |
+| replenish | 池 < 2 | 补到 2 |
 
 ### 2. 生命周期
 
 ```
                          acquire()
                   ┌──────────────────┐
-  idle pool       │  [Host-A]        │ (预创建了 BrowserWindow，隐藏)
-  (max 3)         │  [Host-B]        │
+  idle pool       │  [Host-A]        │ (预创建 BrowserWindow，show: false)
+  (max 2)         │  [Host-B]        │
                   └─────────┬────────┘
                             │ 取出
                             ▼
@@ -53,13 +59,41 @@ RuntimeHostRegistry
                             │
                   ┌────────┴────────┐
                   │ 池 < 2?         │
-                  ├── yes → 存入池  │
-                  └── no  → close() │
+                  ├── yes → push，hide
+                  └── no  → dispose()  ← 不触发 beforeunload
 ```
 
-- **acquire()** — 池中有空闲 → 取出复用；池空 → `new FloatingRuntimeHost()`（回退到当前行为）
-- **release()** — 池未满 → `host.detach()`（remove view + hide window），推入 idle；池满 → `host.close()` 销毁
-- **补充** — `acquire()` 取出后池 < 目标值 2，`setImmediate` 异步创建一个补上，补的 host 预创建 `BrowserWindow` + 加载 `floating.html`
+#### acquire() 时序
+
+1. 池非空 → pop 取出，直接使用（零延迟）
+2. 池空 → `new FloatingRuntimeHost("floating-pool-${counter++}", preloadPath)`（有延迟）
+3. 取出后池 < 2 → `setImmediate` 调用 `scheduleReplenish()`
+
+#### release() 时序
+
+1. 池 < 2 → `host.detach()`（remove view + hide window + 重置状态），push 存入池
+2. 池 ≥ 2 → `host.dispose()`（`window.destroy()`，不触发 beforeunload + 从 registry 注销）
+
+#### scheduleReplenish() 时序
+
+```ts
+private replenishing = false;
+
+scheduleReplenish(): void {
+    if (this.replenishing) return;
+    this.replenishing = true;
+    setImmediate(() => {
+        this.replenishing = false;
+        while (this.floatingPool.length < 2) {
+            const host = this.createFloatingHost();
+            host.preloadWindow();  // show: false，floating.html 加载完成后再存池
+            this.floatingPool.push(host);
+        }
+    });
+}
+```
+
+`replenishing` 守卫防止并发多次 setImmediate 导致补充超量。
 
 ### 3. 预创建窗口
 
@@ -68,15 +102,16 @@ RuntimeHostRegistry
 ```ts
 class FloatingRuntimeHost {
     preloadWindow(): void {
-        // 用一个空 meta 创建 BrowserWindow，加载 floating.html
-        // 窗口保持隐藏，不 attach 任何插件视图
-        const placeholderMeta: HostMeta = { runtimeId: '', pluginId: '', featureExplain: '', cmdLabel: '' };
-        this.createWindow(placeholderMeta);
+        const placeholderMeta: HostMeta = {
+            runtimeId: '', pluginId: '', featureExplain: '', cmdLabel: '',
+        };
+        this.createWindow(placeholderMeta);  // 含 show: false
+        // 窗口已创建、floating.html 加载中，保持隐藏
     }
 }
 ```
 
-`floating.html` 加载时拿到一个空 slot（`runtimeId: null`），渲染空标题栏。窗口隐藏，用户无感知。
+`createWindow()` 的 `BrowserWindow` 参数加 `show: false`，只在 `attach()` 最后调用 `show()`。
 
 ### 4. Slot 更新机制
 
@@ -85,9 +120,7 @@ class FloatingRuntimeHost {
 做法：IPC main → floating renderer，新增通道 `floating:slot-update`。
 
 ```ts
-// packages/shared/src/ipc/channels.ts
-FLOATING_SLOT_UPDATE = 'floating:slot-update'
-
+// packages/shared/src/ipc/channels.ts → FLOATING_SLOT_UPDATE
 // packages/shared/src/ipc/contract.ts → IpcMainToRendererEventContract
 [IPC.FLOATING_SLOT_UPDATE]: RuntimeSlot
 ```
@@ -107,38 +140,156 @@ attach(view, meta): void {
         this.window!.contentView.addChildView(view);
         this.relayout();
     }
-    this.window!.show();
-}
-
-private pushSlotUpdate(meta: HostMeta): void {
-    const slot = {
-        runtimeId: meta.runtimeId,
-        pluginId: meta.pluginId,
-        featureExplain: meta.featureExplain,
-        cmdLabel: meta.cmdLabel ?? '',
-        loadState: 'loaded',
-        mountState: 'attached',
-    };
-    this.window?.webContents.send(IPC.FLOATING_SLOT_UPDATE, slot);
+    this.window!.show();              // show: false 创建的窗口在此才显示
 }
 ```
 
-浮动渲染器侧通过 `window.szybkoFloating.onSlotUpdate()` 监听并更新 `RuntimeStore`：
+#### 防丢事件：Pending Slot 缓存
+
+如果 `floating.html` 的 React 初始化还没完成（IPC listener 未注册），`webContents.send()` 会静默丢弃。修复：始终缓存最新 slot，配合 `did-finish-load` 补发。
+
+```ts
+class FloatingRuntimeHost {
+    private pendingSlot: RuntimeSlot | null = null;
+
+    preloadWindow(): void {
+        // ... create window with show:false ...
+        this.window!.webContents.on('did-finish-load', () => {
+            if (this.pendingSlot) {
+                this.window!.webContents.send(IPC.FLOATING_SLOT_UPDATE, this.pendingSlot);
+            }
+        });
+    }
+
+    attach(view, meta): void {
+        this.currentMeta = meta;
+        if (!this.window) {
+            this.createWindow(meta);
+        } else {
+            this.pushSlotUpdate(meta);
+        }
+        // ... attach view + show ...
+    }
+
+    private pushSlotUpdate(meta: HostMeta): void {
+        const slot: RuntimeSlot = { ... };
+        this.pendingSlot = slot;
+        if (this.window && !this.window.isDestroyed()) {
+            this.window.webContents.send(IPC.FLOATING_SLOT_UPDATE, slot);
+        }
+    }
+}
+```
+
+浮动渲染器侧监听：
 
 ```ts
 // FloatingApp.tsx
 useEffect(() => {
-    return window.szybkoFloating.onSlotUpdate((slot) => {
+    return window.szybkoInternal.onFloatingSlotUpdate((slot) => {
         setSlot(slot);
+        // runtimeId 变化 → PluginHeader 的 pin state 自动重置
     });
 }, []);
 ```
 
-### 5. Coordinator 对接
+API 命名为 `window.szybkoInternal.onFloatingSlotUpdate`（在 `SzybkoInternalApi` 接口中声明）。
 
-`RuntimeCoordinator.moveToHost()` 改为使用池的 acquire/release：
+### 5. dispose() — 静默销毁（不触发 beforeunload）
+
+池 eviction 时销毁窗口**不应**触发 `beforeunload`，否则 `FloatingApp` 的 handler 会误 destroy runtime。
 
 ```ts
+class FloatingRuntimeHost {
+    /** 池 eviction 用：强制销毁，不触发 beforeunload */
+    dispose(): void {
+        if (this.window) {
+            this.window.removeAllListeners();
+            this.window.destroy();   // ← 不触发 beforeunload/close 事件
+        }
+        this.window = null;
+        this.view = null;
+        this.currentMeta = null;
+        this.pendingSlot = null;
+    }
+
+    /** 用户关闭用：正常关闭，触发 beforeunload */
+    close(): void {
+        if (this.window) {
+            this.window.removeAllListeners();
+            this.window.close();     // ← 触发 beforeunload
+        }
+        this.window = null;
+        this.view = null;
+        this.currentMeta = null;
+        this.pendingSlot = null;
+    }
+}
+
+// FloatingRuntimeHost.dispose() 中同时从 registry 注销：
+//   registry.unregisterHost(this.id);
+```
+
+`close()` 与 `dispose()` 的语义差异：
+
+| 方法 | Electron API | 触发 beforeunload | 使用场景 |
+|------|-------------|------------------|---------|
+| `close()` | `window.close()` | **是** | 用户点击关闭按钮 → `destroyRuntime` |
+| `dispose()` | `window.destroy()` | **否** | 池 eviction、静默回收 |
+
+### 6. 状态重置
+
+Host 侧 release 时重置：
+
+```ts
+// FloatingRuntimeHost.detach() 中补充：
+detach(): void {
+    // ... existing: removeChildView + hide ...
+    this.setAlwaysOnTop(false);           // 重置置顶
+    this.pendingSlot = null;
+}
+```
+
+Renderer 侧，PluginHeader 的 pin state 随 `runtimeId` 变化自动重置：
+
+```tsx
+// PluginHeader.tsx
+export function PluginHeader({ hostType }: PluginHeaderProps) {
+    const activeRuntimeId = useRuntimeStore(s => s.slot.runtimeId);
+    const [pinned, setPinned] = useState(false);
+
+    // runtimeId 变化时重置 pin 状态
+    useEffect(() => {
+        setPinned(false);
+    }, [activeRuntimeId]);
+}
+```
+
+### 7. Registry — Host ID 与所有权
+
+```ts
+class RuntimeHostRegistry {
+    private static nextId = 0;
+
+    createFloatingHost(): FloatingRuntimeHost {
+        const id = `floating-pool-${RuntimeHostRegistry.nextId++}`;
+        const host = new FloatingRuntimeHost(id, this.hostPreloadPath);
+        this.hosts.set(host.id, host);
+        return host;
+    }
+
+    // dispose() 中自动注销:
+    //   this.hosts.delete(host.id);
+    //   this.floatingPool = this.floatingPool.filter(h => h !== host);
+}
+```
+
+递增计数器替代 `Date.now()`，避免同毫秒创建冲突。`dispose()` 时从 `hosts` Map 中删除。
+
+### 8. Coordinator 对接
+
+```ts
+// RuntimeCoordinator
 moveToHost(runtimeId, targetType) {
     const currentHost = this.runtimeManager.getHostFor(runtimeId);
 
@@ -153,7 +304,7 @@ moveToHost(runtimeId, targetType) {
 
     const host = targetType === 'launcher'
         ? this.hostRegistry.getOrCreateLauncherHost()
-        : this.hostRegistry.acquireFloatingHost();  // ← 从池取
+        : this.hostRegistry.acquireFloatingHost();
 
     this.runtimeManager.attachToHost(runtimeId, host);
 }
@@ -172,21 +323,29 @@ moveToHost(runtimeId, targetType) {
 
 | 文件 | 改动 |
 |------|------|
-| `hosts/floating-runtime-host.ts` | 加 `preloadWindow()`、改造 `attach()` 的池复用路径、加 `pushSlotUpdate()` |
-| `runtime-host-registry.ts` | 加 `pool` 相关方法：`acquireFloatingHost()`、`releaseFloatingHost()`、`scheduleReplenish()` |
+| `hosts/floating-runtime-host.ts` | 加 `preloadWindow()`、`dispose()`、`pushSlotUpdate()` + `pendingSlot` 缓存；`createWindow()` 参数加 `show: false`；`detach()` 加 `setAlwaysOnTop(false)` 重置 |
+| `runtime-host-registry.ts` | 加池：`acquireFloatingHost()`、`releaseFloatingHost()`、`scheduleReplenish()`；ID 改递增计数器；`release` 池满时调 `host.dispose()` |
 
 ### Host 侧 — `packages/host/src/runtime/`
 
 | 文件 | 改动 |
 |------|------|
-| `runtime-coordinator.ts` | `moveToHost()` 中的 `createFloatingHost()` 改为 `acquireFloatingHost()`；加 release 逻辑 |
+| `runtime-coordinator.ts` | `moveToHost()`: `createFloatingHost()` → `acquireFloatingHost()`；加 release 逻辑 |
 
 ### 渲染器侧 — `apps/desktop/src/`
 
 | 文件 | 改动 |
 |------|------|
-| `preload/host.ts` | 暴露 `onFloatingSlotUpdate`（用现有 `on()` helper） |
-| `renderer/pages/floating/FloatingApp.tsx` | 加 `onFloatingSlotUpdate` 监听，IPC slot 覆盖 URL param 初始值 |
+| `preload/host.ts` | 暴露 `onFloatingSlotUpdate`（`on(IPC.FLOATING_SLOT_UPDATE)`） |
+| `renderer/components/plugin/PluginHeader.tsx` | `useEffect` 监听 `activeRuntimeId` 变化重置 `pinned` state |
+| `renderer/pages/floating/FloatingApp.tsx` | 加 `onFloatingSlotUpdate` 监听；IPC slot 覆盖 URL param 初始值 |
+
+### 类型侧
+
+| 文件 | 改动 |
+|------|------|
+| `packages/shared/src/api/internal.ts` | `SzybkoInternalApi` 加 `onFloatingSlotUpdate` 声明 |
+| `apps/desktop/src/renderer/global.d.ts` | 同步更新类型声明 |
 
 ## 使用场景推演
 
@@ -195,32 +354,35 @@ moveToHost(runtimeId, targetType) {
 ```
 操作                                 池状态
 ───                                  ──
-Cmd+D 分离 A                         [] → 新建池空，有延迟
+Cmd+D 分离 A                         [] → acquire 池空，新建（有延迟）
 → 后台补充                           [H1(preloaded)]
-合并 A → launcher                    [H1] ← release
-Cmd+D 分离 B                         [] → acquire H1，零延迟！  
-→ 后台补充                           [H2(preloaded)]
+合并 A → launcher                    [H1, A] → release，池 < 2 存入
+Cmd+D 分离 B                         [A] → acquire H1，零延迟！
+→ 后台补充                           [H1(preloaded), H2(preloaded)]
+合并 B → launcher                    [H1, H2] → release，池 = 2 存入
 ```
 
 ### 场景 2：并发浮动多个插件
 
 ```
-Cmd+D 分离 A                         [] → 新建，有延迟
-Cmd+D 分离 B（从 launcher）           [] → 新建，有延迟
-→ 后台补充 H1, H2                    [H1, H2]
+Cmd+D 分离 A                         [] → 新建（有延迟）
+Cmd+D 分离 B（从 launcher）           [] → 池仍未补充，新建（有延迟）
+→ 后台补充                           [H1(preloaded), H2(preloaded)]
 ```
 
-并发时池只覆盖到第二次。第三次起步仍有延迟，但可以通过补充的池覆盖后续操作。
+并发时前两次分离仍有延迟。但后续分离/合并循环进入稳态后全部零延迟。
 
-### 场景 3：持续分离/合并
+### 场景 3：池满 eviction
 
 ```
-A→浮动 → A合并 → B→浮动             ← 从第二次起每次零延迟
-→ B合并 → C→浮动 → C合并 → D→浮动   ← 池稳定在 H1 ↔ 使用中循环
+池态: [H1, H2]（idle）
+release Host-C → 池 ≥ 2 → Host-C.dispose()   ← 不触发 beforeunload
+池态: [H1, H2]（不变）
 ```
 
 ## 风险与边界
 
-- **IPC 时序**：`pushSlotUpdate()` 在 `show()` 前发送，浮动渲染器可能在下一 tick 才处理。空 slot 闪现时间极短（<1 frame），可接受
-- **空闲窗口资源**：最多保留 3 个隐藏 `BrowserWindow`，每个加载了 React 应用。约等价于多开了 3 个空白标签页的开销
-- **close 路径不变化**：用户主动关闭浮动窗口（`destroyRuntime`）仍然 `host.close()` 销毁，不进池
+- **IPC 时序**：`pendingSlot` + `did-finish-load` 双重保证，消息不会丢
+- **空闲窗口资源**：最多保留 2 个隐藏 `BrowserWindow`（`show: false`），每个加载了 React 应用。约等价于多开了 2 个空白标签页的开销
+- **close/dispose 分离**：`close()` 触发 `beforeunload`（用户关窗），`dispose()` 调用 `window.destroy()`（池 eviction），语义明确不互扰
+- **Renderer 状态**：`runtimeId` 变化时 `pinned` state 自动重置；`alwaysOnTop` 在 `detach()` 中归零
