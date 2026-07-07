@@ -14,4 +14,4 @@ export const TRAFFIC_LIGHT_X = 12;
 export const TRAFFIC_LIGHT_Y = Math.floor((HEADER_HEIGHT - TRAFFIC_LIGHT_BUTTON_SIZE) / 2);
 
 // 浮动窗口标题栏左侧避让交通灯的安全间距
-export const FLOATING_HEADER_PADDING_LEFT = 19.5;
+export const FLOATING_HEADER_PADDING_LEFT = 78;

@@ -1,6 +1,6 @@
 export function App() {
     return (
-        <div>
+        <div className="px-2 py-2 text-text border border-border">
             <div>
                 设置
             </div>

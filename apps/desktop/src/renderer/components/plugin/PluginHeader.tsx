@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { EllipsisVertical, MapPinCheckInside, X } from 'lucide-react';
+import { EllipsisVertical, MapPin, MapPinCheckInside, Menu, MoreHorizontal, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useRuntimeStore } from '../../stores/runtime-store';
@@ -54,6 +54,7 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
                 'flex h-header shrink-0 items-center gap-2',
                 isFloating ? 'pr-3 pl-traffic-left' : 'px-3',
             )}
+            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
@@ -67,7 +68,8 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
                     )}
                 </div>
                 <button
-                    className="grid size-8 cursor-pointer place-items-center border-l border-border text-text-muted transition-colors outline-none hover:bg-danger/10 hover:text-danger"
+                    className="grid size-8 cursor-pointer place-items-center border-l border-border text-text-muted transition-colors outline-none hover:bg-text/10 hover:text-text"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                     onClick={handleClose}
                     title="关闭"
                     type="button"
@@ -79,28 +81,34 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
             {/* 中间：拖拽区 */}
             <div
                 className="min-w-0 flex-1 cursor-grab self-stretch active:cursor-grabbing"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             />
 
-            {/* 右侧 */}
-            {isFloating && (
+            {/* 右侧工具栏 — flat icons, hover 出圆形背景，置顶在最右 */}
+            <div
+                className="flex items-center"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            >
                 <button
-                    className={`grid size-8 cursor-pointer place-items-center rounded-full border transition-colors outline-none hover:bg-surface-card/80 ${pinned ? 'border-primary text-primary' : 'border-border text-text-muted hover:text-text'}`}
-                    onClick={handlePin}
-                    title={pinned ? '取消置顶' : '置顶窗口'}
+                    className="icon-btn"
+                    onClick={handleMenu}
+                    title="更多操作"
                     type="button"
                 >
-                    <MapPinCheckInside size={16} strokeWidth={2} />
+                    <Menu size={16} strokeWidth={2} />
                 </button>
-            )}
-            <button
-                className="grid size-8 cursor-pointer place-items-center rounded-full border border-border text-text-muted transition-colors outline-none hover:bg-surface-card/80 hover:text-text"
-                onClick={handleMenu}
-                title="更多操作"
-                type="button"
-            >
-                <EllipsisVertical size={16} strokeWidth={2} />
-            </button>
+                {isFloating && (
+                    <button
+                        className={clsx('icon-btn', pinned && 'text-primary hover:bg-primary/10')}
+                        onClick={handlePin}
+                        title={pinned ? '取消置顶' : '置顶窗口'}
+                        type="button"
+                    >
+                        {pinned
+                            ? <MapPinCheckInside size={16} strokeWidth={2} />
+                            : <MapPin size={16} strokeWidth={2} />}
+                    </button>
+                )}
+            </div>
         </header>
     );
 }

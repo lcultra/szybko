@@ -60,7 +60,7 @@ export function SectionList({
         return null;
 
     return (
-        <div className="flex flex-col gap-2.5 pb-2">
+        <div className="flex flex-col pb-2">
             {sections.map((section) => {
                 const offset = sectionOffsets.find(o => o.sectionId === section.id)!;
                 const expanded = expandedSectionIds.has(section.id);

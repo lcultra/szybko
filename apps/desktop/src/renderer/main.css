@@ -2,3 +2,7 @@
 @import '@szybko/ui-kit/index.css';
 
 @source '../../../../packages';
+
+@utility icon-btn {
+    @apply grid size-8 cursor-pointer place-items-center rounded-md text-text-muted transition-colors outline-none hover:bg-white/8 hover:text-text;
+}

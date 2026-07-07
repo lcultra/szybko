@@ -42,10 +42,11 @@ export function FloatingApp() {
         return () => unsubscribe?.();
     }, [setSlot]);
 
+    const runtimeId = useRuntimeStore(s => s.slot.runtimeId);
     const handleClose = useCallback(() => {
-        if (initialSlot.runtimeId)
-            PluginRuntimeService.destroy(initialSlot.runtimeId);
-    }, []);
+        if (runtimeId)
+            PluginRuntimeService.destroy(runtimeId);
+    }, [runtimeId]);
 
     useEffect(() => {
         window.addEventListener('beforeunload', handleClose);
