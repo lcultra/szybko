@@ -3,6 +3,7 @@ import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { WindowManager } from '../window/window-manager';
 import type { PluginRuntime } from './types';
+import type { WebContents } from 'electron';
 import { IPC } from '@szybko/shared';
 import { isFocusable } from '../window/hosts/capabilities';
 import { RuntimeHostAttacher } from './runtime-host-attacher';
@@ -11,10 +12,9 @@ import { RuntimeViewFactory } from './runtime-view-factory';
 
 interface RuntimeEntry {
     runtime: PluginRuntime;
+    /** dispose plugin-view keyboard shortcuts when runtime is destroyed */
+    pluginViewShortcutDisposer?: () => void;
 }
-
-/** Cmd/Ctrl+D 分离请求回调 */
-type DetachCallback = (runtimeId: string) => void;
 
 export class RuntimeManager {
     private entries: Map<string, RuntimeEntry> = new Map();
@@ -22,7 +22,15 @@ export class RuntimeManager {
     private hostAttacher: RuntimeHostAttacher;
     private statePublisher: RuntimeStatePublisher;
 
-    detachRequested: DetachCallback | null = null;
+    private pluginViewShortcutHandler:
+        ((runtimeId: string, webContents: WebContents) => () => void) | null = null;
+
+    /** 注入 PluginView 快捷键注册回调（在 coordinator 创建后调用） */
+    setPluginViewShortcutHandler(
+        fn: (runtimeId: string, webContents: WebContents) => () => void,
+    ): void {
+        this.pluginViewShortcutHandler = fn;
+    }
 
     constructor(
         private pluginManager: PluginCatalog,
@@ -64,17 +72,16 @@ export class RuntimeManager {
             cmdLabel: pluginId,
         };
 
-        this.entries.set(runtimeId, { runtime });
+        // 通过 ShortcutRegistry 注册 PluginView 快捷键
+        const entry: RuntimeEntry = { runtime };
+        const disposer = this.pluginViewShortcutHandler?.(runtimeId, view.webContents);
+        if (disposer) {
+            entry.pluginViewShortcutDisposer = disposer;
+        }
+        this.entries.set(runtimeId, entry);
 
         view.webContents.on('did-finish-load', () => {
             this.transitionLoadState(runtimeId, 'loaded');
-        });
-
-        // Cmd/Ctrl + D → 分离到浮动窗口（插件视图有焦点时）
-        view.webContents.on('before-input-event', (_event, input) => {
-            if ((input.control || input.meta) && input.key.toLowerCase() === 'd' && !input.alt && !input.shift) {
-                this.detachRequested?.(runtimeId);
-            }
         });
 
         return runtime;
@@ -230,6 +237,8 @@ export class RuntimeManager {
         const entry = this.entries.get(runtimeId);
         if (!entry)
             return;
+        // 先注销快捷键
+        entry.pluginViewShortcutDisposer?.();
         this.hostAttacher.detach(runtimeId);
         entry.runtime.webContents.close();
         this.entries.delete(runtimeId);

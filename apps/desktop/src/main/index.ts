@@ -47,14 +47,16 @@ void app.whenReady().then(async () => {
     }
 
     const runtimeManager = new RuntimeManager(pluginManager, windowManager, pluginPreloadPath);
-    runtimeManager.startAll();
-
     const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginManager);
 
-    // Cmd/Ctrl+D 分离快捷键 — 插件视图有焦点时通过 webContents 事件触发
-    runtimeManager.detachRequested = (runtimeId) => {
-        coordinator.moveToHost(runtimeId, 'floating');
-    };
+    // Inject pluginView shortcut handler BEFORE startAll
+    runtimeManager.setPluginViewShortcutHandler((runtimeId, webContents) => {
+        return shortcutRegistry.registerPluginView(webContents, {
+            'plugin:detach': () => coordinator.moveToHost(runtimeId, 'floating'),
+        });
+    });
+
+    runtimeManager.startAll();
 
     // Window
     const win = windowManager.createMainWindow(preloadPath);
