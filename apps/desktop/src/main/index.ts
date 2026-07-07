@@ -1,10 +1,10 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { CommandCatalog, createPlatformDatabase, initAssetProtocol, PluginCatalog, registerIpcHandlers, registerPluginAssetHandler, RuntimeCoordinator, RuntimeManager, ShortcutManager, WindowManager } from '@szybko/host';
+import { CommandCatalog, createPlatformDatabase, initAssetProtocol, PluginCatalog, registerIpcHandlers, registerPluginAssetHandler, RuntimeCoordinator, RuntimeManager, ShortcutRegistry, WindowManager } from '@szybko/host';
 import { app, protocol } from 'electron';
 
 const windowManager = new WindowManager();
-const shortcutManager = new ShortcutManager();
+const shortcutRegistry = new ShortcutRegistry();
 
 protocol.registerSchemesAsPrivileged([
     {
@@ -80,7 +80,25 @@ void app.whenReady().then(async () => {
     });
 
     registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager);
-    shortcutManager.registerToggle(windowManager);
+
+    shortcutRegistry.define([
+        {
+            actionId: 'window:toggle',
+            scope: 'system',
+            description: '切换主窗口显示',
+            bindings: [
+                { id: 'mac', key: ' ', modifiers: { meta: true }, platforms: ['darwin'], accelerator: 'Command+Space' },
+                { id: 'win', key: ' ', modifiers: { alt: true },  platforms: ['win32', 'linux'], accelerator: 'Alt+Space' },
+            ],
+        },
+    ]);
+
+    shortcutRegistry.onAction('window:toggle', () => {
+        if (windowManager.isVisible()) windowManager.hide();
+        else windowManager.show();
+    });
+
+    shortcutRegistry.registerSystemGlobal();
 });
 
 app.on('window-all-closed', () => {
@@ -94,5 +112,5 @@ app.on('activate', () => {
 });
 
 app.on('will-quit', () => {
-    shortcutManager.unregisterAll();
+    shortcutRegistry.dispose();
 });
