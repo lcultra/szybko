@@ -96,4 +96,12 @@ describe('shortcutRegistry', () => {
     expect(registry.getAccelerator('x', { scope: 'main-window', platform: 'darwin', bindingId: 'a' })).toBe('Ctrl+Shift+D');
     expect(registry.getAccelerator('x', { scope: 'main-window', platform: 'darwin', bindingId: 'b' })).toBe('Cmd+Space');
   });
+
+  it('onAction registers and triggers handler', () => {
+    const registry = new ShortcutRegistry();
+    const calls: string[] = [];
+    registry.onAction('test:a', () => calls.push('fired'));
+    registry.triggerForTest('test:a');
+    expect(calls).toEqual(['fired']);
+  });
 });
