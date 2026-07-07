@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { EllipsisVertical, MapPinCheckInside, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useRuntimeStore } from '../../stores/runtime-store';
 
@@ -36,6 +36,10 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     }, [activeRuntimeId, hostType]);
 
     const [pinned, setPinned] = useState(false);
+    // runtimeId 变化时重置 pin 状态（pool 复用切换插件）
+    useEffect(() => {
+        setPinned(false);
+    }, [activeRuntimeId]);
     const handlePin = useCallback(() => {
         if (!activeRuntimeId)
             return;
