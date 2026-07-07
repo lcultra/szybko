@@ -13,7 +13,10 @@ export class RuntimeHostRegistry {
     constructor(
         private windowManager: WindowManager,
         private hostPreloadPath: string,
-    ) {}
+    ) {
+        // 启动时预热浮动窗口池，使首次分离也接近零延迟
+        this.scheduleReplenish();
+    }
 
     getOrCreateLauncherHost(): LauncherRuntimeHost {
         if (!this.launcherHost) {
