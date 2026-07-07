@@ -5,3 +5,4 @@ export * from './ipc/index';
 export * from './plugin/index';
 export * from './runtime/index';
 export * from './search/index';
+export * from './shortcut/index';
