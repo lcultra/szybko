@@ -20,6 +20,7 @@ export class RuntimeStatePublisher {
         const plugin = this.pluginManager.get(pluginId);
         const feature = plugin?.manifest.features[0];
         const featureExplain = feature?.explain || pluginId;
+        const iconUrl = resolveIconUrl(plugin?.manifest, pluginId, feature?.code);
 
         win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
             runtimeId,
@@ -29,6 +30,25 @@ export class RuntimeStatePublisher {
             state: mountState,
             mountState,
             loadState,
+            iconUrl,
         });
     }
+}
+
+/**
+ * 根据 manifest 和 feature 构建插件图标的 asset:// URL。
+ */
+function resolveIconUrl(
+    manifest: { logo: string; features: { code: string; icon?: string }[] } | undefined,
+    pluginId: string,
+    featureCode?: string,
+): string | undefined {
+    if (!manifest) return undefined;
+    const feature = featureCode
+        ? manifest.features.find(f => f.code === featureCode)
+        : undefined;
+    const iconPath = feature?.icon ?? manifest.logo;
+    if (!iconPath) return undefined;
+    const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
+    return `asset://plugin/${encodeURIComponent(pluginId)}/${encoded}`;
 }

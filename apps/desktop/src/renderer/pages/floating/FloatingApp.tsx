@@ -15,6 +15,7 @@ const fallbackSlot: RuntimeSlot = {
     cmdLabel: '',
     loadState: 'loading',
     mountState: 'detached',
+    iconUrl: '',
 };
 let initialSlot: RuntimeSlot;
 try {

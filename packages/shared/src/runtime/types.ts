@@ -23,4 +23,5 @@ export interface RuntimeSlot {
     cmdLabel: string;
     loadState: LoadState;
     mountState: MountState;
+    iconUrl?: string;
 }

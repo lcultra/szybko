@@ -101,6 +101,7 @@ export interface RuntimeStatePayload {
     loadState?: 'loading' | 'loaded' | 'error';
     featureExplain?: string;
     cmdLabel?: string;
+    iconUrl?: string;
 }
 
 export interface PluginEnterPayload {

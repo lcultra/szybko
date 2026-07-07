@@ -24,6 +24,7 @@ export function usePluginRuntime() {
                     cmdLabel: payload.cmdLabel ?? '',
                     loadState: payload.loadState ?? 'loaded',
                     mountState: payload.mountState ?? 'attached',
+                    iconUrl: payload.iconUrl ?? '',
                 });
                 setAppState('plugin');
             }

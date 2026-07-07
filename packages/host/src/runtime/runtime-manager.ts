@@ -128,11 +128,19 @@ export class RuntimeManager {
         }
         const cmdLabel = entry.runtime.cmdLabel;
 
+        // 构建图标 URL
+        const feature = plugin?.manifest.features[0];
+        const iconPath = feature?.icon ?? plugin?.manifest.logo;
+        const iconUrl = plugin && iconPath
+            ? `asset://plugin/${encodeURIComponent(plugin.id)}/${iconPath.split('/').map(encodeURIComponent).join('/')}`
+            : undefined;
+
         this.hostAttacher.attach(runtimeId, host, entry.runtime.webContentsView, {
             runtimeId: entry.runtime.info.id,
             pluginId: entry.runtime.info.pluginId,
             featureExplain,
             cmdLabel,
+            iconUrl,
         });
 
         entry.runtime.info.mountState = 'attached';

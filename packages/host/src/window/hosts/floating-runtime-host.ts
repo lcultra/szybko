@@ -69,6 +69,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             cmdLabel: meta.cmdLabel ?? '',
             loadState: 'loaded',
             mountState: 'attached',
+            iconUrl: meta.iconUrl,
         };
         this.pendingSlot = slot;
         if (this.window && !this.window.isDestroyed()) {
@@ -139,6 +140,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             cmdLabel: meta.cmdLabel ?? '',
             loadState: 'loaded',
             mountState: 'attached',
+            iconUrl: meta.iconUrl,
         };
 
         const query = { slot: JSON.stringify(slot) };

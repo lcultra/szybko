@@ -1,6 +1,6 @@
 import clsx from 'clsx';
-import { EllipsisVertical, MapPin, MapPinCheckInside, Menu, MoreHorizontal, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { MapPin, MapPinCheckInside, Menu, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useRuntimeStore } from '../../stores/runtime-store';
 
@@ -11,9 +11,17 @@ interface PluginHeaderProps {
 export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     const featureExplain = useRuntimeStore(s => s.slot.featureExplain);
     const cmdLabel = useRuntimeStore(s => s.slot.cmdLabel);
+    const iconUrl = useRuntimeStore(s => s.slot.iconUrl);
     const activeRuntimeId = useRuntimeStore(s => s.slot.runtimeId);
     const clearSlot = useRuntimeStore(s => s.clearSlot);
     const isFloating = hostType === 'floating';
+    const [iconFailed, setIconFailed] = useState(false);
+    // runtimeId 变化时重置 icon 加载状态（pool 复用切换插件）
+    const runtimeIdRef = useRef(activeRuntimeId);
+    if (runtimeIdRef.current !== activeRuntimeId) {
+        runtimeIdRef.current = activeRuntimeId;
+        setIconFailed(false);
+    }
 
     const handleClose = useCallback(() => {
         if (!activeRuntimeId) {
@@ -57,13 +65,22 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
             style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
             {/* 左侧：插件信息徽章 */}
-            <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
-                <div className="flex items-center gap-2 py-1.5 pr-2 pl-3 select-none">
-                    <span className="font-semibold text-text">{featureExplain}</span>
+            <div className="flex min-w-0 max-w-[55%] items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
+                <div className="flex min-w-0 items-center gap-1.5 py-1.5 pr-2 pl-3 select-none">
+                    {iconUrl && !iconFailed && (
+                        <img
+                            alt=""
+                            className="size-4 shrink-0 object-contain rounded-sm"
+                            draggable={false}
+                            onError={() => setIconFailed(true)}
+                            src={iconUrl}
+                        />
+                    )}
+                    <span className="truncate font-semibold text-text">{featureExplain}</span>
                     {cmdLabel && (
                         <>
-                            <span className="text-text-muted">/</span>
-                            <span className="text-text-muted">{cmdLabel}</span>
+                            <span className="shrink-0 text-text-muted">/</span>
+                            <span className="truncate font-semibold text-text">{cmdLabel}</span>
                         </>
                     )}
                 </div>

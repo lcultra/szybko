@@ -14,6 +14,7 @@ const INITIAL_SLOT: RuntimeSlot = {
     cmdLabel: '',
     loadState: 'loading',
     mountState: 'detached',
+    iconUrl: '',
 };
 
 export const useRuntimeStore = create<RuntimeStore>(set => ({

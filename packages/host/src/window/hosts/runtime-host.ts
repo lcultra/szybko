@@ -8,6 +8,7 @@ export interface HostMeta {
     pluginId: string;
     featureExplain: string;
     cmdLabel?: string;
+    iconUrl?: string;
 }
 
 /**
