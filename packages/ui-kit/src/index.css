@@ -19,8 +19,3 @@ body {
 body {
     margin: 0;
 }
-
-/* 浮动窗口全屏时，交通灯已移到菜单栏，取消左侧预留间距 */
-:root[data-fullscreen="true"] header {
-    padding-left: 0.75rem !important;
-}

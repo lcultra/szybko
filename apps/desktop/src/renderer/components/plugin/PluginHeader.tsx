@@ -49,11 +49,19 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     }, [activeRuntimeId, pinned]);
 
     return (
-        <header
-            className={clsx(
-                'flex h-header shrink-0 items-center gap-2',
-                isFloating ? 'pr-3 pl-19.5' : 'px-3',
+        <>
+            {isFloating && (
+                <style>{`
+                    :root[data-fullscreen="true"] .floating-header {
+                        padding-left: 0.75rem !important;
+                    }
+                `}</style>
             )}
+            <header
+                className={clsx(
+                    'flex h-header shrink-0 items-center gap-2',
+                    isFloating ? 'pr-3 pl-19.5 floating-header' : 'px-3',
+                )}
         >
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
@@ -102,5 +110,6 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
                 <EllipsisVertical size={16} strokeWidth={2} />
             </button>
         </header>
+        </>
     );
 }
