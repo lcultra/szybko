@@ -1,6 +1,9 @@
+export const HEADER_HEIGHT = 60;
 export const DEFAULT_WINDOW_WIDTH = 820;
 export const MAX_WINDOW_HEIGHT = 520;
 export const WINDOW_TOP_OFFSET_RATIO = 1 / 3;
-export const SEARCHBAR_HEIGHT = 68;
-export const MIN_WINDOW_HEIGHT = SEARCHBAR_HEIGHT;
 export const BORDER_WIDTH = 1;
+export const MIN_WINDOW_HEIGHT = HEADER_HEIGHT;
+export const SHELL_CONTENT_MAX_HEIGHT = 600;
+export const PLUGIN_CONTENT_MIN_HEIGHT = 400;
+export const FLOATING_WINDOW_DEFAULT_HEIGHT = 600;

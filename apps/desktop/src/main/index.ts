@@ -22,7 +22,7 @@ void app.whenReady().then(async () => {
     const preloadPath = join(__dirname, '../preload/host.js');
     const pluginPreloadPath = join(__dirname, '../preload/plugin.js');
 
-    const hostRegistry = windowManager.initHostRegistry(pluginPreloadPath);
+    const hostRegistry = windowManager.initHostRegistry(preloadPath);
 
     // Command catalog — SQLite-backed feature indexing and dynamic feature store
     const platformDb = createPlatformDatabase(join(app.getPath('userData'), 'szybko-platform.db'));

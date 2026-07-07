@@ -156,7 +156,7 @@ export default function App() {
                 onChange={setQuery}
             />
             <div
-                className="max-h-150 min-h-0 overflow-y-auto overscroll-contain"
+                className="max-h-shell-content min-h-0 overflow-y-auto overscroll-contain"
                 onMouseDown={handleMouseDown}
                 onFocusCapture={handleFocusCapture}
             >

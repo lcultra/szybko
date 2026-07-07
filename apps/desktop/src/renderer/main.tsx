@@ -1,4 +1,4 @@
 import { mountMain } from './mount';
 import './main.css';
 
-mountMain();
+mountMain().catch(console.error);

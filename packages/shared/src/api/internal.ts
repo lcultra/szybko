@@ -44,6 +44,12 @@ export interface SzybkoInternalApi {
     onShowMainWindow: (cb: () => void) => () => void;
     onThemeChanged: (cb: (theme: { isDark: boolean }) => void) => () => void;
 
+    // ── 布局常量（后端驱动，renderer 通过此方法获取 CSS 变量和数值） ──
+    getLayoutConstants: () => {
+        css: Record<string, string>;
+        raw: Record<string, number>;
+    };
+
     // ── 旧（废弃） ──
     /** @deprecated 使用 onSearchResponse */
     onSearchBatch?: (cb: (batch: SearchBatch) => void) => () => void;

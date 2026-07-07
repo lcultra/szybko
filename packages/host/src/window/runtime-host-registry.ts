@@ -9,7 +9,7 @@ export class RuntimeHostRegistry {
 
     constructor(
         private windowManager: WindowManager,
-        private pluginPreloadPath: string,
+        private hostPreloadPath: string,
     ) {}
 
     getOrCreateLauncherHost(): LauncherRuntimeHost {
@@ -21,7 +21,7 @@ export class RuntimeHostRegistry {
     }
 
     createFloatingHost(): FloatingRuntimeHost {
-        const host = new FloatingRuntimeHost(`floating-${Date.now()}`, this.pluginPreloadPath);
+        const host = new FloatingRuntimeHost(`floating-${Date.now()}`, this.hostPreloadPath);
         this.hosts.set(host.id, host);
         return host;
     }

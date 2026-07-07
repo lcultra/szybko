@@ -1,0 +1,5 @@
+@theme {
+    --spacing-header: var(--layout-header-height);
+    --spacing-shell-content: var(--layout-shell-content-max-height);
+    --spacing-plugin-content: var(--layout-plugin-content-min-height);
+}

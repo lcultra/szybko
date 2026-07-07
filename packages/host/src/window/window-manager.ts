@@ -1,6 +1,6 @@
 import type { WebContentsView } from 'electron';
 import process from 'node:process';
-import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, SEARCHBAR_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, HEADER_HEIGHT, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
 import { BrowserWindow, screen } from 'electron';
 
 import { RuntimeHostRegistry } from './runtime-host-registry';
@@ -64,8 +64,8 @@ export class WindowManager {
     isVisible(): boolean { return this.window?.isVisible() ?? false; }
 
     /** 初始化 Host 注册表（main/index.ts 启动时调用一次） */
-    initHostRegistry(pluginPreloadPath: string): RuntimeHostRegistry {
-        this.hostRegistry = new RuntimeHostRegistry(this, pluginPreloadPath);
+    initHostRegistry(hostPreloadPath: string): RuntimeHostRegistry {
+        this.hostRegistry = new RuntimeHostRegistry(this, hostPreloadPath);
         return this.hostRegistry;
     }
 
@@ -95,9 +95,9 @@ export class WindowManager {
         for (const view of this.window.contentView.children) {
             view.setBounds({
                 x: BORDER_WIDTH,
-                y: SEARCHBAR_HEIGHT,
+                y: HEADER_HEIGHT,
                 width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
-                height: Math.max(winHeight - SEARCHBAR_HEIGHT - BORDER_WIDTH * 2, 0),
+                height: Math.max(winHeight - HEADER_HEIGHT - BORDER_WIDTH * 2, 0),
             });
         }
     }

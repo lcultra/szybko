@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { EllipsisVertical, MapPinCheckInside, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { PluginRuntimeService } from '../../services/plugin-runtime';
@@ -44,7 +45,12 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     }, [activeRuntimeId, pinned]);
 
     return (
-        <header className={`flex h-15 shrink-0 items-center gap-2 ${isFloating ? 'pr-3 pl-[78px]' : 'px-3'}`}>
+        <header
+            className={clsx(
+                'flex h-header shrink-0 items-center gap-2 border-b',
+                isFloating ? 'pr-3 pl-19.5' : 'px-3',
+            )}
+        >
             {/* 左侧：插件信息徽章 */}
             <div className="flex items-center overflow-hidden rounded-full border border-border bg-surface-hover text-sm">
                 <div className="flex items-center gap-2 py-1.5 pr-2 pl-3 select-none">

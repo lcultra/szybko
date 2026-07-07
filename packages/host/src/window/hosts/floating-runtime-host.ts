@@ -4,7 +4,7 @@ import type { Closable, Focusable, Pinnable } from './capabilities';
 import type { HostMeta, RuntimeHost } from './runtime-host';
 import { join } from 'node:path';
 import process from 'node:process';
-import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, SEARCHBAR_HEIGHT } from '@szybko/shared';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, FLOATING_WINDOW_DEFAULT_HEIGHT, HEADER_HEIGHT } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
 
 export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Closable {
@@ -16,7 +16,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
 
     constructor(
         id: string,
-        private pluginPreloadPath: string,
+        private hostPreloadPath: string,
     ) { this.id = id; }
 
     attach(view: WebContentsView, meta: HostMeta): void {
@@ -45,14 +45,14 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     private createWindow(meta: HostMeta): void {
         this.window = new BrowserWindow({
             width: DEFAULT_WINDOW_WIDTH,
-            height: 600,
+            height: FLOATING_WINDOW_DEFAULT_HEIGHT,
             frame: false,
             hasShadow: false,
             transparent: true,
             titleBarStyle: 'hidden',
             trafficLightPosition: { x: 12, y: 26 },
             webPreferences: {
-                preload: this.pluginPreloadPath,
+                preload: this.hostPreloadPath,
                 contextIsolation: true,
                 nodeIntegration: false,
             },
@@ -90,9 +90,9 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         const { width, height } = this.window.contentView.getBounds();
         this.view.setBounds({
             x: BORDER_WIDTH,
-            y: SEARCHBAR_HEIGHT,
+            y: HEADER_HEIGHT,
             width: Math.max(width - BORDER_WIDTH * 2, 0),
-            height: Math.max(height - SEARCHBAR_HEIGHT - BORDER_WIDTH, 0),
+            height: Math.max(height - HEADER_HEIGHT - BORDER_WIDTH, 0),
         });
     };
 

@@ -27,7 +27,7 @@ export function SearchBar({
     }, []);
 
     return (
-        <div className={clsx('flex h-15 items-center px-2 py-2', className)}>
+        <div className={clsx('flex h-header items-center px-2 py-2', className)}>
             <input
                 ref={inputRef}
                 value={value}

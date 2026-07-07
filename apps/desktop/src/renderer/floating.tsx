@@ -1,4 +1,4 @@
 import { mountFloating } from './mount';
 import './main.css';
 
-mountFloating();
+mountFloating().catch(console.error);
