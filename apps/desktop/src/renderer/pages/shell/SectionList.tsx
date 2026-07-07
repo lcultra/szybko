@@ -31,7 +31,7 @@ interface SectionListProps {
     onExecute: (itemId: LauncherItemId) => void;
     onToggleExpand: (sectionId: string) => void;
     onReorder: (itemId: LauncherItemId, toIndex: number) => void;
-    onContextMenu: (itemId: LauncherItemId, e: React.MouseEvent) => void;
+    onContextMenu: (itemId: LauncherItemId, e: React.MouseEvent, source?: ResultSection['source']) => void;
 }
 
 export function SectionList({
@@ -93,7 +93,7 @@ export function SectionList({
                             draggable={isPinned}
                             onReorder={isPinned ? onReorder : undefined}
                             onExecute={onExecute}
-                            onContextMenu={onContextMenu}
+                            onContextMenu={(itemId, e) => onContextMenu(itemId, e, section.source)}
                         />
                     </div>
                 );

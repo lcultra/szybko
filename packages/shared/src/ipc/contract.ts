@@ -30,7 +30,7 @@ export interface IpcInvokeContract {
         response: { ok: boolean };
     };
     [IPC.ITEM_CONTEXT_MENU]: {
-        request: { itemId: LauncherItemId; screenX: number; screenY: number };
+        request: { itemId: LauncherItemId; screenX: number; screenY: number; source?: 'pinned' | 'recent' | 'search' };
         response: { ok: boolean };
     };
     [IPC.ITEM_EXECUTE]: {

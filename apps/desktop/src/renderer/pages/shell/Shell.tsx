@@ -124,9 +124,9 @@ export default function App() {
         window.szybkoInternal?.reorderItem({ itemId: itemId as any, toIndex });
     };
 
-    const onContextMenu = (itemId: string, e: React.MouseEvent) => {
+    const onContextMenu = (itemId: string, e: React.MouseEvent, source?: 'pinned' | 'recent' | 'search') => {
         e.preventDefault();
-        window.szybkoInternal?.openContextMenu({ itemId: itemId as any, screenX: e.clientX, screenY: e.clientY });
+        window.szybkoInternal?.openContextMenu({ itemId: itemId as any, screenX: e.clientX, screenY: e.clientY, source });
     };
 
     // 焦点锁定：阻止点击结果项让搜索框失焦

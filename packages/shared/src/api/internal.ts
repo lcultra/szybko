@@ -22,7 +22,7 @@ export interface SzybkoInternalApi {
     // ── Item 交互（参数为 IPC contract 的 request payload） ──
     pinItem: (req: { itemId: LauncherItemId; pin: boolean }) => Promise<{ ok: boolean }>;
     reorderItem: (req: { itemId: LauncherItemId; toIndex: number }) => Promise<{ ok: boolean }>;
-    openContextMenu: (req: { itemId: LauncherItemId; screenX: number; screenY: number }) => Promise<{ ok: boolean }>;
+    openContextMenu: (req: { itemId: LauncherItemId; screenX: number; screenY: number; source?: 'pinned' | 'recent' | 'search' }) => Promise<{ ok: boolean }>;
     execute: (req: { sessionId: string; queryId: string; itemId: LauncherItemId }) => Promise<{ ok: boolean; error?: string }>;
 
     // ── 窗口 ──
@@ -52,7 +52,7 @@ export interface SzybkoInternalApi {
     };
 
     // ── 插件安装管理 ──
-    setPluginEnabled: (pluginId: string, enabled: boolean) => Promise<{ ok: boolean }>;
-    uninstallPlugin: (pluginId: string) => Promise<{ ok: boolean; error?: string }>;
+    setPluginEnabled: (req: { pluginId: string; enabled: boolean }) => Promise<{ ok: boolean; error?: string }>;
+    uninstallPlugin: (req: { pluginId: string }) => Promise<{ ok: boolean; error?: string }>;
 
 }

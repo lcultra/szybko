@@ -1,5 +1,5 @@
 import type { PlatformDrizzleDatabase } from '../platform-database';
-import { desc, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { usageEvent } from '../schema';
 
 export interface UsageEventRow {
@@ -38,5 +38,10 @@ export class UsageEventRepository {
             .orderBy(desc(sql`last_used`))
             .limit(limit)
             .all();
+    }
+
+    /** 删除指定 item 的所有使用记录 */
+    removeByItemId(itemId: string): void {
+        this.db.delete(usageEvent).where(eq(usageEvent.itemId, itemId)).run();
     }
 }

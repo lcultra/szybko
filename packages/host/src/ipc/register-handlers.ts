@@ -208,7 +208,7 @@ export function registerIpcHandlers(
     ipcMain.handle(
         IPC.ITEM_CONTEXT_MENU,
         (_event, req: IpcRequest<typeof IPC.ITEM_CONTEXT_MENU>): IpcResponse<typeof IPC.ITEM_CONTEXT_MENU> => {
-            const { itemId, screenX, screenY } = req;
+            const { itemId, screenX, screenY, source } = req;
 
             // Check with repo if item is pinned
             const isPinned = pinnedRepo?.list().some(r => r.itemId === itemId) ?? false;
@@ -231,6 +231,17 @@ export function registerIpcHandlers(
                     },
                 },
             ];
+
+            // 最近使用区域提供"从使用记录中删除"
+            if (source === 'recent') {
+                menuBuilder.push({
+                    label: '从"使用记录"中删除',
+                    click: () => {
+                        usageRepo?.removeByItemId(itemId);
+                        triggerRefresh();
+                    },
+                });
+            }
 
             const built = Menu.buildFromTemplate(menuBuilder);
             built.popup({ window: win, x: screenX, y: screenY });
