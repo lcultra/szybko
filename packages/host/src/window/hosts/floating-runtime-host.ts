@@ -4,7 +4,7 @@ import type { Closable, Focusable, Pinnable } from './capabilities';
 import type { HostMeta, RuntimeHost } from './runtime-host';
 import { join } from 'node:path';
 import process from 'node:process';
-import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, FLOATING_WINDOW_DEFAULT_HEIGHT, HEADER_HEIGHT } from '@szybko/shared';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, FLOATING_WINDOW_DEFAULT_HEIGHT, HEADER_HEIGHT, IPC } from '@szybko/shared';
 import { BrowserWindow } from 'electron';
 
 export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Closable {
@@ -13,6 +13,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     private window: BrowserWindow | null = null;
     private view: WebContentsView | null = null;
     private currentMeta: HostMeta | null = null;
+    private pendingSlot: RuntimeSlot | null = null;
 
     constructor(
         id: string,
@@ -22,16 +23,19 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
     attach(view: WebContentsView, meta: HostMeta): void {
         this.currentMeta = meta;
 
-        // 自动创建窗口（如果尚未创建）
         if (!this.window) {
-            this.createWindow(meta);
+            this.createWindow(meta);       // 首次创建
+        } else {
+            this.pushSlotUpdate(meta);     // 池复用 → IPC 更新 slot
         }
+
         if (view) {
             this.view = view;
             this.window!.contentView.addChildView(view);
             this.relayout();
         }
-        this.window!.show();
+
+        this.window!.show();              // show:false 的窗口在此显示
     }
 
     detach(): void {
@@ -39,7 +43,45 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             this.window.contentView.removeChildView(this.view);
         }
         this.view = null;
+        this.setAlwaysOnTop(false);       // 重置置顶
+        this.pendingSlot = null;          // 清除 pending slot
         this.window?.hide();
+    }
+
+    /** 预创建窗口（pool 补充用）：BrowserWindow 先建好，保持隐藏 */
+    preloadWindow(): void {
+        const placeholderMeta: HostMeta = {
+            runtimeId: '', pluginId: '', featureExplain: '', cmdLabel: '',
+        };
+        this.createWindow(placeholderMeta);
+    }
+
+    /** 向浮动渲染器推送当前 slot（窗口已存在时更新标题栏信息） */
+    private pushSlotUpdate(meta: HostMeta): void {
+        const slot: RuntimeSlot = {
+            runtimeId: meta.runtimeId,
+            pluginId: meta.pluginId,
+            featureExplain: meta.featureExplain,
+            cmdLabel: meta.cmdLabel ?? '',
+            loadState: 'loaded',
+            mountState: 'attached',
+        };
+        this.pendingSlot = slot;
+        if (this.window && !this.window.isDestroyed()) {
+            this.window.webContents.send(IPC.FLOATING_SLOT_UPDATE, slot);
+        }
+    }
+
+    /** 池 eviction 用：强制销毁，不触发 beforeunload */
+    dispose(): void {
+        if (this.window) {
+            this.window.removeAllListeners();
+            this.window.destroy();         // ← 不触发 beforeunload/close 事件
+        }
+        this.window = null;
+        this.view = null;
+        this.currentMeta = null;
+        this.pendingSlot = null;
     }
 
     private createWindow(meta: HostMeta): void {
@@ -49,6 +91,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             frame: false,
             hasShadow: false,
             transparent: true,
+            show: false,
             titleBarStyle: 'hidden',
             trafficLightPosition: { x: 12, y: 26 },
             webPreferences: {
@@ -62,6 +105,13 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         this.window.on('resize', this.relayout);
         this.window.on('maximize', this.relayout);
         this.window.on('unmaximize', this.relayout);
+
+        // 页面加载完成时补发 pending slot（pool 复用场景）
+        this.window.webContents.on('did-finish-load', () => {
+            if (this.pendingSlot) {
+                this.window!.webContents.send(IPC.FLOATING_SLOT_UPDATE, this.pendingSlot);
+            }
+        });
 
         const slot: RuntimeSlot = {
             runtimeId: meta.runtimeId,
