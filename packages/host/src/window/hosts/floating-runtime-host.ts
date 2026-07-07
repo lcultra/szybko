@@ -116,12 +116,12 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         // 全屏时交通灯移到菜单栏 → 取消左侧间距
         this.window.on('enter-full-screen', () => {
             void this.window?.webContents.executeJavaScript(
-                'document.documentElement.dataset.fullscreen = "true"',
+                'document.documentElement.style.setProperty("--traffic-left", "0.75rem")',
             );
         });
         this.window.on('leave-full-screen', () => {
             void this.window?.webContents.executeJavaScript(
-                'document.documentElement.dataset.fullscreen = "false"',
+                'document.documentElement.style.setProperty("--traffic-left", "19.5px")',
             );
         });
 
