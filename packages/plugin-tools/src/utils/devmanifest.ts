@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 interface PluginManifest {
-    id: string;
+    name: string;
     main: string;
     preload: string;
     pluginSetting?: { single?: boolean; height?: number };

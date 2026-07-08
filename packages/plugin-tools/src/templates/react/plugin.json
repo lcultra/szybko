@@ -1,5 +1,5 @@
 {
-    "id": "{{name}}",
+    "name": "{{name}}",
     "main": "index.html",
     "logo": "icon.svg",
     "preload": "preload.js",

@@ -54,14 +54,15 @@ export class PluginProvider implements SearchProvider {
         const items: LauncherItem[] = matches.map((m) => {
             const itemId = `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId;
             this.itemMatchMap.set(itemId, m.matchId);
-            const title = m.label || m.featureCode;
+            const title = m.label ?? '';
             const titleMatchRanges = findTitleMatchRanges(title, query);
 
-            // 解析图标
+            // 解析插件信息
             const plugin = this.catalog.get(m.pluginId);
+            const feature = plugin?.manifest.features.find(f => f.code === m.featureCode);
+            const featureExplain = feature?.explain ?? '';
             let icon: IconDescriptor | undefined;
             if (plugin) {
-                const feature = plugin.manifest.features.find(f => f.code === m.featureCode);
                 const iconPath = feature?.icon ?? plugin.manifest.logo;
                 const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
                 icon = { type: 'url', value: `asset://plugin/${encodeURIComponent(plugin.id)}/${encoded}` };
@@ -71,7 +72,7 @@ export class PluginProvider implements SearchProvider {
                 id: itemId,
                 ownerProvider: 'plugin',
                 title,
-                subtitle: `打开 ${m.pluginId}`,
+                subtitle: featureExplain,
                 icon,
                 score: m.score,
                 capabilities: { pin: true, reveal: false, dragSort: true, contextMenu: true },
@@ -103,16 +104,18 @@ export class PluginProvider implements SearchProvider {
             if (!trigger)
                 return null;
 
+            const plugin = this.catalog.get(pluginId);
+            const feature = plugin?.manifest.features.find(f => f.code === featureCode);
+            const featureExplain = feature?.explain ?? '';
+
             return {
                 id: itemId,
                 ownerProvider: 'plugin',
-                title: trigger.label || featureCode,
-                subtitle: `打开 ${pluginId}`,
+                title: trigger.label ?? '',
+                subtitle: featureExplain,
                 icon: (() => {
-                    const plugin = this.catalog.get(pluginId);
                     if (!plugin)
                         return undefined;
-                    const feature = plugin.manifest.features.find(f => f.code === featureCode);
                     const iconPath = feature?.icon ?? plugin.manifest.logo;
                     const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
                     return { type: 'url', value: `asset://plugin/${encodeURIComponent(pluginId)}/${encoded}` };
@@ -144,6 +147,7 @@ export class PluginProvider implements SearchProvider {
                     code: resolved.match.featureCode,
                     type: resolved.match.enterType,
                     payload: resolved.match.payload,
+                    option: resolved.match.label ?? resolved.match.option ?? undefined,
                     from: resolved.match.from,
                 });
                 return { ok: true };
@@ -157,6 +161,7 @@ export class PluginProvider implements SearchProvider {
                 code: resolved.match.featureCode,
                 type: resolved.match.enterType,
                 payload: resolved.match.payload,
+                option: resolved.match.label ?? resolved.match.option ?? undefined,
                 from: resolved.match.from,
             });
             return { ok: true };

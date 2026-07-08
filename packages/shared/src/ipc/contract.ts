@@ -113,6 +113,7 @@ export interface IpcInvokeContract {
 export interface RuntimeStatePayload {
     runtimeId: string;
     pluginId: string;
+    pluginName?: string;
     state: string;
     mountState?: 'attached' | 'detached';
     loadState?: 'loading' | 'loaded' | 'error';

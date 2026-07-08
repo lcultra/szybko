@@ -2,12 +2,14 @@
  * 插件清单 — 对应 plugin.json 文件。
  */
 export interface PluginManifest {
-    /** 必填。稳定插件 ID，用于持久化关联用户数据。 */
-    id: string;
     /** 必填。插件运行入口，相对于 plugin.json 的 .html 路径。 */
     main: string;
     /** 必填。插件图标，支持 .png / .jpg / .jpeg / .svg，相对于 plugin.json 的路径。 */
     logo: string;
+    /** 必填。插件展示名称。 */
+    name: string;
+    /** 选填。插件简短描述。 */
+    description?: string;
     /** 选填。窗口加载前执行的预加载脚本（.js）。运行在独立预加载环境，可使用 Node.js 能力。 */
     preload?: string;
     /** 选填。插件应用设置。 */

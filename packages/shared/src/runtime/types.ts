@@ -19,6 +19,7 @@ export interface RuntimeHostInfo {
 export interface RuntimeSlot {
     runtimeId: string | null;
     pluginId: string | null;
+    pluginName?: string;
     featureExplain: string;
     cmdLabel: string;
     loadState: LoadState;

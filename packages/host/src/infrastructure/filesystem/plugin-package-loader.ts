@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
 
 export interface LoadedPlugin {
-    id: string;
     manifest: PluginManifest;
     path: string;
 }
@@ -36,8 +35,8 @@ export class PluginLoader {
 
         try {
             const manifest: PluginManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-            if (!manifest.id) {
-                console.error(`[plugin-loader] Missing 'id' in ${manifestPath}`);
+            if (!manifest.name) {
+                console.error(`[plugin-loader] Missing 'name' in ${manifestPath}`);
                 return null;
             }
             if (!manifest.logo) {
@@ -58,7 +57,7 @@ export class PluginLoader {
                     }
                 }
             }
-            return { id: manifest.id, manifest, path: pluginPath };
+            return { manifest, path: pluginPath };
         }
         catch (err) {
             console.error(`[plugin-loader] Failed to load ${pluginPath}:`, err);

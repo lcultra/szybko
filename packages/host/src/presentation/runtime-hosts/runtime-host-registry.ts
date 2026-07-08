@@ -20,7 +20,7 @@ export class RuntimeHostRegistry {
 
     getOrCreateLauncherHost(): LauncherRuntimeHost {
         if (!this.launcherHost) {
-            this.launcherHost = new LauncherRuntimeHost(`launcher-host`, this.windowManager);
+            this.launcherHost = new LauncherRuntimeHost(`main-host`, this.windowManager);
             this.hosts.set(this.launcherHost.id, this.launcherHost);
         }
         return this.launcherHost;

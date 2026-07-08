@@ -4,6 +4,7 @@
 export interface HostMeta {
     runtimeId: string;
     pluginId: string;
+    pluginName?: string;
     featureExplain: string;
     cmdLabel?: string;
     iconUrl?: string;

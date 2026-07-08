@@ -9,7 +9,7 @@ interface PluginHeaderProps {
 }
 
 export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
-    const featureExplain = useRuntimeStore(s => s.slot.featureExplain);
+    const pluginName = useRuntimeStore(s => s.slot.pluginName);
     const cmdLabel = useRuntimeStore(s => s.slot.cmdLabel);
     const iconUrl = useRuntimeStore(s => s.slot.iconUrl);
     const activeRuntimeId = useRuntimeStore(s => s.slot.runtimeId);
@@ -73,7 +73,7 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
                             src={iconUrl}
                         />
                     )}
-                    <span className="truncate font-semibold text-text">{featureExplain}</span>
+                    <span className="truncate font-semibold text-text">{pluginName}</span>
                     {cmdLabel && (
                         <>
                             <span className="shrink-0 text-text-muted">/</span>

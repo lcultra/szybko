@@ -10,6 +10,7 @@ interface RuntimeStore {
 const INITIAL_SLOT: RuntimeSlot = {
     runtimeId: null,
     pluginId: null,
+    pluginName: '',
     featureExplain: '',
     cmdLabel: '',
     loadState: 'loading',

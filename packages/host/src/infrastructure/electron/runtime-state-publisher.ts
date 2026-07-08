@@ -19,12 +19,14 @@ export class RuntimeStatePublisher {
 
         const plugin = this.pluginManager.get(pluginId);
         const feature = plugin?.manifest.features[0];
-        const featureExplain = feature?.explain || pluginId;
+        const pluginName = plugin?.manifest.name;
+        const featureExplain = feature?.explain ?? '';
         const iconUrl = resolveIconUrl(plugin?.manifest, pluginId, feature?.code);
 
         win.webContents.send(IPC.PLUGIN_RUNTIME_STATE, {
             runtimeId,
             pluginId,
+            pluginName,
             featureExplain,
             cmdLabel,
             state: mountState,

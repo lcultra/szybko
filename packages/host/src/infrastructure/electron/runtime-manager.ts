@@ -69,7 +69,7 @@ export class RuntimeManager {
             webContentsView: view,
             webContents: view.webContents,
             cache: new Map(),
-            cmdLabel: pluginId,
+            cmdLabel: '',
         };
 
         // 通过 ShortcutRegistry 注册 PluginView 快捷键
@@ -117,7 +117,7 @@ export class RuntimeManager {
         if (existingHost?.type === 'floating' && isFocusable(existingHost)) {
             existingHost.focus();
             entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
-                code: featureCode ?? entry.runtime.info.pluginId,
+                code: featureCode ?? entry.runtime.currentActivation?.featureCode ?? '',
                 type: 'text',
                 payload: null,
                 from: 'main',
@@ -144,6 +144,7 @@ export class RuntimeManager {
         this.hostAttacher.attach(runtimeId, host, entry.runtime.webContentsView, {
             runtimeId: entry.runtime.info.id,
             pluginId: entry.runtime.info.pluginId,
+            pluginName: plugin?.manifest.name,
             featureExplain,
             cmdLabel,
             iconUrl,
@@ -159,7 +160,7 @@ export class RuntimeManager {
 
         // 通知插件进入
         entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
-            code: featureCode ?? entry.runtime.info.pluginId,
+            code: featureCode ?? entry.runtime.currentActivation?.featureCode ?? '',
             type: 'text',
             payload: null,
             from: 'main',

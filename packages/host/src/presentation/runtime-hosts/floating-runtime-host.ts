@@ -66,6 +66,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         const slot: RuntimeSlot = {
             runtimeId: meta.runtimeId,
             pluginId: meta.pluginId,
+            pluginName: meta.pluginName,
             featureExplain: meta.featureExplain,
             cmdLabel: meta.cmdLabel ?? '',
             loadState: 'loaded',
@@ -137,6 +138,7 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         const slot: RuntimeSlot = {
             runtimeId: meta.runtimeId,
             pluginId: meta.pluginId,
+            pluginName: meta.pluginName,
             featureExplain: meta.featureExplain,
             cmdLabel: meta.cmdLabel ?? '',
             loadState: 'loaded',

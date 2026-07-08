@@ -154,7 +154,7 @@ export class StartupService {
         this.deps.shortcutRegistry.onAction('plugin:detach', () => {
             for (const rt of this.deps.runtimeManager.getAll()) {
                 const host = this.deps.runtimeManager.getHostFor(rt.info.id);
-                if (host?.id === 'launcher-host') {
+                if (host?.id === 'main-host') {
                     this.deps.coordinator.moveToHost(rt.info.id, 'floating');
                     return;
                 }
