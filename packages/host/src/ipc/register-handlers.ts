@@ -8,15 +8,14 @@ import type { WindowManager } from '../window/window-manager';
 import type { SearchApplicationService } from '../app/search/search-application-service';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
 import type { PluginLifecycleService } from '../app/plugins/plugin-lifecycle-service';
+import type { RuntimeApplicationService } from '../app/runtime/ports';
 import { IPC } from '@szybko/shared';
 import { ipcMain } from 'electron';
-import { MatchSessionManager } from '../input/match-session-manager';
-import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
-import { createExecutor } from './execute-action';
 import { registerSearchIpcHandlers } from './handlers/search-ipc-handlers';
 import { registerItemIpcHandlers } from './handlers/item-ipc-handlers';
 import { registerPluginManagementIpcHandlers } from './handlers/plugin-management-ipc-handlers';
 import { registerDynamicFeatureIpcHandlers } from './handlers/dynamic-feature-ipc-handlers';
+import { registerPluginRuntimeIpcHandlers } from './handlers/plugin-runtime-ipc-handlers';
 import type { DynamicFeatureService } from '../app/commands/dynamic-feature-service';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
@@ -33,11 +32,8 @@ export function registerIpcHandlers(
     launcherItemService?: LauncherItemService,
     pluginLifecycle?: PluginLifecycleService,
     dynamicFeatureService?: DynamicFeatureService,
-    sessionManager?: MatchSessionManager,
+    runtimeService?: RuntimeApplicationService,
 ) {
-    const resolvedSession = sessionManager ?? new MatchSessionManager();
-    const executor = createExecutor(new ElectronNativeCapabilityService());
-
     // ── Delegated search/item handlers ────────────────────────────────
 
     if (searchService) {
@@ -60,6 +56,12 @@ export function registerIpcHandlers(
         registerPluginManagementIpcHandlers({ pluginLifecycle, triggerRefresh });
     }
 
+    // ── Delegated runtime handlers ──────────────────────────────────
+
+    if (runtimeService) {
+        registerPluginRuntimeIpcHandlers({ runtimeService });
+    }
+
     // ── Window control ─────────────────────────────────────────────
 
     ipcMain.handle(
@@ -74,95 +76,6 @@ export function registerIpcHandlers(
         IPC.WINDOW_HIDE,
         (): IpcResponse<typeof IPC.WINDOW_HIDE> => {
             windowManager.hide();
-            return { ok: true };
-        },
-    );
-
-    // ── Plugin execute ─────────────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.PLUGIN_EXEC,
-        async (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): Promise<IpcResponse<typeof IPC.PLUGIN_EXEC>> => {
-            if (action.type === 'plugin.open') {
-                if (action.payload.matchId) {
-                    const resolved = resolvedSession.resolve(action.payload.matchId);
-                    if (resolved) {
-                        coordinator.activatePlugin(
-                            action.payload.pluginId,
-                            action.payload.featureCode,
-                            {
-                                code: resolved.match.featureCode,
-                                type: resolved.match.enterType,
-                                payload: resolved.match.payload,
-                                option: resolved.match.option ?? undefined,
-                                from: resolved.match.from,
-                                matchId: resolved.match.matchId,
-                            },
-                        );
-                        return { ok: true };
-                    }
-                    console.warn(`[IPC] matchId ${action.payload.matchId} not resolved`);
-                }
-                coordinator.activatePlugin(action.payload.pluginId, action.payload.featureCode);
-                return { ok: true };
-            }
-            return executor(action);
-        },
-    );
-
-    // ── Host switch ────────────────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.HOST_SWITCH,
-        (_event, { runtimeId, targetHost }: IpcRequest<typeof IPC.HOST_SWITCH>): IpcResponse<typeof IPC.HOST_SWITCH> => {
-            try {
-                const runtime = coordinator.getRuntime(runtimeId);
-                if (!runtime)
-                    return { ok: false, error: 'Runtime not found' };
-                coordinator.moveToHost(runtimeId, targetHost);
-                const hostId = coordinator.getHostFor(runtimeId)?.id;
-                return { ok: true, hostId };
-            }
-            catch (err) {
-                return { ok: false, error: String(err) };
-            }
-        },
-    );
-
-    // ── Plugin hide / destroy ─────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.PLUGIN_HIDE,
-        (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_HIDE>): IpcResponse<typeof IPC.PLUGIN_HIDE> => {
-            coordinator.hideRuntime(runtimeId);
-            return { ok: true };
-        },
-    );
-
-    ipcMain.handle(
-        IPC.PLUGIN_DESTROY,
-        (_event, { runtimeId }: IpcRequest<typeof IPC.PLUGIN_DESTROY>): IpcResponse<typeof IPC.PLUGIN_DESTROY> => {
-            coordinator.destroyRuntime(runtimeId);
-            return { ok: true };
-        },
-    );
-
-    // ── Plugin native menu ──────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.SHOW_PLUGIN_MENU,
-        (_event, { runtimeId, variant }: IpcRequest<typeof IPC.SHOW_PLUGIN_MENU>): IpcResponse<typeof IPC.SHOW_PLUGIN_MENU> => {
-            coordinator.showPluginMenu(runtimeId, variant);
-            return { ok: true };
-        },
-    );
-
-    // ── Plugin pin (runtime-level) ────────────────────────────────
-
-    ipcMain.handle(
-        IPC.PLUGIN_PIN,
-        (_event, { runtimeId, pin }: IpcRequest<typeof IPC.PLUGIN_PIN>): IpcResponse<typeof IPC.PLUGIN_PIN> => {
-            coordinator.pinRuntime(runtimeId, pin);
             return { ok: true };
         },
     );

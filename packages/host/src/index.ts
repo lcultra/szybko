@@ -1,3 +1,7 @@
+export { RuntimeApplicationService } from './app/runtime/runtime-application-service';
+export type { RuntimeApplicationService as IRuntimeApplicationService } from './app/runtime/ports';
+export { registerPluginRuntimeIpcHandlers } from './ipc/handlers/plugin-runtime-ipc-handlers';
+export type { LoadState, MountState, RuntimeInfo, RuntimeSlot } from './domain/runtime/runtime';
 export { CommandCatalog } from './commands/command-catalog';
 export { collectFromSearch } from './input/input-context-collector';
 export { MatchSessionManager } from './input/match-session-manager';

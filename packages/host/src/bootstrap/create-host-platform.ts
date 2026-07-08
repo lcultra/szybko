@@ -14,6 +14,7 @@ import { LauncherItemService } from '../app/search/launcher-item-service';
 import { PluginLifecycleService } from '../app/plugins/plugin-lifecycle-service';
 import { PluginQueryService } from '../app/plugins/plugin-query-service';
 import { StartupService } from '../app/startup/startup-service';
+import { RuntimeApplicationService } from '../app/runtime/runtime-application-service';
 import { registerIpcHandlers } from '../ipc/register-handlers';
 
 export async function createHostPlatform(config: HostPlatformConfig): Promise<HostPlatform> {
@@ -55,6 +56,8 @@ export async function createHostPlatform(config: HostPlatformConfig): Promise<Ho
     config,
   });
 
+  const runtimeService = new RuntimeApplicationService(coordinator);
+
   return {
     async start() {
       await startupService.start();
@@ -65,7 +68,7 @@ export async function createHostPlatform(config: HostPlatformConfig): Promise<Ho
         platformDb, pluginCatalog, shortcutRegistry,
         searchService, launcherItemService, pluginLifecycle,
         undefined, // dynamicFeatureService — not wired in bootstrap yet
-        sessionManager,
+        runtimeService,
       );
     },
     show() {

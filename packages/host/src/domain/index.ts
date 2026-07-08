@@ -1,3 +1,5 @@
+export type { LoadState, MountState, RuntimeInfo, RuntimeSlot } from './runtime/runtime';
+
 export type { NormalizedFeature } from './commands/command-feature';
 export { normalizeFeature, stableJson } from './commands/command-feature';
 export type { NormalizedTrigger, CommandTrigger, MatchType } from './commands/command-trigger';
