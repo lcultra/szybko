@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports -- TODO-P2: extract port interfaces for infra deps */
 import type { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
 import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';
 import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';

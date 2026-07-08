@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports -- TODO-P2: extract port interfaces for infra/presentation deps */
 import type { HostPlatformConfig } from '../../bootstrap/host-platform-config';
 import type { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
 import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';

@@ -7,15 +7,21 @@ export type { RuntimeApplicationService as IRuntimeApplicationService } from './
 export { RuntimeApplicationService } from './app/runtime/runtime-application-service';
 // ── Application Runtime ───────────────────────────────────────────────
 export { RuntimeCoordinator } from './app/runtime/runtime-coordinator';
+// ── Input Pipeline ────────────────────────────────────────────────────
+export { collectFromSearch } from './app/search/input-context-collector';
 export { LauncherItemService } from './app/search/launcher-item-service';
+export { MatchSessionManager } from './app/search/match-session-manager';
+export { runPipeline } from './app/search/matcher-pipeline';
 export { SearchApplicationService } from './app/search/search-application-service';
+
+export { SearchService } from './app/search/search-service';
 // ── Application Services ──────────────────────────────────────────────
 export { StartupService } from './app/startup/startup-service';
 // ── Bootstrap ──────────────────────────────────────────────────────────
 export { createHostPlatform } from './bootstrap/create-host-platform';
 export type { HostPlatform } from './bootstrap/host-platform';
-
 export type { HostPlatformConfig } from './bootstrap/host-platform-config';
+
 // ── Domain Types ──────────────────────────────────────────────────────
 export type { PluginAvailability, PluginPackage, PluginSourceKind } from './domain/plugins/plugin';
 export type { PluginInstallation } from './domain/plugins/plugin-installation';
@@ -26,18 +32,12 @@ export { CommandCatalog } from './infrastructure/commands/sqlite-command-catalog
 export { RuntimeHostAttacher } from './infrastructure/electron/runtime-host-attacher';
 export { RuntimeManager } from './infrastructure/electron/runtime-manager';
 export { RuntimeStatePublisher } from './infrastructure/electron/runtime-state-publisher';
-
 export { RuntimeViewFactory } from './infrastructure/electron/runtime-view-factory';
 export type { ActivationContext, PluginRuntime } from './infrastructure/electron/types';
 export { PluginCatalog } from './infrastructure/filesystem/plugin-catalog';
 export { PluginLoader } from './infrastructure/filesystem/plugin-package-loader';
 export { PluginDiscovery } from './infrastructure/filesystem/plugin-sources/builtin-plugin-source';
 export { InstallationSynchronizer } from './infrastructure/filesystem/plugin-sources/installation-synchronizer';
-// ── Input Pipeline ────────────────────────────────────────────────────
-export { collectFromSearch } from './infrastructure/input/input-context-collector';
-export { MatchSessionManager } from './infrastructure/input/match-session-manager';
-export { runPipeline } from './infrastructure/input/matcher-pipeline';
-export { SearchService } from './infrastructure/input/search-service';
 export { ElectronNativeCapabilityService } from './infrastructure/native/electron-native-capability-service';
 export type { NativeCapabilityService } from './infrastructure/native/native-capability-service';
 export { type AssetResolver, initAssetProtocol, registerAssetHandler } from './infrastructure/protocol/asset-protocol';

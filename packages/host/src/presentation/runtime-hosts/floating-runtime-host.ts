@@ -20,7 +20,8 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
         private hostPreloadPath: string,
     ) { this.id = id; }
 
-    attach(view: WebContentsView, meta: HostMeta): void {
+    attach(view: unknown, meta: HostMeta): void {
+        const webView = view as WebContentsView;
         this.currentMeta = meta;
 
         if (!this.window) {
@@ -30,9 +31,9 @@ export class FloatingRuntimeHost implements RuntimeHost, Focusable, Pinnable, Cl
             this.pushSlotUpdate(meta); // 池复用 → IPC 更新 slot
         }
 
-        if (view) {
-            this.view = view;
-            this.window!.contentView.addChildView(view);
+        if (webView) {
+            this.view = webView;
+            this.window!.contentView.addChildView(webView);
             this.relayout();
         }
 

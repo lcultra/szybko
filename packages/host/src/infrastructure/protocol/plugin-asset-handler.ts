@@ -1,4 +1,4 @@
-import type { PluginCatalog } from '../filesystem/plugin-catalog';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
 import { readFile } from 'node:fs/promises';
 import { extname, relative, resolve } from 'node:path';
 import { registerAssetHandler } from './asset-protocol';
@@ -14,7 +14,7 @@ function isContainedIn(base: string, target: string): boolean {
     return !relativePath.startsWith('..') && relativePath !== '';
 }
 
-export function registerPluginAssetHandler(catalog: PluginCatalog): void {
+export function registerPluginAssetHandler(catalog: PluginQuery): void {
     registerAssetHandler('plugin', async (pathname: string) => {
         // pathname = "/<pluginId>/<encoded-relative-path>"
         const [pluginId, ...rest] = pathname.split('/').filter(Boolean);

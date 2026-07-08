@@ -14,9 +14,9 @@ export class LauncherRuntimeHost implements RuntimeHost {
         this.id = id;
     }
 
-    attach(view: WebContentsView, _meta: HostMeta): void {
-        this.currentView = view;
-        this.windowManager.addChildView(view);
+    attach(view: unknown, _meta: HostMeta): void {
+        this.currentView = view as WebContentsView;
+        this.windowManager.addChildView(this.currentView);
     }
 
     detach(): void {

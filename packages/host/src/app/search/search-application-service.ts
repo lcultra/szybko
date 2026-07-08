@@ -1,21 +1,22 @@
+/* eslint-disable no-restricted-imports -- TODO-P2: extract port interfaces for infra/presentation deps */
 import type { LauncherItem, LauncherItemId, SearchRequest } from '@szybko/shared';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
 import type { SearchProvider } from '../../domain/search/search-provider';
-import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
-import type { MatchSessionManager } from '../../infrastructure/input/match-session-manager';
 import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-database';
 import type { WindowManager } from '../../presentation/window/window-manager';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { LauncherItemService } from './launcher-item-service';
+import type { MatchSessionManager } from './match-session-manager';
 import { IPC } from '@szybko/shared';
-import { collectFromSearch } from '../../infrastructure/input/input-context-collector';
 import { PinnedSectionProvider } from '../../infrastructure/search/providers/pinned-provider';
 import { PluginProvider } from '../../infrastructure/search/providers/plugin-provider';
 import { RecentSectionProvider } from '../../infrastructure/search/providers/recent-provider';
+import { collectFromSearch } from './input-context-collector';
 import { SearchSession } from './search-session';
 
 export interface SearchServiceDeps {
     platformDb: PlatformDatabase;
-    pluginCatalog: PluginCatalog;
+    pluginCatalog: PluginQuery;
     coordinator: RuntimeCoordinator;
     windowManager: WindowManager;
     sessionManager: MatchSessionManager;

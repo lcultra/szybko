@@ -58,14 +58,16 @@ export default antfu(
             }],
         },
     },
-    // app/ 必须不引入 Electron、Drizzle、schema
+    // app/ 必须不引入 Electron、Drizzle、schema、presentation
     {
         files: ['packages/host/src/app/**/*.ts'],
         rules: {
             'no-restricted-imports': ['error', {
                 patterns: [
                     { group: ['electron', 'drizzle-orm'], message: 'app/ 禁止直接引入 Electron 或 Drizzle' },
+                    { group: ['../schema', './schema', '../../schema', '../../../schema'], message: 'app/ 禁止直接引入 schema.ts' },
                     { group: ['../infrastructure/sqlite/schema'], message: 'app/ 禁止引入 schema' },
+                    { group: ['../presentation/**', '../../presentation/**', '../../../presentation/**'], message: 'app/ 禁止引入 presentation/ — 应通过 domain 接口交互' },
                 ],
             }],
         },
@@ -75,13 +77,11 @@ export default antfu(
         files: [
             'packages/host/src/domain/**/*.ts',
             'packages/host/src/ipc/**/*.ts',
-            'packages/host/src/app/**/*.ts',
             'packages/host/src/bootstrap/**/*.ts',
             'packages/host/src/presentation/**/*.ts',
             'packages/host/src/infrastructure/commands/**/*.ts',
             'packages/host/src/infrastructure/electron/**/*.ts',
             'packages/host/src/infrastructure/filesystem/**/*.ts',
-            'packages/host/src/infrastructure/input/**/*.ts',
             'packages/host/src/infrastructure/native/**/*.ts',
             'packages/host/src/infrastructure/protocol/**/*.ts',
             'packages/host/src/infrastructure/search/**/*.ts',

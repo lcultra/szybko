@@ -5,8 +5,8 @@ import type { RuntimeApplicationService } from '../app/runtime/ports';
 import type { RuntimeCoordinator } from '../app/runtime/runtime-coordinator';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
 import type { SearchApplicationService } from '../app/search/search-application-service';
+import type { PluginQuery } from '../domain/plugins/plugin-query';
 import type { CommandCatalog } from '../infrastructure/commands/sqlite-command-catalog';
-import type { PluginCatalog } from '../infrastructure/filesystem/plugin-catalog';
 import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
 import type { ShortcutRegistry } from '../presentation/window/shortcut-registry';
 import type { WindowManager } from '../presentation/window/window-manager';
@@ -26,7 +26,7 @@ export function registerIpcHandlers(
     coordinator: RuntimeCoordinator,
     commandCatalog: CommandCatalog,
     platformDb?: PlatformDatabase,
-    pluginCatalog?: PluginCatalog,
+    pluginCatalog?: PluginQuery,
     shortcutRegistry?: ShortcutRegistry,
     searchService?: SearchApplicationService,
     launcherItemService?: LauncherItemService,

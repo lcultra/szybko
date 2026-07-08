@@ -65,9 +65,9 @@ function createRepositories(db: PlatformDrizzleDatabase) {
 export class CommandCatalog {
     constructor(private platformDb: PlatformDatabase) {}
 
-    private pluginCatalog: import('../../infrastructure/filesystem/plugin-catalog').PluginCatalog | null = null;
+    private pluginCatalog: import('../../domain/plugins/plugin-query').PluginQuery | null = null;
 
-    setPluginCatalog(catalog: import('../../infrastructure/filesystem/plugin-catalog').PluginCatalog): void {
+    setPluginCatalog(catalog: import('../../domain/plugins/plugin-query').PluginQuery): void {
         this.pluginCatalog = catalog;
     }
 

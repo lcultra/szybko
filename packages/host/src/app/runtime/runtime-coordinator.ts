@@ -1,9 +1,10 @@
+/* eslint-disable no-restricted-imports -- TODO-P2: extract port interfaces for infra/presentation deps */
 import type { PluginEnterPayload } from '@szybko/shared';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
+import type { RuntimeHost } from '../../domain/runtime/runtime-host';
 import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';
 import type { PluginRuntime } from '../../infrastructure/electron/types';
-import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
 import type { FloatingRuntimeHost } from '../../presentation/runtime-hosts/floating-runtime-host';
-import type { RuntimeHost } from '../../presentation/runtime-hosts/runtime-host';
 import type { RuntimeHostRegistry } from '../../presentation/runtime-hosts/runtime-host-registry';
 import type { ShortcutRegistry } from '../../presentation/window/shortcut-registry';
 import { Menu } from 'electron';
@@ -17,7 +18,7 @@ export class RuntimeCoordinator {
     constructor(
         private runtimeManager: RuntimeManager,
         private hostRegistry: RuntimeHostRegistry,
-        private pluginCatalog: PluginCatalog,
+        private pluginCatalog: PluginQuery,
         private shortcutRegistry: ShortcutRegistry,
     ) {}
 

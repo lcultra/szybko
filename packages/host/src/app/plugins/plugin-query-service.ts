@@ -1,13 +1,13 @@
-import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
 
 export class PluginQueryService {
-    constructor(private pluginCatalog: PluginCatalog) {}
+    constructor(private pluginQuery: PluginQuery) {}
 
     listPlugins() {
-        return this.pluginCatalog.getAll();
+        return this.pluginQuery.getAll();
     }
 
     getPlugin(pluginId: string) {
-        return this.pluginCatalog.get(pluginId);
+        return this.pluginQuery.get(pluginId);
     }
 }

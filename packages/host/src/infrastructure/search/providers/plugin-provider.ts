@@ -5,13 +5,13 @@ import type {
     LauncherItemId,
 } from '@szybko/shared';
 import type { RuntimeCoordinator } from '../../../app/runtime/runtime-coordinator';
+import type { PluginQuery } from '../../../domain/plugins/plugin-query';
 import type { ContextMenuItem, SearchProvider } from '../../../domain/search/search-provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from '../../../domain/search/types';
-import type { PluginCatalog } from '../../filesystem/plugin-catalog';
 import type { PlatformDrizzleDatabase } from '../../sqlite/platform-database';
+import { MatchSessionManager } from '../../../app/search/match-session-manager';
+import { SearchService } from '../../../app/search/search-service';
 import { findTitleMatchRanges } from '../../../domain/commands/feature-normalizer';
-import { MatchSessionManager } from '../../input/match-session-manager';
-import { SearchService } from '../../input/search-service';
 
 /**
  * PluginProvider——从命令库搜索插件命令匹配。
@@ -28,7 +28,7 @@ export class PluginProvider implements SearchProvider {
     constructor(
         db: PlatformDrizzleDatabase,
         private coordinator: RuntimeCoordinator,
-        private catalog: PluginCatalog,
+        private catalog: PluginQuery,
         sessionManager?: MatchSessionManager,
     ) {
         this.searchService = new SearchService(db);

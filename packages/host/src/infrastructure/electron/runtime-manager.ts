@@ -1,8 +1,8 @@
 import type { LoadState, MountState, PluginEnterPayload } from '@szybko/shared';
 import type { WebContents } from 'electron';
-import type { RuntimeHost } from '../../presentation/runtime-hosts/runtime-host';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
+import type { RuntimeHost } from '../../domain/runtime/runtime-host';
 import type { WindowManager } from '../../presentation/window/window-manager';
-import type { PluginCatalog } from '../filesystem/plugin-catalog';
 import type { PluginRuntime } from './types';
 import { IPC } from '@szybko/shared';
 import { isFocusable } from '../../presentation/runtime-hosts/capabilities';
@@ -33,7 +33,7 @@ export class RuntimeManager {
     }
 
     constructor(
-        private pluginManager: PluginCatalog,
+        private pluginManager: PluginQuery,
         private windowManager: WindowManager,
         private pluginPreloadPath: string,
     ) {

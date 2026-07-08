@@ -1,15 +1,12 @@
+import type { PluginInfo, PluginQuery } from '../../domain/plugins/plugin-query';
 import type { PlatformDatabase } from '../sqlite/platform-database';
 import { PluginInstallationRepository } from '../sqlite/repositories/plugin-installation-repository';
 import { PluginDiscovery } from './plugin-sources/builtin-plugin-source';
 import { InstallationSynchronizer } from './plugin-sources/installation-synchronizer';
 
-export interface PluginInfo {
-    id: string;
-    manifest: import('@szybko/shared').PluginManifest;
-    path: string;
-}
+export type { PluginInfo } from '../../domain/plugins/plugin-query';
 
-export class PluginCatalog {
+export class PluginCatalog implements PluginQuery {
     private plugins = new Map<string, PluginInfo>();
     private discovery = new PluginDiscovery();
 

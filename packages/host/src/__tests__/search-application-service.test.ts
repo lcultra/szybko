@@ -1,7 +1,7 @@
 import type { RuntimeCoordinator } from '../app/runtime/runtime-coordinator';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
-import type { PluginCatalog } from '../infrastructure/filesystem/plugin-catalog';
-import type { MatchSessionManager } from '../infrastructure/input/match-session-manager';
+import type { MatchSessionManager } from '../app/search/match-session-manager';
+import type { PluginQuery } from '../domain/plugins/plugin-query';
 import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
 import type { WindowManager } from '../presentation/window/window-manager';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -42,7 +42,7 @@ function createMockWin() {
 
 interface Deps {
     platformDb?: PlatformDatabase;
-    pluginCatalog?: PluginCatalog;
+    pluginCatalog?: PluginQuery;
     coordinator?: RuntimeCoordinator;
     windowManager?: WindowManager;
     sessionManager?: MatchSessionManager;
@@ -55,7 +55,7 @@ function createService(overrides?: Deps): SearchApplicationService {
 
     return new SearchApplicationService({
         platformDb: overrides?.platformDb ?? baseDb,
-        pluginCatalog: overrides?.pluginCatalog ?? ({} as PluginCatalog),
+        pluginCatalog: overrides?.pluginCatalog ?? ({} as PluginQuery),
         coordinator: overrides?.coordinator ?? ({} as RuntimeCoordinator),
         windowManager: overrides?.windowManager ?? ({ getWindow: () => null } as unknown as WindowManager),
         sessionManager: overrides?.sessionManager ?? ({} as MatchSessionManager),

@@ -1,11 +1,11 @@
 import type { PluginManifest } from '@szybko/shared';
-import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
 import { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
 
 export class CommandIndexService {
     constructor(
         private commandCatalog: CommandCatalog,
-        private pluginCatalog: PluginCatalog,
+        private pluginCatalog: PluginQuery,
     ) {}
 
     async indexPluginManifest(pluginId: string, manifest: PluginManifest, pluginPath: string): Promise<void> {

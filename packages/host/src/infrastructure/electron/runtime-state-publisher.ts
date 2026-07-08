@@ -1,6 +1,6 @@
 import type { LoadState, MountState } from '@szybko/shared';
+import type { PluginQuery } from '../../domain/plugins/plugin-query';
 import type { WindowManager } from '../../presentation/window/window-manager';
-import type { PluginCatalog } from '../filesystem/plugin-catalog';
 import { IPC } from '@szybko/shared';
 
 /**
@@ -9,7 +9,7 @@ import { IPC } from '@szybko/shared';
 export class RuntimeStatePublisher {
     constructor(
         private windowManager: WindowManager,
-        private pluginManager: PluginCatalog,
+        private pluginManager: PluginQuery,
     ) {}
 
     publish(runtimeId: string, pluginId: string, mountState: MountState, loadState: LoadState, cmdLabel?: string): void {
