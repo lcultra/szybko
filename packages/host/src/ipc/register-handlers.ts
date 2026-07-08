@@ -53,7 +53,7 @@ export function registerIpcHandlers(
     // ── Delegated plugin management handlers ────────────────────────
 
     if (pluginLifecycle) {
-        registerPluginManagementIpcHandlers({ pluginLifecycle });
+        registerPluginManagementIpcHandlers({ pluginLifecycle, triggerRefresh });
     }
 
     // ── Window control ─────────────────────────────────────────────

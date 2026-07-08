@@ -8,6 +8,7 @@ type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['resp
 
 export function registerPluginManagementIpcHandlers(deps: {
   pluginLifecycle: PluginLifecycleService;
+  triggerRefresh: () => void;
 }): void {
   ipcMain.handle(
     IPC.PLUGIN_SET_ENABLED,
@@ -18,6 +19,7 @@ export function registerPluginManagementIpcHandlers(deps: {
         } else {
           await deps.pluginLifecycle.disablePlugin(pluginId);
         }
+        deps.triggerRefresh();
         return { ok: true };
       } catch (err) {
         return { ok: false, error: String(err) };
