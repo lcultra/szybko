@@ -1,6 +1,6 @@
 import type { PluginFeature } from '@szybko/shared';
-import type { CommandCatalog } from '../../commands/command-catalog';
-import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
+import type { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
+import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { SearchApplicationService } from '../search/search-application-service';
 
 export class DynamicFeatureService {

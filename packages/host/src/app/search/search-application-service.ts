@@ -1,17 +1,17 @@
 import type { SearchRequest, LauncherItem, LauncherItemId } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
 import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-database';
-import type { SearchProvider } from '../../search/provider';
-import { SearchSession } from '../../search/search-session';
-import { PluginProvider } from '../../search/plugin-provider';
-import { PinnedSectionProvider } from '../../search/pinned-provider';
-import { RecentSectionProvider } from '../../search/recent-provider';
-import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
-import type { PluginCatalog } from '../../plugins/plugin-catalog';
+import type { SearchProvider } from '../../domain/search/search-provider';
+import { SearchSession } from './search-session';
+import { PluginProvider } from '../../infrastructure/search/providers/plugin-provider';
+import { PinnedSectionProvider } from '../../infrastructure/search/providers/pinned-provider';
+import { RecentSectionProvider } from '../../infrastructure/search/providers/recent-provider';
+import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
+import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
 import type { WindowManager } from '../../presentation/window/window-manager';
-import type { MatchSessionManager } from '../../input/match-session-manager';
+import type { MatchSessionManager } from '../../infrastructure/input/match-session-manager';
 import type { LauncherItemService } from './launcher-item-service';
-import { collectFromSearch } from '../../input/input-context-collector';
+import { collectFromSearch } from '../../infrastructure/input/input-context-collector';
 
 export interface SearchServiceDeps {
   platformDb: PlatformDatabase;

@@ -1,6 +1,6 @@
 import type { PluginManifest } from '@szybko/shared';
-import { CommandCatalog } from '../../commands/command-catalog';
-import type { PluginCatalog } from '../../plugins/plugin-catalog';
+import { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
+import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
 
 export class CommandIndexService {
     constructor(

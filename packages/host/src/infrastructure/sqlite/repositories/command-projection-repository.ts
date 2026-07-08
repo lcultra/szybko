@@ -1,4 +1,4 @@
-import type { CommandProjection } from '../../../commands/command-projection-builder';
+import type { CommandProjection } from '../../../domain/commands/command-projection-builder';
 import type { PlatformDrizzleDatabase } from '../platform-database';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { commandAlias, commandProjectionMeta, commandTrigger, commandTriggerSearch, effectiveFeature, pluginInstallation } from '../schema';

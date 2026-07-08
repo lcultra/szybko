@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SearchApplicationService } from '../app/search/search-application-service';
 import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
-import type { PluginCatalog } from '../plugins/plugin-catalog';
-import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
+import type { PluginCatalog } from '../infrastructure/filesystem/plugin-catalog';
+import type { RuntimeCoordinator } from '../app/runtime/runtime-coordinator';
 import type { WindowManager } from '../presentation/window/window-manager';
-import type { MatchSessionManager } from '../input/match-session-manager';
+import type { MatchSessionManager } from '../infrastructure/input/match-session-manager';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
 
 // ── Module-level mocks ──
@@ -12,7 +12,7 @@ import type { LauncherItemService } from '../app/search/launcher-item-service';
 /** Shared holder that the SearchSession mock updates on construction. */
 const sessionHolder = vi.hoisted(() => ({ current: null as any }));
 
-vi.mock('../search/search-session', () => ({
+vi.mock('../app/search/search-session', () => ({
   SearchSession: vi.fn().mockImplementation(function(queryId: string) {
     const session = {
       queryId,

@@ -34,6 +34,24 @@ export type { NativeCapabilityService } from './infrastructure/native/native-cap
 export { PluginDiscovery } from './infrastructure/filesystem/plugin-sources/builtin-plugin-source';
 export { PluginLoader } from './infrastructure/filesystem/plugin-package-loader';
 export { type AssetResolver, initAssetProtocol, registerAssetHandler } from './infrastructure/protocol/asset-protocol';
+export { CommandCatalog } from './infrastructure/commands/sqlite-command-catalog';
+export { PluginCatalog } from './infrastructure/filesystem/plugin-catalog';
+export { InstallationSynchronizer } from './infrastructure/filesystem/plugin-sources/installation-synchronizer';
+export { registerPluginAssetHandler } from './infrastructure/protocol/plugin-asset-handler';
+export { RuntimeManager } from './infrastructure/electron/runtime-manager';
+export { RuntimeHostAttacher } from './infrastructure/electron/runtime-host-attacher';
+export { RuntimeStatePublisher } from './infrastructure/electron/runtime-state-publisher';
+export { RuntimeViewFactory } from './infrastructure/electron/runtime-view-factory';
+export type { ActivationContext, PluginRuntime } from './infrastructure/electron/types';
+
+// ── Application Runtime ───────────────────────────────────────────────
+export { RuntimeCoordinator } from './app/runtime/runtime-coordinator';
+
+// ── Input Pipeline ────────────────────────────────────────────────────
+export { collectFromSearch } from './infrastructure/input/input-context-collector';
+export { MatchSessionManager } from './infrastructure/input/match-session-manager';
+export { runPipeline } from './infrastructure/input/matcher-pipeline';
+export { SearchService } from './infrastructure/input/search-service';
 
 // ── Presentation ──────────────────────────────────────────────────────
 export { WindowManager } from './presentation/window/window-manager';
@@ -43,22 +61,6 @@ export { RuntimeHostRegistry } from './presentation/runtime-hosts/runtime-host-r
 export { LauncherRuntimeHost } from './presentation/runtime-hosts/launcher-runtime-host';
 export { FloatingRuntimeHost } from './presentation/runtime-hosts/floating-runtime-host';
 
-// ── Legacy — origin locations (real implementations, not yet relocated) ──
-export { CommandCatalog } from './commands/command-catalog';
-export { PluginCatalog } from './plugins/plugin-catalog';
-export { InstallationSynchronizer } from './plugins/installation-synchronizer';
-export { registerPluginAssetHandler } from './plugins/plugin-asset-handler';
-export { RuntimeCoordinator } from './runtime/runtime-coordinator';
-export { RuntimeHostAttacher } from './runtime/runtime-host-attacher';
-export { RuntimeManager } from './runtime/runtime-manager';
-export { RuntimeStatePublisher } from './runtime/runtime-state-publisher';
-export { RuntimeViewFactory } from './runtime/runtime-view-factory';
-export type { ActivationContext, PluginRuntime } from './runtime/types';
-
-// ── Legacy — input pipeline (needs future refactoring) ─────────────────
-export { collectFromSearch } from './input/input-context-collector';
-export { MatchSessionManager } from './input/match-session-manager';
-export { runPipeline } from './input/matcher-pipeline';
-export { SearchService } from './input/search-service';
+// ── Other ─────────────────────────────────────────────────────────────
 export { createExecutor } from './ipc/execute-action';
 export { registerIpcHandlers } from './ipc/register-handlers';

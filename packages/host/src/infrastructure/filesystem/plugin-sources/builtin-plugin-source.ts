@@ -1,4 +1,4 @@
-import type { PluginInfo } from '../../../plugins/plugin-catalog';
+import type { PluginInfo } from '../plugin-catalog';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { PluginLoader } from '../plugin-package-loader';

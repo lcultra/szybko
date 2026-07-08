@@ -1,4 +1,4 @@
-import type { PluginCatalog } from '../../plugins/plugin-catalog';
+import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
 
 export class PluginQueryService {
   constructor(private pluginCatalog: PluginCatalog) {}

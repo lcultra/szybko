@@ -1,12 +1,12 @@
 import type { HostPlatformConfig } from '../../bootstrap/host-platform-config';
-import type { CommandCatalog } from '../../commands/command-catalog';
-import type { PluginCatalog } from '../../plugins/plugin-catalog';
-import type { RuntimeManager } from '../../runtime/runtime-manager';
-import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
+import type { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
+import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
+import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';
+import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { ShortcutRegistry } from '../../presentation/window/shortcut-registry';
 import type { WindowManager } from '../../presentation/window/window-manager';
 import { initAssetProtocol } from '../../infrastructure/protocol/asset-protocol';
-import { registerPluginAssetHandler } from '../../plugins/plugin-asset-handler';
+import { registerPluginAssetHandler } from '../../infrastructure/protocol/plugin-asset-handler';
 
 export interface StartupDeps {
   commandCatalog: CommandCatalog;

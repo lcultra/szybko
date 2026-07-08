@@ -1,5 +1,5 @@
 import type { PluginEnterPayload } from '@szybko/shared';
-import { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
+import { RuntimeCoordinator } from './runtime-coordinator';
 import type { PluginId, RuntimeId } from '../../shared/ids';
 
 export class RuntimeApplicationService {

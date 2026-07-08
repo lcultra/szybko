@@ -1,8 +1,8 @@
 import type { PluginFeature } from '@szybko/shared';
-import type { ManifestFeatureInput } from '../../../commands/command-projection-builder';
+import type { ManifestFeatureInput } from '../../../domain/commands/command-projection-builder';
 import type { PlatformDrizzleDatabase } from '../platform-database';
 import { eq } from 'drizzle-orm';
-import { normalizeFeature } from '../../../commands/feature-normalizer';
+import { normalizeFeature } from '../../../domain/commands/feature-normalizer';
 import { manifestFeatureSnapshot } from '../schema';
 
 export class ManifestFeatureRepository {

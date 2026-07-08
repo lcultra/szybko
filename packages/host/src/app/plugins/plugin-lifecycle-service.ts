@@ -1,7 +1,7 @@
-import type { PluginCatalog } from '../../plugins/plugin-catalog';
-import type { CommandCatalog } from '../../commands/command-catalog';
-import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
-import type { RuntimeManager } from '../../runtime/runtime-manager';
+import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
+import type { CommandCatalog } from '../../infrastructure/commands/sqlite-command-catalog';
+import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
+import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';
 import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-database';
 import type { LauncherItemService } from '../search/launcher-item-service';
 import { PluginInstallationRepository } from '../../infrastructure/sqlite/repositories/plugin-installation-repository';

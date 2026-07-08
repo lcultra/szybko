@@ -1,8 +1,8 @@
 import type { PluginFeature } from '@szybko/shared';
-import type { FeatureOverrideInput } from '../../../commands/command-projection-builder';
+import type { FeatureOverrideInput } from '../../../domain/commands/command-projection-builder';
 import type { PlatformDrizzleDatabase } from '../platform-database';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { normalizeFeature, normalizeFeatureCode } from '../../../commands/feature-normalizer';
+import { normalizeFeature, normalizeFeatureCode } from '../../../domain/commands/feature-normalizer';
 import { featureOverride } from '../schema';
 
 export class FeatureOverrideRepository {
