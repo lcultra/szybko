@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { MapPin, MapPinCheckInside, Menu, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { PluginRuntimeService } from '../../services/plugin-runtime';
 import { useRuntimeStore } from '../../stores/runtime-store';
 
@@ -16,11 +16,13 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
     const clearSlot = useRuntimeStore(s => s.clearSlot);
     const isFloating = hostType === 'floating';
     const [iconFailed, setIconFailed] = useState(false);
-    // runtimeId 变化时重置 icon 加载状态（pool 复用切换插件）
     const runtimeIdRef = useRef(activeRuntimeId);
+    const [pinned, setPinned] = useState(false);
+    // runtimeId 变化时重置 icon 与 pin 状态（pool 复用切换插件）
     if (runtimeIdRef.current !== activeRuntimeId) {
         runtimeIdRef.current = activeRuntimeId;
         setIconFailed(false);
+        setPinned(false);
     }
 
     const handleClose = useCallback(() => {
@@ -43,11 +45,6 @@ export function PluginHeader({ hostType = 'launcher' }: PluginHeaderProps) {
             PluginRuntimeService.showMenu(activeRuntimeId, hostType);
     }, [activeRuntimeId, hostType]);
 
-    const [pinned, setPinned] = useState(false);
-    // runtimeId 变化时重置 pin 状态（pool 复用切换插件）
-    useEffect(() => {
-        setPinned(false);
-    }, [activeRuntimeId]);
     const handlePin = useCallback(() => {
         if (!activeRuntimeId)
             return;

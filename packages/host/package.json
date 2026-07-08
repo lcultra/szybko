@@ -10,8 +10,8 @@
     "types": "./src/index.ts",
     "scripts": {
         "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "peerDependencies": {
         "electron": "^43.0"

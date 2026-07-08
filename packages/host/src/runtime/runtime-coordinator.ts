@@ -1,8 +1,8 @@
 import type { PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
-import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { FloatingRuntimeHost } from '../window/hosts/floating-runtime-host';
+import type { RuntimeHost } from '../window/hosts/runtime-host';
 import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
 import type { ShortcutRegistry } from '../window/shortcut-registry';
 import type { RuntimeManager } from './runtime-manager';

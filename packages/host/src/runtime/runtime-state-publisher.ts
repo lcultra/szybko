@@ -43,12 +43,14 @@ function resolveIconUrl(
     pluginId: string,
     featureCode?: string,
 ): string | undefined {
-    if (!manifest) return undefined;
+    if (!manifest)
+        return undefined;
     const feature = featureCode
         ? manifest.features.find(f => f.code === featureCode)
         : undefined;
     const iconPath = feature?.icon ?? manifest.logo;
-    if (!iconPath) return undefined;
+    if (!iconPath)
+        return undefined;
     const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
     return `asset://plugin/${encodeURIComponent(pluginId)}/${encoded}`;
 }

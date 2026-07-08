@@ -77,7 +77,7 @@ void app.whenReady().then(async () => {
             description: '切换主窗口显示',
             bindings: [
                 { id: 'mac', key: ' ', modifiers: { meta: true }, platforms: ['darwin'], accelerator: 'Command+Space' },
-                { id: 'win', key: ' ', modifiers: { alt: true },  platforms: ['win32', 'linux'], accelerator: 'Alt+Space' },
+                { id: 'win', key: ' ', modifiers: { alt: true }, platforms: ['win32', 'linux'], accelerator: 'Alt+Space' },
             ],
         },
         {
@@ -144,7 +144,8 @@ void app.whenReady().then(async () => {
     ]);
 
     shortcutRegistry.onAction('window:toggle', () => {
-        if (windowManager.isVisible()) windowManager.hide();
+        if (windowManager.isVisible())
+            windowManager.hide();
         else windowManager.show();
     });
 

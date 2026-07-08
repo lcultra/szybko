@@ -1,5 +1,5 @@
-import type { NavigationMap } from './navigation';
 import type { ShortcutActionDef } from '@szybko/shared';
+import type { NavigationMap } from './navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 interface UseKeyboardOptions {

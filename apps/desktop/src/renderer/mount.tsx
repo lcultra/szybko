@@ -13,7 +13,8 @@ initTheme();
  */
 async function initLayoutConstants(): Promise<void> {
     const api = window.szybkoInternal?.getLayoutConstants;
-    if (!api) return;
+    if (!api)
+        return;
     const { css } = await api();
     const root = document.documentElement;
     for (const [name, val] of Object.entries(css))

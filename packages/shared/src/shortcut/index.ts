@@ -1,7 +1,7 @@
 export type {
-  ShortcutPlatform,
-  ShortcutScope,
-  ShortcutModifiers,
-  ShortcutBinding,
-  ShortcutActionDef,
+    ShortcutActionDef,
+    ShortcutBinding,
+    ShortcutModifiers,
+    ShortcutPlatform,
+    ShortcutScope,
 } from './types';

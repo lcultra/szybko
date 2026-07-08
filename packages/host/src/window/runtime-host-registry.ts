@@ -45,7 +45,8 @@ export class RuntimeHostRegistry {
         if (this.floatingPool.length >= 2) {
             host.dispose();
             this.hosts.delete(host.id);
-        } else {
+        }
+        else {
             host.detach();
             this.floatingPool.push(host);
         }
@@ -53,7 +54,8 @@ export class RuntimeHostRegistry {
 
     /** 异步补充池到目标大小 2 */
     private scheduleReplenish(): void {
-        if (this.replenishing) return;
+        if (this.replenishing)
+            return;
         this.replenishing = true;
         setImmediate(() => {
             this.replenishing = false;

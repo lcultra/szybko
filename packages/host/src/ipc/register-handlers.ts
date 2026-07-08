@@ -6,6 +6,7 @@ import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { ShortcutRegistry } from '../window/shortcut-registry';
 import type { WindowManager } from '../window/window-manager';
 import { IPC } from '@szybko/shared';
+import { eq, sql } from 'drizzle-orm';
 import { BrowserWindow, ipcMain, Menu } from 'electron';
 import { collectFromSearch } from '../input/input-context-collector';
 import { MatchSessionManager } from '../input/match-session-manager';
@@ -14,7 +15,6 @@ import { PinnedItemRepository } from '../persistence/sqlite/repositories/pinned-
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
 import { UsageEventRepository } from '../persistence/sqlite/repositories/usage-event-repository';
 import { commandTrigger, commandTriggerSearch, pinnedItem, pluginInstallation, usageEvent } from '../persistence/sqlite/schema';
-import { eq, sql } from 'drizzle-orm';
 import {
     PinnedSectionProvider,
     PluginProvider,
