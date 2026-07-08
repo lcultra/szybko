@@ -1,6 +1,6 @@
 import path, { join } from 'node:path';
 import process from 'node:process';
-import { CommandCatalog, createPlatformDatabase, initAssetProtocol, PluginCatalog, registerIpcHandlers, registerPluginAssetHandler, RuntimeCoordinator, RuntimeManager, ShortcutRegistry, WindowManager } from '@szybko/host';
+import { CommandCatalog, createPlatformDatabase, initAssetProtocol, LauncherItemService, MatchSessionManager, PluginCatalog, registerIpcHandlers, registerPluginAssetHandler, RuntimeCoordinator, RuntimeManager, SearchApplicationService, ShortcutRegistry, WindowManager } from '@szybko/host';
 import { app, protocol } from 'electron';
 
 const windowManager = new WindowManager();
@@ -68,7 +68,18 @@ void app.whenReady().then(async () => {
         void win.loadFile(path.join(__dirname, 'renderer/index.html'));
     }
 
-    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager, shortcutRegistry);
+    const launcherItemService = new LauncherItemService(platformDb);
+    const searchService = new SearchApplicationService({
+        platformDb,
+        pluginCatalog: pluginManager,
+        coordinator,
+        windowManager,
+        sessionManager: new MatchSessionManager(),
+        launcherItemService,
+        emitter: () => {},
+    });
+
+    registerIpcHandlers(windowManager, coordinator, commandCatalog, platformDb, pluginManager, shortcutRegistry, searchService, launcherItemService);
 
     shortcutRegistry.define([
         {

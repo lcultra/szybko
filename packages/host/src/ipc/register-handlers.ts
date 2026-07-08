@@ -1,34 +1,25 @@
-import type { IpcInvokeContract, LauncherItem, LauncherItemId, SearchRequest, ShortcutScope } from '@szybko/shared';
+import type { IpcInvokeContract, ShortcutScope } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
 import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { ShortcutRegistry } from '../window/shortcut-registry';
 import type { WindowManager } from '../window/window-manager';
+import type { SearchApplicationService } from '../app/search/search-application-service';
+import type { LauncherItemService } from '../app/search/launcher-item-service';
 import { IPC } from '@szybko/shared';
 import { eq, sql } from 'drizzle-orm';
-import { BrowserWindow, ipcMain, Menu } from 'electron';
-import { collectFromSearch } from '../input/input-context-collector';
+import { ipcMain } from 'electron';
 import { MatchSessionManager } from '../input/match-session-manager';
 import { ElectronNativeCapabilityService } from '../native/electron-native-capability-service';
-import { PinnedItemRepository } from '../persistence/sqlite/repositories/pinned-item-repository';
 import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
-import { UsageEventRepository } from '../persistence/sqlite/repositories/usage-event-repository';
 import { commandTrigger, commandTriggerSearch, pinnedItem, pluginInstallation, usageEvent } from '../persistence/sqlite/schema';
-import {
-    PinnedSectionProvider,
-    PluginProvider,
-    RecentSectionProvider,
-    SearchProvider,
-    SearchSession,
-} from '../search';
 import { createExecutor } from './execute-action';
+import { registerSearchIpcHandlers } from './handlers/search-ipc-handlers';
+import { registerItemIpcHandlers } from './handlers/item-ipc-handlers';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
-
-let currentSession: SearchSession | null = null;
-let lastSearchRequest: SearchRequest | null = null;
 
 export function registerIpcHandlers(
     windowManager: WindowManager,
@@ -37,257 +28,27 @@ export function registerIpcHandlers(
     platformDb?: PlatformDatabase,
     pluginCatalog?: PluginCatalog,
     shortcutRegistry?: ShortcutRegistry,
+    searchService?: SearchApplicationService,
+    launcherItemService?: LauncherItemService,
 ) {
     const sessionManager = new MatchSessionManager();
     const executor = createExecutor(new ElectronNativeCapabilityService());
 
-    // ── Providers ──────────────────────────────────────────────────
+    // ── Delegated search/item handlers ────────────────────────────────
 
-    const pluginProvider = platformDb && pluginCatalog
-        ? new PluginProvider(platformDb.drizzle(), coordinator, pluginCatalog, sessionManager)
-        : null;
+    if (searchService) {
+        registerSearchIpcHandlers({ searchService });
+    }
 
-    const resolveFromProviders = async (itemId: LauncherItemId): Promise<LauncherItem | null> => {
-        // 1. Try current session cache
-        const sessionItem = currentSession?.resolveItem(itemId);
-        if (sessionItem)
-            return sessionItem;
-
-        // 2. Try owner provider's resolve
-        if (itemId.startsWith('plugin://') && pluginProvider) {
-            const resolved = await pluginProvider.resolve(itemId);
-            if (!resolved)
-                return null;
-
-            // 已禁用的插件不返回，让调用方跳过展示
-            const pluginId = itemId.replace('plugin://', '').split('/')[0];
-            const repo = new PluginInstallationRepository(platformDb!.drizzle());
-            if (!repo.isEnabled(pluginId))
-                return null;
-
-            return resolved;
-        }
-
-        // 3. Try independent providers as fallback (skip pinned/recent — their resolve()
-        //    delegates back to this function, which would cause infinite recursion)
-        for (const p of [pluginProvider].filter(Boolean) as SearchProvider[]) {
-            if (itemId.startsWith('plugin://') && p.id === 'plugin')
-                continue; // already tried in step 2
-            const resolved = await p.resolve(itemId);
-            if (resolved)
-                return resolved;
-        }
-
-        return null;
-    };
-
-    const pinnedProvider = platformDb
-        ? new PinnedSectionProvider(platformDb.drizzle(), resolveFromProviders)
-        : null;
-
-    const recentProvider = platformDb
-        ? new RecentSectionProvider(platformDb.drizzle(), resolveFromProviders)
-        : null;
-
-    const pinnedRepo = platformDb ? new PinnedItemRepository(platformDb.drizzle()) : null;
-    const usageRepo = platformDb ? new UsageEventRepository(platformDb.drizzle()) : null;
-
-    function triggerRefresh(): void {
-        if (!lastSearchRequest || !platformDb || !pluginProvider || !pinnedProvider || !recentProvider)
-            return;
-
-        const win = windowManager.getWindow();
-        if (!win || win.isDestroyed())
-            return;
-
-        if (currentSession) {
-            currentSession.cancel();
-        }
-
-        const snapshot = collectFromSearch(lastSearchRequest);
-        const providers = [pinnedProvider, recentProvider, pluginProvider].filter(Boolean) as SearchProvider[];
-
-        const session = new SearchSession(lastSearchRequest.queryId, providers, (res) => {
-            if (!win.isDestroyed()) {
-                win.webContents.send(IPC.SEARCH_RESPONSE, res);
-            }
-        });
-
-        currentSession = session;
-        session.search(snapshot).catch((err) => {
-            console.error('[IPC] Refresh search error:', err);
+    if (launcherItemService && searchService) {
+        registerItemIpcHandlers({
+            launcherItemService,
+            searchService,
+            triggerRefresh: () => searchService.triggerRefresh(),
         });
     }
 
-    // ── Search ─────────────────────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.SEARCH_QUERY,
-        async (_event, req: IpcRequest<typeof IPC.SEARCH_QUERY>): Promise<IpcResponse<typeof IPC.SEARCH_QUERY>> => {
-            if (!platformDb)
-                return { ok: false };
-            if (!pluginProvider || !pinnedProvider || !recentProvider)
-                return { ok: false };
-
-            // 取消上一个仍在进行的会话
-            if (currentSession) {
-                currentSession.cancel();
-            }
-            currentSession = null;
-
-            // 保存请求用于后续刷新
-            lastSearchRequest = req;
-
-            const snapshot = collectFromSearch(req);
-            const win = windowManager.getWindow();
-            if (!win || win.isDestroyed())
-                return { ok: false };
-
-            // 所有 provider 都在 session 中注册（用于 execute），但只调用有结果的 provider search
-            const providers = [pinnedProvider, recentProvider, pluginProvider].filter(Boolean) as SearchProvider[];
-
-            const session = new SearchSession(req.queryId, providers, (res) => {
-                if (!win.isDestroyed()) {
-                    win.webContents.send(IPC.SEARCH_RESPONSE, res);
-                }
-            });
-
-            currentSession = session;
-
-            // 异步执行搜索，不阻塞 IPC 返回
-            session.search(snapshot).catch((err) => {
-                console.error('[IPC] SearchSession error:', err);
-            });
-
-            return { ok: true, sessionId: session.sessionId };
-        },
-    );
-
-    ipcMain.handle(
-        IPC.SEARCH_CANCEL,
-        (): IpcResponse<typeof IPC.SEARCH_CANCEL> => {
-            if (currentSession) {
-                currentSession.cancel();
-                currentSession = null;
-            }
-            return { ok: true };
-        },
-    );
-
-    // ── Item pin ───────────────────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.ITEM_PIN,
-        (_event, { itemId, pin }: IpcRequest<typeof IPC.ITEM_PIN>): IpcResponse<typeof IPC.ITEM_PIN> => {
-            if (!pinnedRepo)
-                return { ok: false };
-            if (pin) {
-                pinnedRepo.add(itemId, Date.now());
-            }
-            else {
-                pinnedRepo.remove(itemId);
-            }
-            // Re-run current search to refresh UI
-            triggerRefresh();
-            return { ok: true };
-        },
-    );
-
-    ipcMain.handle(
-        IPC.ITEM_REORDER,
-        (_event, { itemId, toIndex }: IpcRequest<typeof IPC.ITEM_REORDER>): IpcResponse<typeof IPC.ITEM_REORDER> => {
-            if (!pinnedRepo)
-                return { ok: false };
-            pinnedRepo.reorder(itemId, toIndex);
-            // Re-run current search to refresh UI
-            triggerRefresh();
-            return { ok: true };
-        },
-    );
-
-    // ── Item context menu ──────────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.ITEM_CONTEXT_MENU,
-        (_event, req: IpcRequest<typeof IPC.ITEM_CONTEXT_MENU>): IpcResponse<typeof IPC.ITEM_CONTEXT_MENU> => {
-            const { itemId, screenX, screenY, source } = req;
-
-            // Check with repo if item is pinned
-            const isPinned = pinnedRepo?.list().some(r => r.itemId === itemId) ?? false;
-
-            const win = BrowserWindow.getFocusedWindow();
-            if (!win)
-                return { ok: false };
-
-            const menuBuilder: Electron.MenuItemConstructorOptions[] = [
-                {
-                    label: isPinned ? '取消固定"搜索框"' : '固定到"搜索框"',
-                    click: () => {
-                        if (isPinned) {
-                            pinnedRepo?.remove(itemId);
-                        }
-                        else {
-                            pinnedRepo?.add(itemId, Date.now());
-                        }
-                        triggerRefresh();
-                    },
-                },
-            ];
-
-            // 最近使用区域提供"从使用记录中删除"
-            if (source === 'recent') {
-                menuBuilder.push({
-                    label: '从"使用记录"中删除',
-                    click: () => {
-                        usageRepo?.removeByItemId(itemId);
-                        triggerRefresh();
-                    },
-                });
-            }
-
-            const built = Menu.buildFromTemplate(menuBuilder);
-            built.popup({ window: win, x: screenX, y: screenY });
-
-            return { ok: true };
-        },
-    );
-
-    // ── Item execute ───────────────────────────────────────────────
-
-    ipcMain.handle(
-        IPC.ITEM_EXECUTE,
-        async (
-            _event,
-            req: IpcRequest<typeof IPC.ITEM_EXECUTE>,
-        ): Promise<IpcResponse<typeof IPC.ITEM_EXECUTE>> => {
-            const { sessionId, queryId, itemId } = req;
-
-            // Validate session
-            if (!currentSession || currentSession.isCancelled) {
-                return { ok: false, error: 'Session expired' };
-            }
-            if (currentSession.sessionId !== sessionId) {
-                return { ok: false, error: 'Session expired' };
-            }
-            if (currentSession.queryId !== queryId) {
-                return { ok: false, error: 'Session expired' };
-            }
-
-            // Validate item exists in current session
-            if (!currentSession.resolveItem(itemId)) {
-                return { ok: false, error: 'Item not found in current session' };
-            }
-
-            // Record usage
-            usageRepo?.record(itemId);
-
-            const result = await currentSession.executeItem(itemId, {
-                queryId,
-                sessionId,
-            });
-            return result;
-        },
-    );
+    const triggerRefresh = () => searchService?.triggerRefresh();
 
     // ── Window control ─────────────────────────────────────────────
 
