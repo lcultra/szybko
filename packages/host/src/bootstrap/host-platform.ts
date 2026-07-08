@@ -1,5 +1,5 @@
 export interface HostPlatform {
-  start(): Promise<void>;
-  show(): void;
-  dispose(): void;
+    start: () => Promise<void>;
+    show: () => void;
+    dispose: () => void;
 }

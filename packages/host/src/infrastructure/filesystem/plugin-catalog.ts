@@ -1,7 +1,7 @@
 import type { PlatformDatabase } from '../sqlite/platform-database';
 import { PluginInstallationRepository } from '../sqlite/repositories/plugin-installation-repository';
-import { InstallationSynchronizer } from './plugin-sources/installation-synchronizer';
 import { PluginDiscovery } from './plugin-sources/builtin-plugin-source';
+import { InstallationSynchronizer } from './plugin-sources/installation-synchronizer';
 
 export interface PluginInfo {
     id: string;

@@ -1,6 +1,6 @@
 import type { LoadState, MountState } from '@szybko/shared';
-import type { PluginCatalog } from '../filesystem/plugin-catalog';
 import type { WindowManager } from '../../presentation/window/window-manager';
+import type { PluginCatalog } from '../filesystem/plugin-catalog';
 import { IPC } from '@szybko/shared';
 
 /**

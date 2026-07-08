@@ -1,11 +1,11 @@
 import type { PluginEnterPayload } from '@szybko/shared';
-import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
+import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';
 import type { PluginRuntime } from '../../infrastructure/electron/types';
+import type { PluginCatalog } from '../../infrastructure/filesystem/plugin-catalog';
 import type { FloatingRuntimeHost } from '../../presentation/runtime-hosts/floating-runtime-host';
 import type { RuntimeHost } from '../../presentation/runtime-hosts/runtime-host';
 import type { RuntimeHostRegistry } from '../../presentation/runtime-hosts/runtime-host-registry';
 import type { ShortcutRegistry } from '../../presentation/window/shortcut-registry';
-import type { RuntimeManager } from '../../infrastructure/electron/runtime-manager';
 import { Menu } from 'electron';
 import { isClosable, isPinnable } from '../../presentation/runtime-hosts/capabilities';
 

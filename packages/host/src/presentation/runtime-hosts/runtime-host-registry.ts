@@ -1,5 +1,5 @@
-import type { RuntimeHost } from './runtime-host';
 import type { WindowManager } from '../window/window-manager';
+import type { RuntimeHost } from './runtime-host';
 import { FloatingRuntimeHost } from './floating-runtime-host';
 import { LauncherRuntimeHost } from './launcher-runtime-host';
 

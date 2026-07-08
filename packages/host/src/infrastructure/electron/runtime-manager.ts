@@ -1,8 +1,8 @@
 import type { LoadState, MountState, PluginEnterPayload } from '@szybko/shared';
 import type { WebContents } from 'electron';
-import type { PluginCatalog } from '../filesystem/plugin-catalog';
 import type { RuntimeHost } from '../../presentation/runtime-hosts/runtime-host';
 import type { WindowManager } from '../../presentation/window/window-manager';
+import type { PluginCatalog } from '../filesystem/plugin-catalog';
 import type { PluginRuntime } from './types';
 import { IPC } from '@szybko/shared';
 import { isFocusable } from '../../presentation/runtime-hosts/capabilities';

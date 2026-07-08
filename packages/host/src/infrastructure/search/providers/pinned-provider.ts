@@ -3,9 +3,9 @@ import type {
     LauncherItem,
     LauncherItemId,
 } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../../sqlite/platform-database';
 import type { ContextMenuItem, SearchProvider } from '../../../domain/search/search-provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from '../../../domain/search/types';
+import type { PlatformDrizzleDatabase } from '../../sqlite/platform-database';
 import { PinnedItemRepository } from '../../sqlite/repositories/pinned-item-repository';
 
 /**

@@ -4,11 +4,11 @@ import type {
     LauncherItem,
     LauncherItemId,
 } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../../sqlite/platform-database';
-import type { PluginCatalog } from '../../filesystem/plugin-catalog';
 import type { RuntimeCoordinator } from '../../../app/runtime/runtime-coordinator';
 import type { ContextMenuItem, SearchProvider } from '../../../domain/search/search-provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from '../../../domain/search/types';
+import type { PluginCatalog } from '../../filesystem/plugin-catalog';
+import type { PlatformDrizzleDatabase } from '../../sqlite/platform-database';
 import { findTitleMatchRanges } from '../../../domain/commands/feature-normalizer';
 import { MatchSessionManager } from '../../input/match-session-manager';
 import { SearchService } from '../../input/search-service';

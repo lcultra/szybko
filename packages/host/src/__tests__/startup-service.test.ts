@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-describe('StartupService', () => {
-  it('should be constructable', () => {
-    expect(true).toBe(true);
-  });
+describe('startupService', () => {
+    it('should be constructable', () => {
+        expect(true).toBe(true);
+    });
 });

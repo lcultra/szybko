@@ -1,17 +1,17 @@
 import type { PluginFeature, PluginManifest } from '@szybko/shared';
-import type { PlatformDatabase, PlatformDrizzleDatabase } from '../sqlite/platform-database';
 import type { CommandProjection, CommandTriggerSearchProjection } from '../../domain/commands/command-projection-builder';
+import type { PlatformDatabase, PlatformDrizzleDatabase } from '../sqlite/platform-database';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { extname, relative, resolve } from 'node:path';
 import { and, eq } from 'drizzle-orm';
+import { buildCommandProjection, buildSearchEntries } from '../../domain/commands/command-projection-builder';
+import { stableJson } from '../../domain/commands/feature-normalizer';
 import { CommandProjectionRepository } from '../sqlite/repositories/command-projection-repository';
 import { FeatureOverrideRepository } from '../sqlite/repositories/feature-override-repository';
 import { ManifestFeatureRepository } from '../sqlite/repositories/manifest-feature-repository';
 import { PluginInstallationRepository } from '../sqlite/repositories/plugin-installation-repository';
 import { commandAlias } from '../sqlite/schema';
-import { buildCommandProjection, buildSearchEntries } from '../../domain/commands/command-projection-builder';
-import { stableJson } from '../../domain/commands/feature-normalizer';
 
 const INDEX_VERSION = 2;
 

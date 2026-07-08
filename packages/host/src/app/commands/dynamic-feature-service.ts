@@ -15,7 +15,8 @@ export class DynamicFeatureService {
         feature: PluginFeature,
     ): Promise<{ ok: boolean; error?: string }> {
         const pluginId = this.coordinator.pluginIdForWebContents(senderWebContentsId);
-        if (!pluginId) return { ok: false, error: 'Plugin runtime not found for sender' };
+        if (!pluginId)
+            return { ok: false, error: 'Plugin runtime not found for sender' };
         return this.commandCatalog.setFeature(pluginId, feature);
     }
 
