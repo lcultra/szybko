@@ -33,7 +33,7 @@ export class LauncherItemService {
   }
 
   isPinned(itemId: string): boolean {
-    return this.pinnedRepo.list().some(r => r.itemId === itemId);
+    return this.pinnedRepo.exists(itemId);
   }
 
   async cleanupByPlugin(pluginId: string): Promise<void> {

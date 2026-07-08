@@ -53,33 +53,8 @@ export class SearchApplicationService {
   }
 
   async query(request: SearchRequest): Promise<{ ok: boolean; sessionId?: string }> {
-    // Cancel previous session
-    if (this.currentSession) {
-      this.currentSession.cancel();
-    }
-    this.currentSession = null;
     this.lastSearchRequest = request;
-
-    const snapshot = collectFromSearch(request);
-    const win = this.deps.windowManager.getWindow();
-    if (!win || win.isDestroyed()) return { ok: false };
-
-    const providers = [this.pinnedProvider, this.recentProvider, this.pluginProvider]
-      .filter(Boolean) as SearchProvider[];
-
-    const session = new SearchSession(request.queryId, providers, (res) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send(IPC.SEARCH_RESPONSE, res);
-      }
-    });
-
-    this.currentSession = session;
-
-    session.search(snapshot).catch((err: unknown) => {
-      console.error('[SearchApp] SearchSession error:', err);
-    });
-
-    return { ok: true, sessionId: session.sessionId };
+    return this.startNewSession(request);
   }
 
   cancel(): void {
@@ -109,27 +84,35 @@ export class SearchApplicationService {
 
   triggerRefresh(): void {
     if (!this.lastSearchRequest || !this.pluginProvider || !this.pinnedProvider || !this.recentProvider) return;
+    this.startNewSession(this.lastSearchRequest);
+  }
 
-    const win = this.deps.windowManager.getWindow();
-    if (!win || win.isDestroyed()) return;
-
+  private startNewSession(request: SearchRequest): { ok: boolean; sessionId?: string } {
+    // Cancel previous session
     if (this.currentSession) {
       this.currentSession.cancel();
     }
+    this.currentSession = null;
 
-    const snapshot = collectFromSearch(this.lastSearchRequest);
+    const snapshot = collectFromSearch(request);
+    const win = this.deps.windowManager.getWindow();
+    if (!win || win.isDestroyed()) return { ok: false };
+
     const providers = [this.pinnedProvider, this.recentProvider, this.pluginProvider]
       .filter(Boolean) as SearchProvider[];
 
-    const session = new SearchSession(this.lastSearchRequest.queryId, providers, (res) => {
+    const session = new SearchSession(request.queryId, providers, (res) => {
       if (!win.isDestroyed()) {
         win.webContents.send(IPC.SEARCH_RESPONSE, res);
       }
     });
 
     this.currentSession = session;
+
     session.search(snapshot).catch((err: unknown) => {
-      console.error('[SearchApp] Refresh error:', err);
+      console.error('[SearchApp] SearchSession error:', err);
     });
+
+    return { ok: true, sessionId: session.sessionId };
   }
 }

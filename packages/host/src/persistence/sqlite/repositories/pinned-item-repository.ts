@@ -33,6 +33,15 @@ export class PinnedItemRepository {
         this.db.delete(pinnedItem).where(sql`item_id LIKE ${prefix}`).run();
     }
 
+    exists(itemId: string): boolean {
+        const rows = this.db.select({ id: pinnedItem.itemId })
+            .from(pinnedItem)
+            .where(eq(pinnedItem.itemId, itemId))
+            .limit(1)
+            .all();
+        return rows.length > 0;
+    }
+
     reorder(itemId: string, toIndex: number): void {
         const all = this.list(); // ordered by sortOrder asc
         const sourceIndex = all.findIndex(r => r.itemId === itemId);
