@@ -42,6 +42,7 @@ export async function createPlugin(options: CreateOptions): Promise<void> {
     }
 
     const files: Record<string, string> = {
+        'tsconfig.json': readTemplate(type, 'tsconfig.json'),
         'plugin.config.js': readTemplate(type, 'plugin.config.js'),
         'package.json': render(readTemplate(type, 'package.json'), { name }),
         'plugin.json': render(readTemplate(type, 'plugin.json'), { name }),

@@ -122,14 +122,11 @@ export interface RuntimeStatePayload {
 }
 
 export interface PluginEnterPayload {
-    pluginId: string;
-    featureExplain?: string;
     code: string;
     type: 'text' | 'regex' | 'over' | 'file' | 'img' | 'window';
     payload: unknown;
-    option?: string;
     from: EntryIntent;
-    matchId?: string;
+    option?: string;
 }
 
 export interface PluginOutPayload {

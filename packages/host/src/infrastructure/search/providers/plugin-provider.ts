@@ -144,9 +144,7 @@ export class PluginProvider implements SearchProvider {
                     code: resolved.match.featureCode,
                     type: resolved.match.enterType,
                     payload: resolved.match.payload,
-                    option: resolved.match.label ?? resolved.match.option ?? undefined,
                     from: resolved.match.from,
-                    matchId: resolved.match.matchId,
                 });
                 return { ok: true };
             }
@@ -159,9 +157,7 @@ export class PluginProvider implements SearchProvider {
                 code: resolved.match.featureCode,
                 type: resolved.match.enterType,
                 payload: resolved.match.payload,
-                option: resolved.match.label ?? resolved.match.option ?? undefined,
                 from: resolved.match.from,
-                matchId: resolved.match.matchId,
             });
             return { ok: true };
         }

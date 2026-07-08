@@ -117,7 +117,6 @@ export class RuntimeManager {
         if (existingHost?.type === 'floating' && isFocusable(existingHost)) {
             existingHost.focus();
             entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
-                pluginId: entry.runtime.info.pluginId,
                 code: featureCode ?? entry.runtime.info.pluginId,
                 type: 'text',
                 payload: null,
@@ -160,7 +159,6 @@ export class RuntimeManager {
 
         // 通知插件进入
         entry.runtime.webContents.send(IPC.PLUGIN_ENTER, enterPayload ?? {
-            pluginId: entry.runtime.info.pluginId,
             code: featureCode ?? entry.runtime.info.pluginId,
             type: 'text',
             payload: null,

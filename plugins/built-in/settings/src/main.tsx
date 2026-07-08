@@ -7,6 +7,14 @@ import './style.css';
 
 initTheme();
 
+window.szybko.onPluginEnter((payload) => {
+    console.error('插件进入 UI 模式', payload);
+});
+
+window.szybko.onPluginOut((payload) => {
+    console.error('插件离开 UI 模式', payload);
+});
+
 const root = document.getElementById('root');
 if (root) {
     createRoot(root).render(
