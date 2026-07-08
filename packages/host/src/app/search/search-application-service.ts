@@ -1,6 +1,6 @@
 import type { SearchRequest, LauncherItem, LauncherItemId } from '@szybko/shared';
 import { IPC } from '@szybko/shared';
-import type { PlatformDatabase } from '../../persistence/sqlite/platform-database';
+import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-database';
 import type { SearchProvider } from '../../search/provider';
 import { SearchSession } from '../../search/search-session';
 import { PluginProvider } from '../../search/plugin-provider';
@@ -8,7 +8,7 @@ import { PinnedSectionProvider } from '../../search/pinned-provider';
 import { RecentSectionProvider } from '../../search/recent-provider';
 import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
 import type { PluginCatalog } from '../../plugins/plugin-catalog';
-import type { WindowManager } from '../../window/window-manager';
+import type { WindowManager } from '../../presentation/window/window-manager';
 import type { MatchSessionManager } from '../../input/match-session-manager';
 import type { LauncherItemService } from './launcher-item-service';
 import { collectFromSearch } from '../../input/input-context-collector';

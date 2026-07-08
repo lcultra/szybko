@@ -1,0 +1,104 @@
+import type { WebContentsView } from 'electron';
+import process from 'node:process';
+import { BORDER_WIDTH, DEFAULT_WINDOW_WIDTH, HEADER_HEIGHT, MAX_WINDOW_HEIGHT, MIN_WINDOW_HEIGHT, WINDOW_TOP_OFFSET_RATIO } from '@szybko/shared';
+import { BrowserWindow, screen } from 'electron';
+
+import { RuntimeHostRegistry } from '../runtime-hosts/runtime-host-registry';
+
+export class WindowManager {
+    private window: BrowserWindow | null = null;
+    private hostRegistry: RuntimeHostRegistry | null = null;
+
+    createMainWindow(preloadPath: string): BrowserWindow {
+        this.repositionToCursor();
+
+        this.window = new BrowserWindow({
+            width: DEFAULT_WINDOW_WIDTH,
+            height: MIN_WINDOW_HEIGHT,
+            hasShadow: false,
+            frame: false,
+            transparent: true,
+            resizable: false,
+            webPreferences: {
+                preload: preloadPath,
+                sandbox: false,
+                contextIsolation: true,
+                nodeIntegration: false,
+            },
+        });
+
+        /**
+         * 禁用主窗口自动隐藏 DISABLE_AUTO_HIDE=true
+         */
+        if (process.env.DISABLE_AUTO_HIDE !== 'true') {
+            this.window.on('blur', () => this.hide());
+        }
+
+        return this.window;
+    }
+
+    repositionToCursor() {
+        const cursorPoint = screen.getCursorScreenPoint();
+        const display = screen.getDisplayNearestPoint(cursorPoint);
+        const winX = Math.round(display.workArea.x + (display.workArea.width - DEFAULT_WINDOW_WIDTH) / 2);
+        const winY = Math.round(display.workArea.y + display.workArea.height * WINDOW_TOP_OFFSET_RATIO);
+        this.window?.setPosition(winX, winY);
+    }
+
+    getWindow() { return this.window; }
+    resize(height: number) {
+        const clamped = Math.min(Math.max(height, MIN_WINDOW_HEIGHT), MAX_WINDOW_HEIGHT);
+        this.window?.setSize(DEFAULT_WINDOW_WIDTH, clamped);
+        this.relayout();
+    }
+
+    hide() {
+        this.window?.hide();
+    }
+
+    show() {
+        this.repositionToCursor();
+        this.window?.show();
+    }
+
+    isVisible(): boolean { return this.window?.isVisible() ?? false; }
+
+    /** 初始化 Host 注册表（main/index.ts 启动时调用一次） */
+    initHostRegistry(hostPreloadPath: string): RuntimeHostRegistry {
+        this.hostRegistry = new RuntimeHostRegistry(this, hostPreloadPath);
+        return this.hostRegistry;
+    }
+
+    getHostRegistry(): RuntimeHostRegistry | null {
+        return this.hostRegistry;
+    }
+
+    // ── Child view management (called by RuntimeHost implementations) ──
+
+    addChildView(view: WebContentsView): void {
+        this.window?.contentView.addChildView(view);
+        this.relayout();
+    }
+
+    removeChildView(view: WebContentsView): void {
+        if (this.window && !this.window.isDestroyed()) {
+            this.window.contentView.removeChildView(view);
+        }
+        this.relayout();
+    }
+
+    /** 重新计算所有子 view 的位置（窗口 resize 或 view 变更时调用） */
+    relayout(): void {
+        if (!this.window)
+            return;
+        const [, winHeight] = this.window.getSize();
+        for (const view of this.window.contentView.children) {
+            view.setBounds({
+                x: BORDER_WIDTH,
+                y: HEADER_HEIGHT,
+                width: DEFAULT_WINDOW_WIDTH - BORDER_WIDTH * 2,
+                height: Math.max(winHeight - HEADER_HEIGHT - BORDER_WIDTH * 2, 0),
+            });
+        }
+    }
+}

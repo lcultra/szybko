@@ -3,9 +3,9 @@ import type { CommandCatalog } from '../../commands/command-catalog';
 import type { PluginCatalog } from '../../plugins/plugin-catalog';
 import type { RuntimeManager } from '../../runtime/runtime-manager';
 import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
-import type { ShortcutRegistry } from '../../window/shortcut-registry';
-import type { WindowManager } from '../../window/window-manager';
-import { initAssetProtocol } from '../../protocol/asset-protocol';
+import type { ShortcutRegistry } from '../../presentation/window/shortcut-registry';
+import type { WindowManager } from '../../presentation/window/window-manager';
+import { initAssetProtocol } from '../../infrastructure/protocol/asset-protocol';
 import { registerPluginAssetHandler } from '../../plugins/plugin-asset-handler';
 
 export interface StartupDeps {

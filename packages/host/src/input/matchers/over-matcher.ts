@@ -1,5 +1,5 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
-import type { CommandSearchRow } from '../../persistence/sqlite/repositories/command-projection-repository';
+import type { CommandSearchRow } from '../../infrastructure/sqlite/repositories/command-projection-repository';
 import type { Matcher } from './matcher';
 
 interface OverMatcherConfig {

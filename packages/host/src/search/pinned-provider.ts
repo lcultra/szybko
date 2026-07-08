@@ -3,10 +3,10 @@ import type {
     LauncherItem,
     LauncherItemId,
 } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDrizzleDatabase } from '../infrastructure/sqlite/platform-database';
 import type { ContextMenuItem, SearchProvider } from './provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from './types';
-import { PinnedItemRepository } from '../persistence/sqlite/repositories/pinned-item-repository';
+import { PinnedItemRepository } from '../infrastructure/sqlite/repositories/pinned-item-repository';
 
 /**
  * PinnedSectionProvider——返回被用户固定的结果。

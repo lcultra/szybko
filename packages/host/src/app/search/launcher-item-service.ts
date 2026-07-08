@@ -1,6 +1,6 @@
-import type { PlatformDatabase } from '../../persistence/sqlite/platform-database';
-import { PinnedItemRepository } from '../../persistence/sqlite/repositories/pinned-item-repository';
-import { UsageEventRepository } from '../../persistence/sqlite/repositories/usage-event-repository';
+import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-database';
+import { PinnedItemRepository } from '../../infrastructure/sqlite/repositories/pinned-item-repository';
+import { UsageEventRepository } from '../../infrastructure/sqlite/repositories/usage-event-repository';
 
 export class LauncherItemService {
   private pinnedRepo: PinnedItemRepository;

@@ -1,15 +1,15 @@
 import type { PluginFeature, PluginManifest } from '@szybko/shared';
-import type { PlatformDatabase, PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDatabase, PlatformDrizzleDatabase } from '../infrastructure/sqlite/platform-database';
 import type { CommandProjection, CommandTriggerSearchProjection } from './command-projection-builder';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { extname, relative, resolve } from 'node:path';
 import { and, eq } from 'drizzle-orm';
-import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
-import { FeatureOverrideRepository } from '../persistence/sqlite/repositories/feature-override-repository';
-import { ManifestFeatureRepository } from '../persistence/sqlite/repositories/manifest-feature-repository';
-import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
-import { commandAlias } from '../persistence/sqlite/schema';
+import { CommandProjectionRepository } from '../infrastructure/sqlite/repositories/command-projection-repository';
+import { FeatureOverrideRepository } from '../infrastructure/sqlite/repositories/feature-override-repository';
+import { ManifestFeatureRepository } from '../infrastructure/sqlite/repositories/manifest-feature-repository';
+import { PluginInstallationRepository } from '../infrastructure/sqlite/repositories/plugin-installation-repository';
+import { commandAlias } from '../infrastructure/sqlite/schema';
 import { buildCommandProjection, buildSearchEntries } from './command-projection-builder';
 import { stableJson } from './feature-normalizer';
 

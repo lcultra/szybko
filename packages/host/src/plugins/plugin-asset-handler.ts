@@ -1,7 +1,7 @@
 import type { PluginCatalog } from './plugin-catalog';
 import { readFile } from 'node:fs/promises';
 import { extname, relative, resolve } from 'node:path';
-import { registerAssetHandler } from '../protocol/asset-protocol';
+import { registerAssetHandler } from '../infrastructure/protocol/asset-protocol';
 
 const MIME_MAP: Record<string, string> = {
     '.png': 'image/png',

@@ -1,13 +1,13 @@
 import type { PluginEnterPayload } from '@szybko/shared';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { PluginRuntime } from '../runtime/types';
-import type { FloatingRuntimeHost } from '../window/hosts/floating-runtime-host';
-import type { RuntimeHost } from '../window/hosts/runtime-host';
-import type { RuntimeHostRegistry } from '../window/runtime-host-registry';
-import type { ShortcutRegistry } from '../window/shortcut-registry';
+import type { FloatingRuntimeHost } from '../presentation/runtime-hosts/floating-runtime-host';
+import type { RuntimeHost } from '../presentation/runtime-hosts/runtime-host';
+import type { RuntimeHostRegistry } from '../presentation/runtime-hosts/runtime-host-registry';
+import type { ShortcutRegistry } from '../presentation/window/shortcut-registry';
 import type { RuntimeManager } from './runtime-manager';
 import { Menu } from 'electron';
-import { isClosable, isPinnable } from '../window/hosts/capabilities';
+import { isClosable, isPinnable } from '../presentation/runtime-hosts/capabilities';
 
 /**
  * RuntimeCoordinator — 所有业务流的统一入口。

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SearchApplicationService } from '../app/search/search-application-service';
-import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
-import type { WindowManager } from '../window/window-manager';
+import type { WindowManager } from '../presentation/window/window-manager';
 import type { MatchSessionManager } from '../input/match-session-manager';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
 

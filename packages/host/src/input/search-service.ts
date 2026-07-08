@@ -1,7 +1,7 @@
 import type { InputContextSnapshot, TriggerMatch } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDrizzleDatabase } from '../infrastructure/sqlite/platform-database';
 import { normalizeTextKey, rankCommandSearchTextMatch } from '../commands/feature-normalizer';
-import { CommandProjectionRepository } from '../persistence/sqlite/repositories/command-projection-repository';
+import { CommandProjectionRepository } from '../infrastructure/sqlite/repositories/command-projection-repository';
 import { dedupAndSort, runPipeline } from './matcher-pipeline';
 
 /**
@@ -70,7 +70,7 @@ export class SearchService {
         return dedupAndSort(allMatches);
     }
 
-    getTrigger(pluginId: string, featureCode: string, cmdKey: string): import('../persistence/sqlite/repositories/command-projection-repository').CommandSearchRow | null {
+    getTrigger(pluginId: string, featureCode: string, cmdKey: string): import('../infrastructure/sqlite/repositories/command-projection-repository').CommandSearchRow | null {
         const repo = new CommandProjectionRepository(this.db);
         return repo.getTrigger(pluginId, featureCode, cmdKey);
     }

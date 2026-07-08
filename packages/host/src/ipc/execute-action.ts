@@ -1,5 +1,5 @@
 import type { ActionDescriptor } from '@szybko/shared';
-import type { NativeCapabilityService } from '../native/native-capability-service';
+import type { NativeCapabilityService } from '../infrastructure/native/native-capability-service';
 
 export function createExecutor(native: NativeCapabilityService) {
     return async function executeAction(action: ActionDescriptor): Promise<{ ok: boolean; error?: string }> {

@@ -1,5 +1,5 @@
-import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
-import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
+import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
+import { PluginInstallationRepository } from '../infrastructure/sqlite/repositories/plugin-installation-repository';
 import { InstallationSynchronizer } from './installation-synchronizer';
 import { PluginDiscovery } from './plugin-discovery';
 

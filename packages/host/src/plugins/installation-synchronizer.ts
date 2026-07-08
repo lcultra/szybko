@@ -1,5 +1,5 @@
 import type { PluginInfo } from './plugin-catalog';
-import { PluginInstallationRepository } from '../persistence/sqlite/repositories/plugin-installation-repository';
+import { PluginInstallationRepository } from '../infrastructure/sqlite/repositories/plugin-installation-repository';
 
 /**
  * InstallationSynchronizer — 同步磁盘发现的插件与 DB 安装记录。

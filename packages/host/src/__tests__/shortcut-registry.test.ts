@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ShortcutRegistry } from '../window/shortcut-registry';
+import { ShortcutRegistry } from '../presentation/window/shortcut-registry';
 
 describe('shortcutRegistry', () => {
     it('defines and retrieves actions by scope', () => {

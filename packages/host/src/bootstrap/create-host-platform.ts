@@ -1,9 +1,9 @@
 import type { HostPlatformConfig } from './host-platform-config';
 import type { HostPlatform } from './host-platform';
 import { join } from 'node:path';
-import { WindowManager } from '../window/window-manager';
-import { ShortcutRegistry } from '../window/shortcut-registry';
-import { createPlatformDatabase } from '../persistence/sqlite/platform-database';
+import { WindowManager } from '../presentation/window/window-manager';
+import { ShortcutRegistry } from '../presentation/window/shortcut-registry';
+import { createPlatformDatabase } from '../infrastructure/sqlite/platform-database';
 import { CommandCatalog } from '../commands/command-catalog';
 import { PluginCatalog } from '../plugins/plugin-catalog';
 import { RuntimeManager } from '../runtime/runtime-manager';

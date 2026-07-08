@@ -3,9 +3,9 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { drizzle } from 'drizzle-orm/node-sqlite';
-import { name as migration1Name, sql as migration1Sql } from '../migrations/migration-001';
-import { name as migration2Name, sql as migration2Sql } from '../migrations/migration-002';
-import { Migrator } from '../migrations/migrator';
+import { name as migration1Name, sql as migration1Sql } from './migrations/migration-001';
+import { name as migration2Name, sql as migration2Sql } from './migrations/migration-002';
+import { Migrator } from './migrations/migrator';
 import * as schema from './schema';
 
 export type PlatformDrizzleDatabase = NodeSQLiteDatabase<typeof schema>;

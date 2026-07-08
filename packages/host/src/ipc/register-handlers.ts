@@ -1,10 +1,10 @@
 import type { IpcInvokeContract, ShortcutScope } from '@szybko/shared';
 import type { CommandCatalog } from '../commands/command-catalog';
-import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
-import type { ShortcutRegistry } from '../window/shortcut-registry';
-import type { WindowManager } from '../window/window-manager';
+import type { ShortcutRegistry } from '../presentation/window/shortcut-registry';
+import type { WindowManager } from '../presentation/window/window-manager';
 import type { SearchApplicationService } from '../app/search/search-application-service';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
 import type { PluginLifecycleService } from '../app/plugins/plugin-lifecycle-service';

@@ -2,9 +2,9 @@ import type { PluginCatalog } from '../../plugins/plugin-catalog';
 import type { CommandCatalog } from '../../commands/command-catalog';
 import type { RuntimeCoordinator } from '../../runtime/runtime-coordinator';
 import type { RuntimeManager } from '../../runtime/runtime-manager';
-import type { PlatformDatabase } from '../../persistence/sqlite/platform-database';
+import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-database';
 import type { LauncherItemService } from '../search/launcher-item-service';
-import { PluginInstallationRepository } from '../../persistence/sqlite/repositories/plugin-installation-repository';
+import { PluginInstallationRepository } from '../../infrastructure/sqlite/repositories/plugin-installation-repository';
 import type { PluginQueryService } from './plugin-query-service';
 import { AppError, AppErrorCode } from '../../shared/errors';
 

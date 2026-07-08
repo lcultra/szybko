@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { PlatformDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
 
 describe('LauncherItemService', () => {
   // Integration test with SQLite — use a real in-memory database

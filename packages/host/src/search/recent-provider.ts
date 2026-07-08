@@ -3,10 +3,10 @@ import type {
     LauncherItem,
     LauncherItemId,
 } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDrizzleDatabase } from '../infrastructure/sqlite/platform-database';
 import type { ContextMenuItem, SearchProvider } from './provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from './types';
-import { UsageEventRepository } from '../persistence/sqlite/repositories/usage-event-repository';
+import { UsageEventRepository } from '../infrastructure/sqlite/repositories/usage-event-repository';
 
 /**
  * RecentSectionProvider——返回最近使用的结果。

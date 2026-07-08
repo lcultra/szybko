@@ -4,7 +4,7 @@ import type {
     LauncherItem,
     LauncherItemId,
 } from '@szybko/shared';
-import type { PlatformDrizzleDatabase } from '../persistence/sqlite/platform-database';
+import type { PlatformDrizzleDatabase } from '../infrastructure/sqlite/platform-database';
 import type { PluginCatalog } from '../plugins/plugin-catalog';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { ContextMenuItem, SearchProvider } from './provider';
