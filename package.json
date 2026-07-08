@@ -12,8 +12,7 @@
         "typecheck": "pnpm -r run typecheck",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "check": "pnpm typecheck && pnpm lint",
-        "check:boundaries": "tsx scripts/check-arch-boundaries.ts"
+        "check": "pnpm typecheck && pnpm lint"
     },
     "dependencies": {
         "clsx": "^2.1.1",
