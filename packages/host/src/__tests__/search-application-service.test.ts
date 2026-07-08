@@ -1,6 +1,5 @@
 import type { RuntimeCoordinator } from '../app/runtime/runtime-coordinator';
 import type { LauncherItemService } from '../app/search/launcher-item-service';
-import type { MatchSessionManager } from '../app/search/match-session-manager';
 import type { PluginQuery } from '../domain/plugins/plugin-query';
 import type { PlatformDatabase } from '../infrastructure/sqlite/platform-database';
 import type { WindowManager } from '../presentation/window/window-manager';
@@ -45,7 +44,6 @@ interface Deps {
     pluginCatalog?: PluginQuery;
     coordinator?: RuntimeCoordinator;
     windowManager?: WindowManager;
-    sessionManager?: MatchSessionManager;
     launcherItemService?: LauncherItemService;
 }
 
@@ -58,7 +56,6 @@ function createService(overrides?: Deps): SearchApplicationService {
         pluginCatalog: overrides?.pluginCatalog ?? ({} as PluginQuery),
         coordinator: overrides?.coordinator ?? ({} as RuntimeCoordinator),
         windowManager: overrides?.windowManager ?? ({ getWindow: () => null } as unknown as WindowManager),
-        sessionManager: overrides?.sessionManager ?? ({} as MatchSessionManager),
         launcherItemService: overrides?.launcherItemService ?? baseItemSvc,
         emitter: () => {},
     });

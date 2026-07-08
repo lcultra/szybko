@@ -6,7 +6,6 @@ import type { PlatformDatabase } from '../../infrastructure/sqlite/platform-data
 import type { WindowManager } from '../../presentation/window/window-manager';
 import type { RuntimeCoordinator } from '../runtime/runtime-coordinator';
 import type { LauncherItemService } from './launcher-item-service';
-import type { MatchSessionManager } from './match-session-manager';
 import { IPC } from '@szybko/shared';
 import { PinnedSectionProvider } from '../../infrastructure/search/providers/pinned-provider';
 import { PluginProvider } from '../../infrastructure/search/providers/plugin-provider';
@@ -19,7 +18,6 @@ export interface SearchServiceDeps {
     pluginCatalog: PluginQuery;
     coordinator: RuntimeCoordinator;
     windowManager: WindowManager;
-    sessionManager: MatchSessionManager;
     launcherItemService: LauncherItemService;
     emitter: (channel: string, data: unknown) => void;
 }
@@ -49,7 +47,7 @@ export class SearchApplicationService {
             return null;
         };
 
-        this.pluginProvider = new PluginProvider(db, this.deps.coordinator, this.deps.pluginCatalog, this.deps.sessionManager);
+        this.pluginProvider = new PluginProvider(db, this.deps.coordinator, this.deps.pluginCatalog);
         this.pinnedProvider = new PinnedSectionProvider(db, resolveFromProviders);
         this.recentProvider = new RecentSectionProvider(db, resolveFromProviders);
     }

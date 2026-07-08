@@ -1,4 +1,5 @@
 import type {
+    EntryIntent,
     IconDescriptor,
     InputContextSnapshot,
     LauncherItem,
@@ -9,9 +10,15 @@ import type { PluginQuery } from '../../../domain/plugins/plugin-query';
 import type { ContextMenuItem, SearchProvider } from '../../../domain/search/search-provider';
 import type { ExecuteContext, ExecuteResult, SearchProviderResult } from '../../../domain/search/types';
 import type { PlatformDrizzleDatabase } from '../../sqlite/platform-database';
-import { MatchSessionManager } from '../../../app/search/match-session-manager';
 import { SearchService } from '../../../app/search/search-service';
 import { findTitleMatchRanges } from '../../../domain/commands/feature-normalizer';
+
+interface ExecuteContextEntry {
+    payload: unknown;
+    enterType: 'text' | 'regex' | 'over' | 'file' | 'img' | 'window';
+    from: EntryIntent;
+    label: string | null;
+}
 
 /**
  * PluginProvider——从命令库搜索插件命令匹配。
@@ -22,17 +29,14 @@ export class PluginProvider implements SearchProvider {
     readonly priority = 100;
 
     private searchService: SearchService;
-    private sessionManager: MatchSessionManager;
-    private itemMatchMap = new Map<LauncherItemId, string>();
+    private executeContextMap = new Map<LauncherItemId, ExecuteContextEntry>();
 
     constructor(
         db: PlatformDrizzleDatabase,
         private coordinator: RuntimeCoordinator,
         private catalog: PluginQuery,
-        sessionManager?: MatchSessionManager,
     ) {
         this.searchService = new SearchService(db);
-        this.sessionManager = sessionManager ?? new MatchSessionManager();
     }
 
     async search(snapshot: InputContextSnapshot, _signal?: AbortSignal): Promise<SearchProviderResult> {
@@ -41,19 +45,21 @@ export class PluginProvider implements SearchProvider {
         if (!query) {
             return { items: [], section: { id: 'best', title: '最佳搜索结果', source: 'search', layout: 'grid' } };
         }
-        this.itemMatchMap.clear(); // Clear previous session's mapping
+        this.executeContextMap.clear();
         const matches = this.searchService.search(snapshot, query);
 
         if (matches.length === 0) {
             return { items: [], section: { id: 'best', title: '最佳搜索结果', source: 'search', layout: 'grid' } };
         }
 
-        const session = this.sessionManager.create(snapshot);
-        this.sessionManager.addMatches(session.sessionId, matches);
-
         const items: LauncherItem[] = matches.map((m) => {
             const itemId = `plugin://${m.pluginId}/${m.featureCode}/${m.cmdKey}` as LauncherItemId;
-            this.itemMatchMap.set(itemId, m.matchId);
+            this.executeContextMap.set(itemId, {
+                payload: m.payload,
+                enterType: m.enterType,
+                from: m.from,
+                label: m.label,
+            });
             const title = m.label ?? '';
             const titleMatchRanges = findTitleMatchRanges(title, query);
 
@@ -138,31 +144,14 @@ export class PluginProvider implements SearchProvider {
             return { ok: false, error: `Invalid plugin itemId: ${itemId}` };
         const [pluginId, featureCode] = parts;
 
-        // Prefer precise matchId from search result
-        const matchId = this.itemMatchMap.get(itemId);
-        if (matchId) {
-            const resolved = this.sessionManager.resolve(matchId);
-            if (resolved) {
-                this.coordinator.activatePlugin(pluginId, featureCode, {
-                    code: resolved.match.featureCode,
-                    type: resolved.match.enterType,
-                    payload: resolved.match.payload,
-                    option: resolved.match.label ?? resolved.match.option ?? undefined,
-                    from: resolved.match.from,
-                });
-                return { ok: true };
-            }
-        }
-
-        // Fallback: try by plugin key
-        const resolved = this.sessionManager.resolveByPluginKey(pluginId, featureCode);
-        if (resolved) {
+        const ctx = this.executeContextMap.get(itemId);
+        if (ctx) {
             this.coordinator.activatePlugin(pluginId, featureCode, {
-                code: resolved.match.featureCode,
-                type: resolved.match.enterType,
-                payload: resolved.match.payload,
-                option: resolved.match.label ?? resolved.match.option ?? undefined,
-                from: resolved.match.from,
+                code: featureCode,
+                type: ctx.enterType,
+                payload: ctx.payload,
+                option: ctx.label ?? undefined,
+                from: ctx.from,
             });
             return { ok: true };
         }

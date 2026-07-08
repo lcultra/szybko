@@ -6,7 +6,6 @@ import { PluginQueryService } from '../app/plugins/plugin-query-service';
 import { RuntimeApplicationService } from '../app/runtime/runtime-application-service';
 import { RuntimeCoordinator } from '../app/runtime/runtime-coordinator';
 import { LauncherItemService } from '../app/search/launcher-item-service';
-import { MatchSessionManager } from '../app/search/match-session-manager';
 import { SearchApplicationService } from '../app/search/search-application-service';
 import { StartupService } from '../app/startup/startup-service';
 import { CommandCatalog } from '../infrastructure/commands/sqlite-command-catalog';
@@ -29,7 +28,6 @@ export async function createHostPlatform(config: HostPlatformConfig): Promise<Ho
     const runtimeManager = new RuntimeManager(pluginCatalog, windowManager, config.pluginPreloadPath);
     const coordinator = new RuntimeCoordinator(runtimeManager, hostRegistry, pluginCatalog, shortcutRegistry);
 
-    const sessionManager = new MatchSessionManager();
     const launcherItemService = new LauncherItemService(platformDb);
     const pluginQuery = new PluginQueryService(pluginCatalog);
     const pluginLifecycle = new PluginLifecycleService(
@@ -47,7 +45,6 @@ export async function createHostPlatform(config: HostPlatformConfig): Promise<Ho
         pluginCatalog,
         coordinator,
         windowManager,
-        sessionManager,
         launcherItemService,
         emitter: () => {},
     });

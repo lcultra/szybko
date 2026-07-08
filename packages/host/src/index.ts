@@ -10,7 +10,6 @@ export { RuntimeCoordinator } from './app/runtime/runtime-coordinator';
 // ── Input Pipeline ────────────────────────────────────────────────────
 export { collectFromSearch } from './app/search/input-context-collector';
 export { LauncherItemService } from './app/search/launcher-item-service';
-export { MatchSessionManager } from './app/search/match-session-manager';
 export { runPipeline } from './app/search/matcher-pipeline';
 export { SearchApplicationService } from './app/search/search-application-service';
 
