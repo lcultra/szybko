@@ -33,3 +33,7 @@ export { RuntimeHostRegistry } from './window/runtime-host-registry';
 export { ShortcutRegistry } from './window/shortcut-registry';
 export { ThemeManager } from './window/theme';
 export { WindowManager } from './window/window-manager';
+export { StartupService } from './app/startup/startup-service';
+export { createHostPlatform } from './bootstrap/create-host-platform';
+export type { HostPlatform } from './bootstrap/host-platform';
+export type { HostPlatformConfig } from './bootstrap/host-platform-config';

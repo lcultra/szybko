@@ -30,8 +30,9 @@ export function registerIpcHandlers(
     searchService?: SearchApplicationService,
     launcherItemService?: LauncherItemService,
     pluginLifecycle?: PluginLifecycleService,
+    sessionManager?: MatchSessionManager,
 ) {
-    const sessionManager = new MatchSessionManager();
+    const resolvedSession = sessionManager ?? new MatchSessionManager();
     const executor = createExecutor(new ElectronNativeCapabilityService());
 
     // ── Delegated search/item handlers ────────────────────────────────
@@ -81,7 +82,7 @@ export function registerIpcHandlers(
         async (_event, { action }: IpcRequest<typeof IPC.PLUGIN_EXEC>): Promise<IpcResponse<typeof IPC.PLUGIN_EXEC>> => {
             if (action.type === 'plugin.open') {
                 if (action.payload.matchId) {
-                    const resolved = sessionManager.resolve(action.payload.matchId);
+                    const resolved = resolvedSession.resolve(action.payload.matchId);
                     if (resolved) {
                         coordinator.activatePlugin(
                             action.payload.pluginId,
