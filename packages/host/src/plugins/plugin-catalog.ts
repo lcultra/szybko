@@ -42,4 +42,9 @@ export class PluginCatalog {
             .map(id => this.plugins.get(id))
             .filter((p): p is PluginInfo => !!p);
     }
+
+    async refresh(): Promise<void> {
+        // Re-initialize from scratch
+        await this.init();
+    }
 }

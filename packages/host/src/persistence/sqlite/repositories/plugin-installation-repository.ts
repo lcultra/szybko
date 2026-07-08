@@ -34,16 +34,18 @@ export class PluginInstallationRepository {
             .run();
     }
 
-    get(pluginId: string): { pluginId: string; manifestHash: string } | null {
-        const rows = this.db.select({
-            pluginId: pluginInstallation.pluginId,
-            manifestHash: pluginInstallation.manifestHash,
-        })
+    get(pluginId: string): typeof pluginInstallation.$inferSelect | undefined {
+        const row = this.db.select()
             .from(pluginInstallation)
             .where(eq(pluginInstallation.pluginId, pluginId))
-            .all();
+            .get();
+        return row ?? undefined;
+    }
 
-        return rows.length > 0 ? rows[0]! : null;
+    delete(pluginId: string): void {
+        this.db.delete(pluginInstallation)
+            .where(eq(pluginInstallation.pluginId, pluginId))
+            .run();
     }
 
     has(pluginId: string): boolean {

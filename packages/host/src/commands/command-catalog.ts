@@ -169,6 +169,11 @@ export class CommandCatalog {
         }
     }
 
+    removePluginIndex(pluginId: string): void {
+        const repos = createRepositories(this.platformDb.drizzle());
+        repos.commandProjections.removeByPluginId(pluginId);
+    }
+
     private expandAliasesInProjection(
         tx: PlatformDrizzleDatabase,
         pluginId: string,

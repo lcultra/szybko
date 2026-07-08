@@ -117,6 +117,13 @@ export class CommandProjectionRepository {
             .get() ?? null;
     }
 
+    removeByPluginId(pluginId: string): void {
+        this.db.delete(effectiveFeature).where(eq(effectiveFeature.pluginId, pluginId)).run();
+        this.db.delete(commandTrigger).where(eq(commandTrigger.pluginId, pluginId)).run();
+        this.db.delete(commandTriggerSearch).where(eq(commandTriggerSearch.pluginId, pluginId)).run();
+        this.db.delete(commandProjectionMeta).where(eq(commandProjectionMeta.pluginId, pluginId)).run();
+    }
+
     searchByText(normalizedQuery: string): TextSearchMatch[] {
         const escapedQuery = escapeLikePattern(normalizedQuery);
         const containsPattern = `%${escapedQuery}%`;
