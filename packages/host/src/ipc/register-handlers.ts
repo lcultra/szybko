@@ -16,6 +16,8 @@ import { createExecutor } from './execute-action';
 import { registerSearchIpcHandlers } from './handlers/search-ipc-handlers';
 import { registerItemIpcHandlers } from './handlers/item-ipc-handlers';
 import { registerPluginManagementIpcHandlers } from './handlers/plugin-management-ipc-handlers';
+import { registerDynamicFeatureIpcHandlers } from './handlers/dynamic-feature-ipc-handlers';
+import type { DynamicFeatureService } from '../app/commands/dynamic-feature-service';
 
 type IpcRequest<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['request'];
 type IpcResponse<C extends keyof IpcInvokeContract> = IpcInvokeContract[C]['response'];
@@ -30,6 +32,7 @@ export function registerIpcHandlers(
     searchService?: SearchApplicationService,
     launcherItemService?: LauncherItemService,
     pluginLifecycle?: PluginLifecycleService,
+    dynamicFeatureService?: DynamicFeatureService,
     sessionManager?: MatchSessionManager,
 ) {
     const resolvedSession = sessionManager ?? new MatchSessionManager();
@@ -164,37 +167,14 @@ export function registerIpcHandlers(
         },
     );
 
-    // ── Dynamic feature IPC ───────────────────────────────────
+    // ── Dynamic feature IPC (delegated) ────────────────────────
 
-    ipcMain.handle(
-        IPC.FEATURE_SET,
-        (event, { feature }: IpcRequest<typeof IPC.FEATURE_SET>): IpcResponse<typeof IPC.FEATURE_SET> => {
-            const pluginId = coordinator.pluginIdForWebContents(event.sender.id);
-            if (!pluginId)
-                return { ok: false, error: 'Plugin runtime not found for sender' };
-            return commandCatalog.setFeature(pluginId, feature);
-        },
-    );
-
-    ipcMain.handle(
-        IPC.FEATURE_GET,
-        (event, { codes }: IpcRequest<typeof IPC.FEATURE_GET>): IpcResponse<typeof IPC.FEATURE_GET> => {
-            const pluginId = coordinator.pluginIdForWebContents(event.sender.id);
-            if (!pluginId)
-                return { ok: false, features: [], error: 'Plugin runtime not found for sender' };
-            return { ok: true, features: commandCatalog.getDynamicFeatures(pluginId, codes) };
-        },
-    );
-
-    ipcMain.handle(
-        IPC.FEATURE_REMOVE,
-        (event, { code }: IpcRequest<typeof IPC.FEATURE_REMOVE>): IpcResponse<typeof IPC.FEATURE_REMOVE> => {
-            const pluginId = coordinator.pluginIdForWebContents(event.sender.id);
-            if (!pluginId)
-                return { ok: false, error: 'Plugin runtime not found for sender' };
-            return commandCatalog.removeFeature(pluginId, code);
-        },
-    );
+    if (dynamicFeatureService) {
+        registerDynamicFeatureIpcHandlers({
+            dynamicFeature: dynamicFeatureService,
+            resolvePluginId: (webContentsId: number) => coordinator.pluginIdForWebContents(webContentsId),
+        });
+    }
 
     // ── 快捷键定义 ─────────────────────────────────────────────
 

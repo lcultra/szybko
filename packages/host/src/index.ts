@@ -10,9 +10,12 @@ export { SearchApplicationService } from './app/search/search-application-servic
 export { LauncherItemService } from './app/search/launcher-item-service';
 export { PluginLifecycleService } from './app/plugins/plugin-lifecycle-service';
 export { PluginQueryService } from './app/plugins/plugin-query-service';
+export { CommandIndexService } from './app/commands/command-index-service';
+export { DynamicFeatureService } from './app/commands/dynamic-feature-service';
 export { registerPluginManagementIpcHandlers } from './ipc/handlers/plugin-management-ipc-handlers';
 export { registerSearchIpcHandlers } from './ipc/handlers/search-ipc-handlers';
 export { registerItemIpcHandlers } from './ipc/handlers/item-ipc-handlers';
+export { registerDynamicFeatureIpcHandlers } from './ipc/handlers/dynamic-feature-ipc-handlers';
 export { type NativeCapabilityService } from './native/native-capability-service';
 export { createPlatformDatabase } from './persistence/sqlite/platform-database';
 export { InstallationSynchronizer } from './plugins/installation-synchronizer';

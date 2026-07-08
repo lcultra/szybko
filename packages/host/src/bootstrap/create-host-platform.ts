@@ -63,7 +63,9 @@ export async function createHostPlatform(config: HostPlatformConfig): Promise<Ho
       registerIpcHandlers(
         windowManager, coordinator, commandCatalog,
         platformDb, pluginCatalog, shortcutRegistry,
-        searchService, launcherItemService, pluginLifecycle, sessionManager,
+        searchService, launcherItemService, pluginLifecycle,
+        undefined, // dynamicFeatureService — not wired in bootstrap yet
+        sessionManager,
       );
     },
     show() {

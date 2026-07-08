@@ -142,7 +142,7 @@ export class CommandCatalog {
             this.platformDb.transaction((tx) => {
                 const repos = createRepositories(tx);
                 repos.featureOverrides.setActive(pluginId, feature, Date.now());
-                this.rebuildPluginWithRepositories(pluginId, repos, Date.now(), tx);
+                this.rebuildPluginProjectionInternal(pluginId, repos, Date.now(), tx);
             });
             return { ok: true };
         }
@@ -160,7 +160,7 @@ export class CommandCatalog {
             this.platformDb.transaction((tx) => {
                 const repos = createRepositories(tx);
                 repos.featureOverrides.setRemoved(pluginId, code, Date.now());
-                this.rebuildPluginWithRepositories(pluginId, repos, Date.now(), tx);
+                this.rebuildPluginProjectionInternal(pluginId, repos, Date.now(), tx);
             });
             return { ok: true };
         }
@@ -207,7 +207,7 @@ export class CommandCatalog {
         projection.commandTriggerSearch = dedupSearchEntries(projection.commandTriggerSearch);
     }
 
-    private rebuildPluginWithRepositories(
+    private rebuildPluginProjectionInternal(
         pluginId: string,
         repos: ReturnType<typeof createRepositories>,
         now: number,
@@ -231,5 +231,16 @@ export class CommandCatalog {
         this.expandAliasesInProjection(tx, pluginId, projection);
 
         repos.commandProjections.replaceForPlugin(pluginId, projection);
+    }
+
+    /** Public entry point for rebuilding a plugin's command projection from current state. */
+    rebuildPluginWithRepositories(pluginId?: string): void {
+        if (pluginId) {
+            this.platformDb.transaction((tx) => {
+                const repos = createRepositories(tx);
+                this.rebuildPluginProjectionInternal(pluginId, repos, Date.now(), tx);
+            });
+        }
+        // If no pluginId, could rebuild all enabled plugins in the future.
     }
 }
