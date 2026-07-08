@@ -29,6 +29,9 @@ export class StartupService {
     // 2. Discover built-in plugin source
     await this.deps.pluginCatalog.init();
 
+    // Wire plugin catalog into command catalog (needed for icon validation in dynamic features)
+    this.deps.commandCatalog.setPluginCatalog(this.deps.pluginCatalog);
+
     // 3. Index manifest features for all enabled plugins
     for (const plugin of this.deps.pluginCatalog.getEnabled()) {
       this.deps.commandCatalog.indexPlugin(plugin.id, plugin.manifest, plugin.path);
