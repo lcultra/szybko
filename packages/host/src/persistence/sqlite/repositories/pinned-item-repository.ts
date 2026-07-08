@@ -1,5 +1,5 @@
 import type { PlatformDrizzleDatabase } from '../platform-database';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import { pinnedItem } from '../schema';
 
 export interface PinnedItemRow {
@@ -27,6 +27,10 @@ export class PinnedItemRepository {
 
     remove(itemId: string): void {
         this.db.delete(pinnedItem).where(eq(pinnedItem.itemId, itemId)).run();
+    }
+
+    removeByItemIdPrefix(prefix: string): void {
+        this.db.delete(pinnedItem).where(sql`item_id LIKE ${prefix}`).run();
     }
 
     reorder(itemId: string, toIndex: number): void {

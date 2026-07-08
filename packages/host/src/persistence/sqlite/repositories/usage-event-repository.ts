@@ -44,4 +44,9 @@ export class UsageEventRepository {
     removeByItemId(itemId: string): void {
         this.db.delete(usageEvent).where(eq(usageEvent.itemId, itemId)).run();
     }
+
+    /** 按 item_id 前缀删除（用于清理某个 plugin 的所有记录） */
+    removeByItemIdPrefix(prefix: string): void {
+        this.db.delete(usageEvent).where(sql`item_id LIKE ${prefix}`).run();
+    }
 }
